@@ -14,6 +14,7 @@
 		role="status"
 		aria-label="Loading"
 	>
+		<!--  -->
 		<span class="sr-only">Loading...</span>
 	</div>
 </div>
