@@ -1,0 +1,72 @@
+name: Deploy to S3
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set Environment Variables
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "S3_BUCKET=cosmonaut-prod-frontend" >> $GITHUB_ENV
+            echo "CLOUDFRONT_DISTRIBUTION_ID=E10792TCHVPSKQ" >> $GITHUB_ENV
+            echo "PUBLIC_API_BASE_URL=https://api.cosmonaut-ai.com" >> $GITHUB_ENV
+            echo "PUBLIC_STREAMING_BASE_URL=https://streaming.cosmonaut-ai.com" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_USER_POOL_ID=us-east-2_wLg6WTvcN" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_CLIENT_ID=3el862qtsgrdumiee802jhpegu" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_DOMAIN=cosmonaut-prod.auth.us-east-2.amazoncognito.com" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_REDIRECT_URI=https://cosmonaut-prod.auth.us-east-2.amazoncognito.com/oauth2/idpresponse" >> $GITHUB_ENV
+          else
+            echo "S3_BUCKET=cosmonaut-dev-frontend" >> $GITHUB_ENV
+            echo "CLOUDFRONT_DISTRIBUTION_ID=E2B2XQRISFFDLK" >> $GITHUB_ENV
+            echo "PUBLIC_API_BASE_URL=https://api.dev.cosmonaut-ai.com" >> $GITHUB_ENV
+            echo "PUBLIC_STREAMING_BASE_URL=https://streaming.dev.cosmonaut-ai.com" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_USER_POOL_ID=us-east-2_yztvRZ3oT" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_CLIENT_ID=4l5f2tb9vdl01ig9k9ian6b0as" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_DOMAIN=cosmonaut-dev.auth.us-east-2.amazoncognito.com" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_REDIRECT_URI=https://cosmonaut-dev.auth.us-east-2.amazoncognito.com/oauth2/idpresponse" >> $GITHUB_ENV
+          fi
+
+      - name: Build
+        run: npm run build
+        env:
+          PUBLIC_API_BASE_URL: ${{ env.PUBLIC_API_BASE_URL }}
+          PUBLIC_STREAMING_BASE_URL: ${{ env.PUBLIC_STREAMING_BASE_URL }}
+          PUBLIC_COGNITO_USER_POOL_ID: ${{ env.PUBLIC_COGNITO_USER_POOL_ID }}
+          PUBLIC_COGNITO_CLIENT_ID: ${{ env.PUBLIC_COGNITO_CLIENT_ID }}
+          PUBLIC_COGNITO_DOMAIN: ${{ env.PUBLIC_COGNITO_DOMAIN }}
+          PUBLIC_COGNITO_REDIRECT_URI: ${{ env.PUBLIC_COGNITO_REDIRECT_URI }}
+          PUBLIC_AWS_REGION: us-east-2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-2
+
+      - name: Deploy to S3
+        run: aws s3 sync build/ s3://${{ env.S3_BUCKET }} --delete
+
+      - name: Invalidate CloudFront Cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
