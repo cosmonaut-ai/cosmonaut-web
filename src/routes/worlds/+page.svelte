@@ -1,15 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { createWorld, generateLore, generateStartNode } from '$lib/api/client';
-	import type { World } from '$lib/types/api';
+	import { createWorld, pollWorldCompletion } from '$lib/api/client';
+	import type { World, GenerationStatus } from '$lib/types/api';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
-	type Step = 'init' | 'lore' | 'start-node';
-
-	let step = $state<Step>('init');
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let world = $state<World | null>(null);
+	let generationStatus = $state<GenerationStatus | null>(null);
 
 	// Form state
 	let worldPrompt = $state('');
@@ -17,7 +15,57 @@
 	let nodeTextLength = $state<number | undefined>(300);
 	let visibility = $state('private');
 
-	async function handleInitWorld() {
+	// Whether we're in the generation phase (polling for completion)
+	let isGenerating = $state(false);
+
+	// Status steps for the progress display
+	const generationStatuses: GenerationStatus[] = [
+		'initialized',
+		'generating_lore',
+		'generating_narrator_profile',
+		'generating_start_node',
+		'completed'
+	];
+
+	function getStatusMessage(status: GenerationStatus): string {
+		switch (status) {
+			case 'initialized':
+				return 'Initializing world...';
+			case 'generating_lore':
+				return 'Generating world lore and setting...';
+			case 'generating_narrator_profile':
+				return 'Creating narrative voice...';
+			case 'generating_start_node':
+				return 'Writing the opening scene...';
+			case 'completed':
+				return 'World created successfully!';
+			case 'failed':
+				return 'World generation failed';
+			default:
+				return 'Processing...';
+		}
+	}
+
+	function getStatusProgress(status: GenerationStatus): number {
+		switch (status) {
+			case 'initialized':
+				return 10;
+			case 'generating_lore':
+				return 35;
+			case 'generating_narrator_profile':
+				return 55;
+			case 'generating_start_node':
+				return 80;
+			case 'completed':
+				return 100;
+			case 'failed':
+				return 100;
+			default:
+				return 0;
+		}
+	}
+
+	async function handleCreateWorld() {
 		if (!worldPrompt.trim()) {
 			error = 'World prompt is required';
 			return;
@@ -26,56 +74,38 @@
 		try {
 			loading = true;
 			error = null;
+			isGenerating = false;
+
+			// Create the world (kicks off async generation)
 			world = await createWorld({
 				world_prompt: worldPrompt.trim(),
 				narrator_profile: narratorProfile.trim() || undefined,
 				node_text_length: nodeTextLength || undefined,
 				visibility: visibility || undefined
 			});
-			step = 'lore';
-			// Automatically generate lore
-			await handleGenerateLore();
+
+			// Start polling for completion
+			isGenerating = true;
+			generationStatus = world.generation_status;
+
+			// Poll until completion
+			const completedWorld = await pollWorldCompletion(world.id, (status) => {
+				generationStatus = status as GenerationStatus;
+			});
+
+			world = completedWorld;
+
+			// Navigate to the world once complete
+			if (completedWorld.root_node_id) {
+				goto(`/worlds/${completedWorld.id}`);
+			} else {
+				error = 'World creation completed but no story was generated. Please try again.';
+				isGenerating = false;
+			}
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to create world';
 			console.error('Error creating world:', err);
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function handleGenerateLore() {
-		if (!world) return;
-
-		try {
-			loading = true;
-			error = null;
-			world = await generateLore(world.id);
-			// Keep step at 'lore' so user can see the results and click the button
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to generate lore';
-			console.error('Error generating lore:', err);
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function handleGenerateStartNode() {
-		if (!world) return;
-
-		try {
-			loading = true;
-			error = null;
-			step = 'start-node';
-			world = await generateStartNode(world.id);
-			// Redirect to play page
-			if (world.root_node_id) {
-				goto(`/worlds/${world.id}`);
-			} else {
-				error = 'Start node was not generated. Please try again.';
-			}
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to generate start node';
-			console.error('Error generating start node:', err);
+			isGenerating = false;
 		} finally {
 			loading = false;
 		}
@@ -95,13 +125,85 @@
 			</div>
 		{/if}
 
-		{#if step === 'init'}
+		{#if isGenerating && generationStatus}
+			<!-- Generation Progress View -->
+			<div class="rounded-lg bg-white p-8 shadow-md">
+				<div class="flex flex-col items-center">
+					<LoadingSpinner size="lg" />
+
+					<h2 class="mt-6 text-xl font-semibold text-gray-900">Creating Your World</h2>
+					<p class="mt-2 text-gray-600">{getStatusMessage(generationStatus)}</p>
+
+					<!-- Progress Bar -->
+					<div class="mt-6 w-full max-w-md">
+						<div class="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+							<div
+								class="h-full rounded-full bg-blue-600 transition-all duration-500"
+								style="width: {getStatusProgress(generationStatus)}%"
+							></div>
+						</div>
+						<div class="mt-2 flex justify-between text-xs text-gray-500">
+							<span>Starting</span>
+							<span>Complete</span>
+						</div>
+					</div>
+
+					<!-- Status Steps -->
+					<div class="mt-8 w-full max-w-md space-y-3">
+						{#each generationStatuses as status (status)}
+							{@const isActive = status === generationStatus}
+							{@const isComplete =
+								getStatusProgress(generationStatus) > getStatusProgress(status) ||
+								generationStatus === 'completed'}
+							<div
+								class="flex items-center gap-3 rounded-lg p-2 {isActive
+									? 'bg-blue-50'
+									: ''} transition-colors"
+							>
+								<div
+									class="flex h-6 w-6 items-center justify-center rounded-full {isComplete
+										? 'bg-green-500'
+										: isActive
+											? 'bg-blue-500'
+											: 'bg-gray-300'} text-white"
+								>
+									{#if isComplete}
+										<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M5 13l4 4L19 7"
+											/>
+										</svg>
+									{:else if isActive}
+										<div class="h-2 w-2 animate-pulse rounded-full bg-white"></div>
+									{:else}
+										<div class="h-2 w-2 rounded-full bg-gray-400"></div>
+									{/if}
+								</div>
+								<span
+									class="text-sm {isActive
+										? 'font-medium text-blue-900'
+										: isComplete
+											? 'text-green-700'
+											: 'text-gray-500'}"
+								>
+									{getStatusMessage(status)}
+								</span>
+							</div>
+						{/each}
+					</div>
+				</div>
+			</div>
+		{:else}
+			<!-- Creation Form -->
 			<div class="rounded-lg bg-white p-6 shadow-md">
-				<h2 class="mb-4 text-2xl font-semibold">Step 1: Initialize World</h2>
+				<h2 class="mb-4 text-2xl font-semibold">Describe Your World</h2>
 				<form
 					onsubmit={(e) => {
 						e.preventDefault();
-						handleInitWorld();
+						handleCreateWorld();
 					}}
 					class="space-y-4"
 				>
@@ -114,7 +216,8 @@
 							bind:value={worldPrompt}
 							placeholder="Describe the world you want to create, e.g., 'A cyberpunk city where AI and humans coexist'"
 							required
-							class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+							disabled={loading}
+							class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:opacity-50"
 							rows="4"
 						></textarea>
 					</div>
@@ -128,13 +231,14 @@
 							type="text"
 							bind:value={narratorProfile}
 							placeholder="e.g., 'gritty and noir', 'mysterious and atmospheric'"
-							class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+							disabled={loading}
+							class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:opacity-50"
 						/>
 					</div>
 
 					<div>
 						<label for="node_text_length" class="mb-1 block text-sm font-medium text-gray-700">
-							Node Text Length (optional)
+							Story Segment Length (optional)
 						</label>
 						<input
 							id="node_text_length"
@@ -142,18 +246,23 @@
 							bind:value={nodeTextLength}
 							min="100"
 							max="1000"
-							class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+							disabled={loading}
+							class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:opacity-50"
 						/>
+						<p class="mt-1 text-xs text-gray-500">
+							Approximate word count for each story segment (100-1000)
+						</p>
 					</div>
 
 					<div>
 						<label for="visibility" class="mb-1 block text-sm font-medium text-gray-700">
-							Visibility (optional)
+							Visibility
 						</label>
 						<select
 							id="visibility"
 							bind:value={visibility}
-							class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+							disabled={loading}
+							class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:opacity-50"
 						>
 							<option value="private">Private</option>
 							<option value="public">Public</option>
@@ -164,7 +273,8 @@
 						<button
 							type="button"
 							onclick={() => goto('/')}
-							class="rounded-lg border border-gray-300 px-6 py-2 transition-colors hover:bg-gray-50"
+							disabled={loading}
+							class="rounded-lg border border-gray-300 px-6 py-2 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							Cancel
 						</button>
@@ -180,94 +290,6 @@
 						</button>
 					</div>
 				</form>
-			</div>
-		{:else if step === 'lore'}
-			<div class="rounded-lg bg-white p-6 shadow-md">
-				<h2 class="mb-4 text-2xl font-semibold">Step 2: Generating Lore</h2>
-				{#if loading}
-					<div class="flex flex-col items-center justify-center py-12">
-						<LoadingSpinner size="lg" />
-						<p class="mt-4 text-gray-600">Generating world lore...</p>
-					</div>
-				{:else if world}
-					<div class="space-y-4">
-						{#if world.title}
-							<div>
-								<h3 class="text-lg font-semibold text-gray-700">Title</h3>
-								<p class="text-gray-900">{world.title}</p>
-							</div>
-						{/if}
-
-						{#if world.description}
-							<div>
-								<h3 class="text-lg font-semibold text-gray-700">Description</h3>
-								<p class="text-gray-900">{world.description}</p>
-							</div>
-						{/if}
-
-						{#if world.setting}
-							<div>
-								<h3 class="text-lg font-semibold text-gray-700">Setting</h3>
-								<p class="whitespace-pre-wrap text-gray-900">{world.setting}</p>
-							</div>
-						{/if}
-
-						{#if world.characters && world.characters.length > 0}
-							<div>
-								<h3 class="text-lg font-semibold text-gray-700">Characters</h3>
-								<ul class="list-inside list-disc text-gray-900">
-									{#each world.characters as character (character)}
-										<li>{character}</li>
-									{/each}
-								</ul>
-							</div>
-						{/if}
-
-						{#if world.story_background}
-							<div>
-								<h3 class="text-lg font-semibold text-gray-700">Story Background</h3>
-								<p class="whitespace-pre-wrap text-gray-900">{world.story_background}</p>
-							</div>
-						{/if}
-
-						<div class="pt-4">
-							<button
-								onclick={handleGenerateStartNode}
-								disabled={loading}
-								class="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-							>
-								{#if loading}
-									<LoadingSpinner size="sm" />
-								{/if}
-								Generate Start Node
-							</button>
-						</div>
-					</div>
-				{/if}
-			</div>
-		{:else if step === 'start-node'}
-			<div class="rounded-lg bg-white p-6 shadow-md">
-				<h2 class="mb-4 text-2xl font-semibold">Step 3: Generating Start Node</h2>
-				{#if loading}
-					<div class="flex flex-col items-center justify-center py-12">
-						<LoadingSpinner size="lg" />
-						<p class="mt-4 text-gray-600">Generating the opening scene...</p>
-					</div>
-				{:else if world && !world.root_node_id}
-					<div class="space-y-4">
-						<p class="text-gray-600">Start node generation failed or is still in progress.</p>
-						<button
-							onclick={handleGenerateStartNode}
-							disabled={loading}
-							class="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							{#if loading}
-								<LoadingSpinner size="sm" />
-							{/if}
-							Try Again
-						</button>
-					</div>
-				{/if}
 			</div>
 		{/if}
 	</div>

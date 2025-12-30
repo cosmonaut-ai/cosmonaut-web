@@ -1,8 +1,12 @@
 export type GenerationStatus =
 	| 'initialized'
 	| 'generating_lore'
+	| 'generating_narrator_profile'
 	| 'generating_start_node'
-	| 'completed';
+	| 'completed'
+	| 'failed';
+
+export type StoryNodeProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 export interface Choice {
 	label: string;
@@ -18,8 +22,8 @@ export interface StoryNode {
 	choices: Choice[];
 	parent_id: string | null;
 	ancestors: string[];
+	processing_status: StoryNodeProcessingStatus;
 	created_at: string;
-	updated_at: string;
 }
 
 export interface World {
@@ -54,3 +58,8 @@ export interface CreateWorldRequest {
 export interface ApiError {
 	detail: string;
 }
+
+/**
+ * Callback for streaming text updates
+ */
+export type StreamingCallback = (text: string, done: boolean) => void;

@@ -20,7 +20,7 @@
 		}
 	}
 
-	async function handleDelete(e: MouseEvent) {
+	async function handleDelete() {
 		if (!showDeleteConfirm) {
 			showDeleteConfirm = true;
 			return;
@@ -37,7 +37,7 @@
 		}
 	}
 
-	function handleCancelDelete(e: MouseEvent) {
+	function handleCancelDelete() {
 		showDeleteConfirm = false;
 	}
 
@@ -47,10 +47,14 @@
 				return 'bg-green-100 text-green-700';
 			case 'generating_lore':
 				return 'bg-yellow-100 text-yellow-700';
+			case 'generating_narrator_profile':
+				return 'bg-purple-100 text-purple-700';
 			case 'generating_start_node':
 				return 'bg-blue-100 text-blue-700';
 			case 'initialized':
 				return 'bg-gray-100 text-gray-600';
+			case 'failed':
+				return 'bg-red-100 text-red-700';
 			default:
 				return 'bg-gray-100 text-gray-600';
 		}
@@ -62,10 +66,14 @@
 				return 'Ready';
 			case 'generating_lore':
 				return 'Generating Lore';
+			case 'generating_narrator_profile':
+				return 'Creating Narrator';
 			case 'generating_start_node':
 				return 'Generating Story';
 			case 'initialized':
 				return 'Initialized';
+			case 'failed':
+				return 'Failed';
 			default:
 				return status;
 		}
