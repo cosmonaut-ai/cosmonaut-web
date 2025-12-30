@@ -1,10 +1,9 @@
 import { getWorld, getNode } from '$lib/api/client';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ params, url }) => {
+export const load: PageLoad = async ({ params, url, parent }) => {
 	const worldId = params.worldId;
-
-	const world = await getWorld(worldId);
+	const { world } = await parent();
 	let currentNode = null;
 
 	// Check if a specific node is requested via query parameter
@@ -21,7 +20,6 @@ export const load: PageLoad = async ({ params, url }) => {
 	}
 
 	return {
-		world,
 		currentNode
 	};
 };

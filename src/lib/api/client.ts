@@ -185,32 +185,13 @@ export async function makeChoiceStreaming(
 		// Signal streaming is complete
 		onTextUpdate(fullText, true);
 
-		// After streaming completes, fetch the full node to get all metadata
-		// Wait a moment for the server to finish processing
-		await new Promise((resolve) => setTimeout(resolve, 500));
+		// Calculate the deterministic new node ID
+		// Parent ID + letter corresponding to choice index (0 -> a, 1 -> b, etc.)
+		const newNodeId = nodeId + String.fromCharCode(97 + choiceIndex);
 
-		// Get the latest node - the response should have created a new node
-		// We need to find it. For now, re-fetch the parent and find the choice target
-		const parentNode = await getNode(worldId, nodeId);
-		const choice = parentNode.choices[choiceIndex];
-
-		if (choice?.target) {
-			return await getNode(worldId, choice.target);
-		}
-
-		// If no target yet, construct a partial node from what we have
-		return {
-			id: '', // Will be populated when we can fetch it
-			world_id: worldId,
-			title: null,
-			text: fullText,
-			story_summary: null,
-			choices: [],
-			parent_id: nodeId,
-			ancestors: [...(parentNode.ancestors || []), nodeId],
-			processing_status: 'pending',
-			created_at: new Date().toISOString()
-		};
+		// Fetch the full node to get all metadata (choices, etc.)
+		// This node is created by the streaming process
+		return await getNode(worldId, newNodeId);
 	} else {
 		// Handle JSON response (pre-generated node)
 		const node = (await response.json()) as StoryNode;

@@ -1,46 +1,116 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, pushState } from '$app/navigation';
+	import { navigating } from '$app/stores';
+	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import { getNode, makeChoiceStreaming } from '$lib/api/client';
 	import type { PageData } from './$types';
 	import type { StoryNode } from '$lib/types/api';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import StreamingText from '$lib/components/StreamingText.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	const initialNode = data.currentNode;
-	const initialWorld = data.world;
-
-	let currentNode = $state<StoryNode | null>(initialNode);
+	let currentNode = $state<StoryNode | null>(null);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
-	let world = $state(initialWorld);
+	const world = $derived(data.world);
+
+	// Sync state with data changes (e.g. from navigation or shallow routing)
+	$effect(() => {
+		const nodeFromState = page.state.currentNode;
+		const dataNode = data.currentNode;
+
+		untrack(() => {
+			// 1. If we have state from pushState, that is the source of truth
+			if (nodeFromState) {
+				if (nodeFromState.id !== currentNode?.id) {
+					currentNode = nodeFromState;
+				}
+				return;
+			}
+
+			// 2. If we are currently showing a node that we just streamed (it might not have an ID yet)
+			// or if we are in the middle of a transition, don't let stale dataNode override it.
+			if (currentNode && (currentNode.id === '' || isProcessingChoice || loading)) {
+				return;
+			}
+
+			// 3. Only fall back to dataNode if we don't have page state
+			// and the ID is different from what we're currently showing
+			if (dataNode && dataNode.id !== currentNode?.id) {
+				currentNode = dataNode;
+			}
+		});
+	});
 
 	// Streaming state
 	let isStreaming = $state(false);
 	let streamingText = $state('');
+	let streamingDone = $state(false);
+	let typewriterDone = $state(false);
+	let pendingNode = $state<StoryNode | null>(null);
+
+	const isNavigating = $derived(!!$navigating);
+	const isProcessingChoice = $derived(isStreaming || (streamingDone && !typewriterDone));
+	const isLoading = $derived(loading || isNavigating || isProcessingChoice);
+
+	// Handle completion of typewriter effect
+	$effect(() => {
+		const node = pendingNode;
+		if (typewriterDone && node) {
+			untrack(() => {
+				currentNode = node;
+				if (node.id) {
+					pushState(`?node=${node.id}`, { currentNode: node });
+				}
+				isStreaming = false;
+				streamingText = '';
+				streamingDone = false;
+				typewriterDone = false;
+				pendingNode = null;
+			});
+		}
+	});
 
 	async function handleChoiceSelect(choiceIndex: number) {
-		if (!currentNode || loading || isStreaming) return;
+		if (!currentNode || loading || isProcessingChoice) return;
+
+		const choice = currentNode.choices[choiceIndex];
+		if (choice?.target) {
+			handleNavigateToNode(choice.target);
+			return;
+		}
 
 		try {
 			loading = true;
 			isStreaming = true;
 			streamingText = '';
+			streamingDone = false;
+			typewriterDone = false;
+			pendingNode = null;
 			error = null;
 
-			const newNode = await makeChoiceStreaming(world.id, currentNode.id, choiceIndex, (text) => {
-				streamingText = text;
-			});
+			const newNode = await makeChoiceStreaming(
+				world.id,
+				currentNode.id,
+				choiceIndex,
+				(text, done) => {
+					streamingText = text;
+					if (done) streamingDone = true;
+				}
+			);
 
-			// Once streaming is complete, update the current node
-			currentNode = newNode;
 			isStreaming = false;
-			streamingText = '';
+			// Store the node but don't display it yet - wait for typewriter
+			pendingNode = newNode;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to make choice';
 			console.error('Error making choice:', err);
 			isStreaming = false;
 			streamingText = '';
+			streamingDone = false;
+			typewriterDone = false;
 		} finally {
 			loading = false;
 		}
@@ -48,34 +118,11 @@
 
 	async function handleBack() {
 		if (!currentNode?.parent_id) return;
-
-		try {
-			loading = true;
-			error = null;
-			const parentNode = await getNode(world.id, currentNode.parent_id);
-			currentNode = parentNode;
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to load parent node';
-			console.error('Error loading parent node:', err);
-		} finally {
-			loading = false;
-		}
+		goto(`?node=${currentNode.parent_id}`, { replaceState: false, noScroll: true });
 	}
 
 	function handleNavigateToNode(nodeId: string) {
-		loading = true;
-		getNode(world.id, nodeId)
-			.then((node) => {
-				currentNode = node;
-				error = null;
-			})
-			.catch((err) => {
-				error = err instanceof Error ? err.message : 'Failed to load node';
-				console.error('Error loading node:', err);
-			})
-			.finally(() => {
-				loading = false;
-			});
+		goto(`?node=${nodeId}`, { replaceState: false, noScroll: true });
 	}
 </script>
 
@@ -90,7 +137,8 @@
 					← Back to Worlds
 				</button>
 				<button
-					onclick={() => goto(`/worlds/${world.id}/map`)}
+					onclick={() =>
+						goto(`/worlds/${world.id}/map${currentNode ? '?node=' + currentNode.id : ''}`)}
 					class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
 				>
 					<svg
@@ -152,10 +200,10 @@
 			<div class="mb-4">
 				<button
 					onclick={handleBack}
-					disabled={loading || isStreaming}
+					disabled={isLoading}
 					class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
 				>
-					{#if loading && !isStreaming}
+					{#if isLoading && !isProcessingChoice}
 						<LoadingSpinner size="sm" />
 					{/if}
 					← Back
@@ -164,21 +212,27 @@
 		{/if}
 
 		<!-- Story Node Display -->
-		{#if isStreaming}
+		{#if isProcessingChoice}
 			<!-- Streaming View with Typewriter Effect -->
 			<article class="mb-6 rounded-lg bg-white p-6 shadow-md">
 				<div class="prose prose-lg mb-6 max-w-none">
-					<p class="leading-relaxed whitespace-pre-wrap text-gray-700">
-						{streamingText}<span class="inline-block h-5 w-0.5 animate-pulse bg-gray-900"></span>
-					</p>
+					<StreamingText
+						text={streamingText}
+						done={streamingDone}
+						onComplete={() => {
+							typewriterDone = true;
+						}}
+					/>
 				</div>
 
-				<div class="flex items-center gap-2 text-sm text-gray-500">
-					<LoadingSpinner size="sm" />
-					<span>Generating story...</span>
-				</div>
+				{#if isProcessingChoice}
+					<div class="flex items-center gap-2 text-sm text-gray-500">
+						<LoadingSpinner size="sm" />
+						<span>Generating story...</span>
+					</div>
+				{/if}
 			</article>
-		{:else if loading && !currentNode}
+		{:else if isLoading && !currentNode}
 			<div class="flex items-center justify-center py-12">
 				<LoadingSpinner size="lg" />
 			</div>
@@ -189,7 +243,7 @@
 				{/if}
 
 				<div class="prose prose-lg mb-6 max-w-none">
-					<p class="leading-relaxed whitespace-pre-wrap text-gray-700">{currentNode.text}</p>
+					<StreamingText text={currentNode.text} done={true} />
 				</div>
 
 				{#if currentNode.choices && currentNode.choices.length > 0}
@@ -197,7 +251,7 @@
 						{#each currentNode.choices as choice, index (index)}
 							<button
 								onclick={() => handleChoiceSelect(index)}
-								disabled={loading || isStreaming}
+								disabled={isLoading}
 								class="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
 							>
 								<span class="text-gray-900">{choice.label}</span>
