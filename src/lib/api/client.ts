@@ -252,8 +252,9 @@ export async function makeChoiceStreaming(
 						break;
 					}
 
-					// Append content to full text
-					fullText += content;
+					// Convert literal \n to actual newlines and append to full text
+					const processedContent = content.replace(/\\n/g, '\n');
+					fullText += processedContent;
 					onTextUpdate(fullText, false);
 				}
 			}
