@@ -217,8 +217,8 @@ export async function makeChoiceStreaming(
 	// Check if this is a streaming response
 	const contentType = response.headers.get('Content-Type') || '';
 
-	if (contentType.includes('text/plain')) {
-		// Handle streaming text response
+	if (contentType.includes('text/plain') || contentType.includes('text/event-stream')) {
+		// Handle streaming SSE response
 		const reader = response.body?.getReader();
 		if (!reader) {
 			throw new Error('No response body for streaming');
@@ -226,18 +226,43 @@ export async function makeChoiceStreaming(
 
 		const decoder = new TextDecoder();
 		let fullText = '';
+		let buffer = '';
 
 		while (true) {
 			const { done, value } = await reader.read();
 			if (done) break;
 
-			const chunk = decoder.decode(value, { stream: true });
-			fullText += chunk;
-			onTextUpdate(fullText, false);
+			// Decode the chunk and add to buffer
+			buffer += decoder.decode(value, { stream: true });
+
+			// Process complete SSE messages (lines ending with \n)
+			const lines = buffer.split('\n');
+			// Keep the last incomplete line in the buffer
+			buffer = lines.pop() || '';
+
+			for (const line of lines) {
+				// SSE format: "data: content"
+				if (line.startsWith('data: ')) {
+					const content = line.slice(6); // Remove "data: " prefix
+
+					// Check for completion marker
+					if (content === '[DONE]') {
+						// Signal streaming is complete
+						onTextUpdate(fullText, true);
+						break;
+					}
+
+					// Append content to full text
+					fullText += content;
+					onTextUpdate(fullText, false);
+				}
+			}
 		}
 
-		// Signal streaming is complete
-		onTextUpdate(fullText, true);
+		// If we haven't received [DONE], signal completion anyway
+		if (!fullText || buffer) {
+			onTextUpdate(fullText, true);
+		}
 
 		// Calculate the deterministic new node ID
 		// Parent ID + letter corresponding to choice index (0 -> a, 1 -> b, etc.)
