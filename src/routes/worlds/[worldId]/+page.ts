@@ -1,4 +1,4 @@
-import { getWorld, getNode } from '$lib/api/client';
+import { getNode } from '$lib/api/client';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params, url, parent }) => {

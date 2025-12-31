@@ -3,7 +3,7 @@
 	import { navigating } from '$app/stores';
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
-	import { getNode, makeChoiceStreaming } from '$lib/api/client';
+	import { makeChoiceStreaming } from '$lib/api/client';
 	import type { PageData } from './$types';
 	import type { StoryNode } from '$lib/types/api';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';

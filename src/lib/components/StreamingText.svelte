@@ -100,9 +100,9 @@
 	});
 </script>
 
-{#each paragraphs as para}
+{#each paragraphs as para, paraIndex (paraIndex)}
 	<p class="whitespace-pre-wrap">
-		{#each para as token}
+		{#each para as token, tokenIndex (tokenIndex)}
 			<span in:fade={{ duration: 200 }} class="inline">{token}</span>
 		{/each}
 	</p>

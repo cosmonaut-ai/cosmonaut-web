@@ -48,7 +48,8 @@
 		<div class="mx-auto flex max-w-7xl items-center justify-between">
 			<div class="flex items-center gap-4">
 				<button
-					onclick={() => goto(`/worlds/${world.id}${currentNodeId ? '?node=' + currentNodeId : ''}`)}
+					onclick={() =>
+						goto(`/worlds/${world.id}${currentNodeId ? '?node=' + currentNodeId : ''}`)}
 					class="flex items-center gap-2 text-gray-600 hover:text-gray-900"
 				>
 					← Back to Story

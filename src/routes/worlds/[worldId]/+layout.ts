@@ -9,4 +9,3 @@ export const load: LayoutLoad = async ({ params }) => {
 		world
 	};
 };
-

@@ -10,15 +10,18 @@ import { getAuthToken, refreshStreamingSession } from '$lib/auth/auth.svelte';
 
 /**
  * Get authorization headers for API requests
+ * @param forceRefresh - If true, forces a token refresh
  */
-async function getAuthHeaders(): Promise<HeadersInit> {
-	const token = await getAuthToken();
+async function getAuthHeaders(forceRefresh = false): Promise<HeadersInit> {
+	const token = await getAuthToken(forceRefresh);
 	const headers: HeadersInit = {
 		'Content-Type': 'application/json'
 	};
 
 	if (token) {
 		headers['Authorization'] = `Bearer ${token}`;
+	} else if (!isLocalEnvironment) {
+		console.warn('No auth token available for API request');
 	}
 
 	return headers;
@@ -38,21 +41,59 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 /**
+ * Perform an authenticated API request with automatic retry on 401
+ */
+async function apiRequest<T>(
+	url: string,
+	options: RequestInit = {},
+	retry = true,
+	fetchFn: typeof fetch = fetch
+): Promise<T> {
+	const headers = await getAuthHeaders();
+	const response = await fetchFn(url, {
+		...options,
+		headers: {
+			...(headers as Record<string, string>),
+			...(options.headers as Record<string, string>)
+		}
+	});
+
+	if (response.status === 401 && retry && !isLocalEnvironment) {
+		console.log('API returned 401, attempting token refresh and retry...');
+		// Force token refresh
+		const newHeaders = await getAuthHeaders(true);
+
+		// Also refresh streaming session (sets signed cookies for CloudFront)
+		// This is often required by the backend in addition to the Bearer token
+		await refreshStreamingSession();
+
+		// Retry once
+		const retryResponse = await fetchFn(url, {
+			...options,
+			headers: {
+				...(newHeaders as Record<string, string>),
+				...(options.headers as Record<string, string>)
+			}
+		});
+
+		return handleResponse<T>(retryResponse);
+	}
+
+	return handleResponse<T>(response);
+}
+
+/**
  * List all worlds for the authenticated user
  */
 export async function getWorlds(): Promise<World[]> {
-	const headers = await getAuthHeaders();
-	const response = await fetch(`${API_BASE_URL}/worlds/`, { headers });
-	return handleResponse<World[]>(response);
+	return apiRequest<World[]>(`${API_BASE_URL}/worlds/`);
 }
 
 /**
  * Get a specific world by ID
  */
 export async function getWorld(worldId: string): Promise<World> {
-	const headers = await getAuthHeaders();
-	const response = await fetch(`${API_BASE_URL}/worlds/${worldId}`, { headers });
-	return handleResponse<World>(response);
+	return apiRequest<World>(`${API_BASE_URL}/worlds/${worldId}`);
 }
 
 /**
@@ -60,13 +101,10 @@ export async function getWorld(worldId: string): Promise<World> {
  * Returns immediately with initial world data; poll getWorld() for completion
  */
 export async function createWorld(data: CreateWorldRequest): Promise<World> {
-	const headers = await getAuthHeaders();
-	const response = await fetch(`${API_BASE_URL}/worlds/`, {
+	return apiRequest<World>(`${API_BASE_URL}/worlds/`, {
 		method: 'POST',
-		headers,
 		body: JSON.stringify(data)
 	});
-	return handleResponse<World>(response);
 }
 
 /**
@@ -78,22 +116,36 @@ export async function deleteWorld(worldId: string): Promise<void> {
 		method: 'DELETE',
 		headers
 	});
+
+	if (response.status === 401 && !isLocalEnvironment) {
+		const retryHeaders = await getAuthHeaders(true);
+		await refreshStreamingSession();
+		const retryResponse = await fetch(`${API_BASE_URL}/worlds/${worldId}`, {
+			method: 'DELETE',
+			headers: retryHeaders
+		});
+		if (!retryResponse.ok) {
+			const error: ApiError = await retryResponse.json().catch(() => ({
+				detail: `HTTP ${retryResponse.status}: ${retryResponse.statusText}`
+			}));
+			throw new Error(error.detail || `HTTP ${retryResponse.status}: ${retryResponse.statusText}`);
+		}
+		return;
+	}
+
 	if (!response.ok) {
 		const error: ApiError = await response.json().catch(() => ({
 			detail: `HTTP ${response.status}: ${response.statusText}`
 		}));
 		throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
 	}
-	// DELETE returns 204 No Content
 }
 
 /**
  * Get a specific story node
  */
 export async function getNode(worldId: string, nodeId: string): Promise<StoryNode> {
-	const headers = await getAuthHeaders();
-	const response = await fetch(`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}`, { headers });
-	return handleResponse<StoryNode>(response);
+	return apiRequest<StoryNode>(`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}`);
 }
 
 /**
@@ -103,9 +155,7 @@ export async function getWorldNodes(
 	worldId: string,
 	fetchFn: typeof fetch = fetch
 ): Promise<StoryNode[]> {
-	const headers = await getAuthHeaders();
-	const response = await fetchFn(`${API_BASE_URL}/worlds/${worldId}/nodes/`, { headers });
-	return handleResponse<StoryNode[]>(response);
+	return apiRequest<StoryNode[]>(`${API_BASE_URL}/worlds/${worldId}/nodes/`, {}, true, fetchFn);
 }
 
 /**
@@ -129,9 +179,9 @@ export async function makeChoiceStreaming(
 		}
 	}
 
-	const headers = await getAuthHeaders();
+	const headers = (await getAuthHeaders()) as Record<string, string>;
 	// Remove Content-Type for streaming request
-	delete (headers as Record<string, string>)['Content-Type'];
+	delete headers['Content-Type'];
 
 	let response = await fetch(url, {
 		method: 'POST',
@@ -140,16 +190,20 @@ export async function makeChoiceStreaming(
 	});
 
 	// Retry on auth errors
-	if (response.status === 401 || response.status === 403) {
-		if (!isLocalEnvironment) {
-			const refreshed = await refreshStreamingSession();
-			if (refreshed) {
-				response = await fetch(url, {
-					method: 'POST',
-					headers: await getAuthHeaders(),
-					credentials: 'include'
-				});
-			}
+	if ((response.status === 401 || response.status === 403) && !isLocalEnvironment) {
+		console.log('Streaming API returned auth error, refreshing session and retrying...');
+		const refreshedToken = await getAuthToken(true);
+		const sessionRefreshed = await refreshStreamingSession();
+
+		if (refreshedToken && sessionRefreshed) {
+			const retryHeaders = (await getAuthHeaders()) as Record<string, string>;
+			delete retryHeaders['Content-Type'];
+
+			response = await fetch(url, {
+				method: 'POST',
+				headers: retryHeaders,
+				credentials: 'include'
+			});
 		}
 	}
 
