@@ -51,6 +51,10 @@
 	let typewriterDone = $state(false);
 	let pendingNode = $state<StoryNode | null>(null);
 
+	// Custom choice state
+	let customChoiceText = $state('');
+	const MAX_CUSTOM_CHOICE_LENGTH = 200;
+
 	const isNavigating = $derived(!!$navigating);
 	const isProcessingChoice = $derived(isStreaming || (streamingDone && !typewriterDone));
 	const isLoading = $derived(loading || isNavigating || isProcessingChoice);
@@ -82,6 +86,20 @@
 			return;
 		}
 
+		await executeChoice({ choiceIndex });
+	}
+
+	async function handleCustomChoice() {
+		if (!currentNode || loading || isProcessingChoice) return;
+		if (!customChoiceText.trim()) return;
+
+		await executeChoice({ customChoice: customChoiceText.trim() });
+		customChoiceText = '';
+	}
+
+	async function executeChoice(choice: { choiceIndex: number } | { customChoice: string }) {
+		if (!currentNode) return;
+
 		try {
 			loading = true;
 			isStreaming = true;
@@ -91,15 +109,10 @@
 			pendingNode = null;
 			error = null;
 
-			const newNode = await makeChoiceStreaming(
-				world.id,
-				currentNode.id,
-				choiceIndex,
-				(text, done) => {
-					streamingText = text;
-					if (done) streamingDone = true;
-				}
-			);
+			const newNode = await makeChoiceStreaming(world.id, currentNode.id, choice, (text, done) => {
+				streamingText = text;
+				if (done) streamingDone = true;
+			});
 
 			isStreaming = false;
 			// Store the node but don't display it yet - wait for typewriter
@@ -252,14 +265,56 @@
 							<button
 								onclick={() => handleChoiceSelect(index)}
 								disabled={isLoading}
-								class="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+								class={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+									choice.is_custom
+										? 'border-blue-300 bg-blue-50 hover:bg-blue-100'
+										: 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+								}`}
 							>
-								<span class="text-gray-900">{choice.label}</span>
+								<div class="flex items-center gap-3">
+									<span class="text-gray-900">{choice.label}</span>
+									{#if choice.is_custom}
+										<span class="rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+											Custom action
+										</span>
+									{/if}
+								</div>
 								{#if choice.target === null}
 									<span class="text-sm text-gray-400">→</span>
 								{/if}
 							</button>
 						{/each}
+					</div>
+
+					<!-- Custom Choice Input -->
+					<div class="mt-6 border-t border-gray-200 pt-6">
+						<p class="mb-3 text-sm font-medium text-gray-600">Or write your own action...</p>
+						<div class="space-y-2">
+							<textarea
+								bind:value={customChoiceText}
+								maxlength={MAX_CUSTOM_CHOICE_LENGTH}
+								disabled={isLoading}
+								placeholder="Describe what you want to do..."
+								class="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+								rows="2"
+							></textarea>
+							<div class="flex items-center justify-between">
+								<span class="text-xs text-gray-400">
+									{customChoiceText.length}/{MAX_CUSTOM_CHOICE_LENGTH}
+								</span>
+								<button
+									onclick={handleCustomChoice}
+									disabled={isLoading || !customChoiceText.trim()}
+									class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+								>
+									{#if isLoading}
+										<LoadingSpinner size="sm" />
+									{:else}
+										Take Action
+									{/if}
+								</button>
+							</div>
+						</div>
 					</div>
 				{:else}
 					<div class="py-4 text-center text-gray-500 italic">The story ends here.</div>

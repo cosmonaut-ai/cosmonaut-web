@@ -14,6 +14,9 @@
 	let narratorProfile = $state('');
 	let nodeTextLength = $state<number | undefined>(300);
 	let visibility = $state('private');
+	let prompts = $state<string[]>([]);
+	let promptsLoaded = $state(false);
+	let promptsLoading = $state(false);
 
 	// Whether we're in the generation phase (polling for completion)
 	let isGenerating = $state(false);
@@ -62,6 +65,52 @@
 				return 100;
 			default:
 				return 0;
+		}
+	}
+
+	function getRandomPrompt(list: string[]): string | null {
+		if (!list.length) return null;
+		const index = Math.floor(Math.random() * list.length);
+		return list[index] ?? null;
+	}
+
+	async function loadPrompts(): Promise<string[]> {
+		if (promptsLoaded || promptsLoading) return prompts;
+
+		promptsLoading = true;
+
+		try {
+			const response = await fetch('/story-prompts.txt');
+
+			if (!response.ok) {
+				throw new Error(`Failed to load prompts (${response.status})`);
+			}
+
+			const text = await response.text();
+			prompts = text
+				.split('\n')
+				.map((line) => line.trim())
+				.filter(Boolean);
+
+			promptsLoaded = true;
+		} catch (err) {
+			console.error('Error loading prompts:', err);
+		} finally {
+			promptsLoading = false;
+		}
+
+		return prompts;
+	}
+
+	async function useRandomPrompt() {
+		if (loading || promptsLoading) return;
+
+		const list = promptsLoaded ? prompts : await loadPrompts();
+		if (!list?.length) return;
+
+		const prompt = getRandomPrompt(list);
+		if (prompt) {
+			worldPrompt = prompt;
 		}
 	}
 
@@ -208,9 +257,43 @@
 					class="space-y-4"
 				>
 					<div>
-						<label for="world_prompt" class="mb-1 block text-sm font-medium text-gray-700">
-							World Prompt <span class="text-red-500">*</span>
-						</label>
+						<div class="mb-1 flex items-center justify-between gap-2">
+							<label for="world_prompt" class="block text-sm font-medium text-gray-700">
+								World Prompt <span class="text-red-500">*</span>
+							</label>
+							<button
+								type="button"
+								onclick={useRandomPrompt}
+								disabled={loading || promptsLoading}
+								class="flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+								title="Use a random story prompt"
+								aria-label="Use a random story prompt"
+							>
+								{#if promptsLoading}
+									<LoadingSpinner size="sm" />
+								{:else}
+									<svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+										<rect
+											x="4"
+											y="4"
+											width="16"
+											height="16"
+											rx="2"
+											ry="2"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="1.5"
+										/>
+										<circle cx="9" cy="9" r="1.25" fill="currentColor" />
+										<circle cx="15" cy="9" r="1.25" fill="currentColor" />
+										<circle cx="9" cy="15" r="1.25" fill="currentColor" />
+										<circle cx="15" cy="15" r="1.25" fill="currentColor" />
+										<circle cx="12" cy="12" r="1.25" fill="currentColor" />
+									</svg>
+								{/if}
+								<span class="sr-only">Use a random story prompt</span>
+							</button>
+						</div>
 						<textarea
 							id="world_prompt"
 							bind:value={worldPrompt}

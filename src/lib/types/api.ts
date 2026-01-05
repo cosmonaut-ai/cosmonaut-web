@@ -11,6 +11,8 @@ export type StoryNodeProcessingStatus = 'pending' | 'processing' | 'completed' |
 export interface Choice {
 	label: string;
 	target: string | null;
+	is_custom?: boolean;
+	creator?: string | null;
 }
 
 export interface StoryNode {
@@ -57,6 +59,15 @@ export interface CreateWorldRequest {
 
 export interface ApiError {
 	detail: string;
+}
+
+/**
+ * Request body for the choose endpoint
+ * Exactly one of choice_index or custom_choice must be set
+ */
+export interface ChooseRequest {
+	choice_index: number | null;
+	custom_choice: string | null;
 }
 
 /**

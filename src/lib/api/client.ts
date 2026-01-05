@@ -3,7 +3,8 @@ import type {
 	StoryNode,
 	CreateWorldRequest,
 	ApiError,
-	StreamingCallback
+	StreamingCallback,
+	ChooseRequest
 } from '$lib/types/api';
 import { API_BASE_URL, STREAMING_BASE_URL, isLocalEnvironment } from '$lib/config';
 import { getAuthToken, refreshStreamingSession } from '$lib/auth/auth.svelte';
@@ -161,15 +162,22 @@ export async function getWorldNodes(
 /**
  * Make a choice and stream the new story node text
  * Uses the streaming endpoint with signed cookies
+ * @param choice - Either { choiceIndex: number } for predefined choices or { customChoice: string } for custom text (max 200 chars)
  */
 export async function makeChoiceStreaming(
 	worldId: string,
 	nodeId: string,
-	choiceIndex: number,
+	choice: { choiceIndex: number } | { customChoice: string },
 	onTextUpdate: StreamingCallback
 ): Promise<StoryNode> {
 	const baseUrl = isLocalEnvironment ? API_BASE_URL : STREAMING_BASE_URL;
-	const url = `${baseUrl}/worlds/${worldId}/nodes/${nodeId}/choose/${choiceIndex}`;
+	const url = `${baseUrl}/worlds/${worldId}/nodes/${nodeId}/choose`;
+
+	// Build request body based on choice type
+	const requestBody: ChooseRequest =
+		'choiceIndex' in choice
+			? { choice_index: choice.choiceIndex, custom_choice: null }
+			: { choice_index: null, custom_choice: choice.customChoice };
 
 	// Ensure streaming session is valid (sets signed cookies)
 	if (!isLocalEnvironment) {
@@ -180,12 +188,11 @@ export async function makeChoiceStreaming(
 	}
 
 	const headers = (await getAuthHeaders()) as Record<string, string>;
-	// Remove Content-Type for streaming request
-	delete headers['Content-Type'];
 
 	let response = await fetch(url, {
 		method: 'POST',
 		headers,
+		body: JSON.stringify(requestBody),
 		credentials: 'include' // Include signed cookies
 	});
 
@@ -197,11 +204,11 @@ export async function makeChoiceStreaming(
 
 		if (refreshedToken && sessionRefreshed) {
 			const retryHeaders = (await getAuthHeaders()) as Record<string, string>;
-			delete retryHeaders['Content-Type'];
 
 			response = await fetch(url, {
 				method: 'POST',
 				headers: retryHeaders,
+				body: JSON.stringify(requestBody),
 				credentials: 'include'
 			});
 		}
@@ -212,6 +219,12 @@ export async function makeChoiceStreaming(
 			detail: `HTTP ${response.status}: ${response.statusText}`
 		}));
 		throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+	}
+
+	// Get the new node ID from the response header
+	const newNodeId = response.headers.get('X-New-Node-Id');
+	if (!newNodeId) {
+		throw new Error('Server did not return X-New-Node-Id header');
 	}
 
 	// Check if this is a streaming response
@@ -265,10 +278,6 @@ export async function makeChoiceStreaming(
 			onTextUpdate(fullText, true);
 		}
 
-		// Calculate the deterministic new node ID
-		// Parent ID + letter corresponding to choice index (0 -> a, 1 -> b, etc.)
-		const newNodeId = nodeId + String.fromCharCode(97 + choiceIndex);
-
 		// Fetch the full node to get all metadata (choices, etc.)
 		// This node is created by the streaming process
 		return await getNode(worldId, newNodeId);
@@ -291,7 +300,7 @@ export async function makeChoice(
 ): Promise<StoryNode> {
 	let resultNode: StoryNode | null = null;
 
-	await makeChoiceStreaming(worldId, nodeId, choiceIndex, (text, done) => {
+	await makeChoiceStreaming(worldId, nodeId, { choiceIndex }, (text, done) => {
 		if (done && !resultNode) {
 			// This shouldn't happen in normal flow, but handle gracefully
 			resultNode = {
