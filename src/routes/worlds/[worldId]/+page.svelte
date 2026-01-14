@@ -3,76 +3,244 @@
 	import { navigating } from '$app/stores';
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
-	import { makeChoiceStreaming } from '$lib/api/client';
+	import { makeChoiceStreaming, getWorld } from '$lib/api/client';
 	import type { PageData } from './$types';
-	import type { StoryNode } from '$lib/types/api';
-	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
-	import StreamingText from '$lib/components/StreamingText.svelte';
+	import type { StoryNode, World, GenerationStatus } from '$lib/types/api';
+	import WorldHeader from '$lib/components/story/WorldHeader.svelte';
+	import StoryCard from '$lib/components/story/StoryCard.svelte';
+	import SlideTransition from '$lib/components/story/SlideTransition.svelte';
+	import { Card, CardContent } from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import { ChevronLeft, RotateCcw, Sparkles, Check, ArrowLeft } from '@lucide/svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	let currentNode = $state<StoryNode | null>(null);
+	let worldOverride = $state<World | null>(null);
+	const world = $derived(worldOverride ?? data.world);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
-	const world = $derived(data.world);
 
-	// Sync state with data changes (e.g. from navigation or shallow routing)
-	$effect(() => {
-		const nodeFromState = page.state.currentNode;
-		const dataNode = data.currentNode;
-
-		untrack(() => {
-			// 1. If we have state from pushState, that is the source of truth
-			if (nodeFromState) {
-				if (nodeFromState.id !== currentNode?.id) {
-					currentNode = nodeFromState;
-				}
-				return;
-			}
-
-			// 2. If we are currently showing a node that we just streamed (it might not have an ID yet)
-			// or if we are in the middle of a transition, don't let stale dataNode override it.
-			if (currentNode && (currentNode.id === '' || isProcessingChoice || loading)) {
-				return;
-			}
-
-			// 3. Only fall back to dataNode if we don't have page state
-			// and the ID is different from what we're currently showing
-			if (dataNode && dataNode.id !== currentNode?.id) {
-				currentNode = dataNode;
-			}
-		});
-	});
+	// Navigation direction for slide animation
+	let slideDirection = $state<'forward' | 'back'>('forward');
 
 	// Streaming state
 	let isStreaming = $state(false);
 	let streamingText = $state('');
 	let streamingDone = $state(false);
-	let typewriterDone = $state(false);
 	let pendingNode = $state<StoryNode | null>(null);
 
-	// Custom choice state
-	let customChoiceText = $state('');
-	const MAX_CUSTOM_CHOICE_LENGTH = 200;
+	// Typewriter state
+	let displayedText = $state('');
+	let isTyping = $state(false);
+	// Track whether to animate the next node (only for newly created nodes)
+	let shouldAnimateNextNode = $state(false);
 
 	const isNavigating = $derived(!!$navigating);
-	const isProcessingChoice = $derived(isStreaming || (streamingDone && !typewriterDone));
-	const isLoading = $derived(loading || isNavigating || isProcessingChoice);
+	const isProcessingChoice = $derived(isStreaming || isTyping);
+	const isLoading = $derived(loading || isNavigating);
 
-	// Handle completion of typewriter effect
+	// Generation status tracking
+	const isWorldComplete = $derived(world.generation_status === 'completed');
+	const isWorldFailed = $derived(world.generation_status === 'failed');
+	const generationStatus = $derived<GenerationStatus>(world.generation_status);
+
+	// Status steps for the progress display
+	const generationStatuses: GenerationStatus[] = [
+		'initialized',
+		'generating_lore',
+		'generating_narrator_profile',
+		'generating_start_node',
+		'completed'
+	];
+
+	function getStatusMessage(status: GenerationStatus): string {
+		switch (status) {
+			case 'initialized':
+				return 'Initializing world...';
+			case 'generating_lore':
+				return 'Generating world lore and setting...';
+			case 'generating_narrator_profile':
+				return 'Creating narrative voice...';
+			case 'generating_start_node':
+				return 'Writing the opening scene...';
+			case 'completed':
+				return 'World created successfully!';
+			case 'failed':
+				return 'World generation failed';
+			default:
+				return 'Processing...';
+		}
+	}
+
+	function getStatusProgress(status: GenerationStatus): number {
+		switch (status) {
+			case 'initialized':
+				return 10;
+			case 'generating_lore':
+				return 35;
+			case 'generating_narrator_profile':
+				return 55;
+			case 'generating_start_node':
+				return 80;
+			case 'completed':
+				return 100;
+			case 'failed':
+				return 100;
+			default:
+				return 0;
+		}
+	}
+
+	function isGenerationStatusComplete(status: GenerationStatus): boolean {
+		return (
+			getStatusProgress(generationStatus) > getStatusProgress(status) ||
+			generationStatus === 'completed'
+		);
+	}
+
+	function isGenerationStatusActive(status: GenerationStatus): boolean {
+		return status === generationStatus;
+	}
+
+	// Poll for world completion if not already complete
 	$effect(() => {
-		const node = pendingNode;
-		if (typewriterDone && node) {
-			untrack(() => {
-				currentNode = node;
-				if (node.id) {
-					pushState(`?node=${node.id}`, { currentNode: node });
+		if (isWorldComplete || isWorldFailed) return;
+
+		let cancelled = false;
+		const pollInterval = 2000;
+
+		async function pollStatus() {
+			while (!cancelled) {
+				try {
+					const updatedWorld = await getWorld(world.id);
+					if (cancelled) return;
+
+					// Update world override which will automatically update generationStatus via $derived
+					worldOverride = updatedWorld;
+
+					if (updatedWorld.generation_status === 'completed') {
+						// Reload the page data to get the root node
+						if (updatedWorld.root_node_id) {
+							// Small delay to let the UI show completion
+							await new Promise((r) => setTimeout(r, 500));
+							if (!cancelled) {
+								goto(`/worlds/${updatedWorld.id}`, { invalidateAll: true });
+							}
+						}
+						return;
+					}
+
+					if (updatedWorld.generation_status === 'failed') {
+						error = 'World generation failed. Please try again.';
+						return;
+					}
+
+					await new Promise((r) => setTimeout(r, pollInterval));
+				} catch (err) {
+					console.error('Error polling world status:', err);
+					if (!cancelled) {
+						await new Promise((r) => setTimeout(r, pollInterval));
+					}
 				}
+			}
+		}
+
+		pollStatus();
+
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	// Sync state with data changes
+	$effect(() => {
+		const nodeFromState = page.state.currentNode;
+		const dataNode = data.currentNode;
+
+		untrack(() => {
+			if (nodeFromState) {
+				if (nodeFromState.id !== currentNode?.id) {
+					currentNode = nodeFromState;
+					// Only animate if this is a newly created node
+					if (shouldAnimateNextNode) {
+						startTypewriter(nodeFromState.text);
+					} else {
+						displayedText = nodeFromState.text;
+						isTyping = false;
+					}
+					shouldAnimateNextNode = false;
+				}
+				return;
+			}
+
+			if (currentNode && (currentNode.id === '' || isProcessingChoice || loading)) {
+				return;
+			}
+
+			if (dataNode && dataNode.id !== currentNode?.id) {
+				currentNode = dataNode;
+				// Only animate if this is a newly created node
+				if (shouldAnimateNextNode) {
+					startTypewriter(dataNode.text);
+				} else {
+					displayedText = dataNode.text;
+					isTyping = false;
+				}
+				shouldAnimateNextNode = false;
+			}
+		});
+	});
+
+	// Store last visited node in localStorage
+	$effect(() => {
+		if (currentNode?.id && world?.id) {
+			try {
+				const key = `cosmonaut-last-node-${world.id}`;
+				localStorage.setItem(key, currentNode.id);
+			} catch {
+				// localStorage might not be available
+			}
+		}
+	});
+
+	function startTypewriter(text: string) {
+		displayedText = '';
+		isTyping = true;
+
+		let index = 0;
+		const speed = 8;
+
+		const interval = setInterval(() => {
+			if (index < text.length) {
+				displayedText = text.slice(0, index + 1);
+				index++;
+			} else {
+				clearInterval(interval);
+				isTyping = false;
+			}
+		}, speed);
+	}
+
+	// Handle streaming completion - transition from streaming to typewriter
+	$effect(() => {
+		if (streamingDone && pendingNode) {
+			// Capture the node reference before untrack to avoid null issues
+			const nodeToProcess = pendingNode;
+			untrack(() => {
+				currentNode = nodeToProcess;
+				// New nodes from streaming should always animate
+				startTypewriter(nodeToProcess.text);
+
+				if (nodeToProcess.id) {
+					pushState(`?node=${nodeToProcess.id}`, { currentNode: nodeToProcess });
+				}
+
 				isStreaming = false;
 				streamingText = '';
 				streamingDone = false;
-				typewriterDone = false;
 				pendingNode = null;
+				shouldAnimateNextNode = false;
 			});
 		}
 	});
@@ -81,20 +249,25 @@
 		if (!currentNode || loading || isProcessingChoice) return;
 
 		const choice = currentNode.choices[choiceIndex];
+
+		// If choice already has a target, navigate to it (no animation for existing nodes)
 		if (choice?.target) {
-			handleNavigateToNode(choice.target);
+			slideDirection = 'forward';
+			shouldAnimateNextNode = false;
+			goto(`?node=${choice.target}`, { replaceState: false, noScroll: true });
 			return;
 		}
 
+		// Otherwise, generate new node (will be animated after streaming)
+		shouldAnimateNextNode = true;
 		await executeChoice({ choiceIndex });
 	}
 
-	async function handleCustomChoice() {
+	async function handleCustomChoice(text: string) {
 		if (!currentNode || loading || isProcessingChoice) return;
-		if (!customChoiceText.trim()) return;
-
-		await executeChoice({ customChoice: customChoiceText.trim() });
-		customChoiceText = '';
+		// Custom choices always create new nodes, so animate
+		shouldAnimateNextNode = true;
+		await executeChoice({ customChoice: text });
 	}
 
 	async function executeChoice(choice: { choiceIndex: number } | { customChoice: string }) {
@@ -105,9 +278,9 @@
 			isStreaming = true;
 			streamingText = '';
 			streamingDone = false;
-			typewriterDone = false;
 			pendingNode = null;
 			error = null;
+			slideDirection = 'forward';
 
 			const newNode = await makeChoiceStreaming(world.id, currentNode.id, choice, (text, done) => {
 				streamingText = text;
@@ -115,7 +288,6 @@
 			});
 
 			isStreaming = false;
-			// Store the node but don't display it yet - wait for typewriter
 			pendingNode = newNode;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to make choice';
@@ -123,205 +295,246 @@
 			isStreaming = false;
 			streamingText = '';
 			streamingDone = false;
-			typewriterDone = false;
 		} finally {
 			loading = false;
 		}
 	}
 
 	async function handleBack() {
-		if (!currentNode?.parent_id) return;
+		if (!currentNode?.parent_id || isProcessingChoice) return;
+		slideDirection = 'back';
 		goto(`?node=${currentNode.parent_id}`, { replaceState: false, noScroll: true });
 	}
 
-	function handleNavigateToNode(nodeId: string) {
-		goto(`?node=${nodeId}`, { replaceState: false, noScroll: true });
+	async function handleRestart() {
+		if (!world.root_node_id || isProcessingChoice) return;
+		slideDirection = 'back';
+		goto(`?node=${world.root_node_id}`, { replaceState: false, noScroll: true });
 	}
+
+	function handleWorldUpdate(updatedWorld: World) {
+		worldOverride = updatedWorld;
+	}
+
+	const isEnding = $derived(!currentNode?.choices || currentNode.choices.length === 0);
+	const canGoBack = $derived(!!currentNode?.parent_id);
+	const pathLength = $derived((currentNode?.ancestors?.length || 0) + 1);
 </script>
 
-<div class="min-h-screen bg-gray-50">
-	<div class="mx-auto max-w-4xl px-4 py-8">
-		<header class="mb-6">
-			<div class="mb-4 flex items-center justify-between">
-				<button
-					onclick={() => goto('/')}
-					class="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-				>
-					← Back to Worlds
-				</button>
-				<button
-					onclick={() =>
-						goto(`/worlds/${world.id}/map${currentNode ? '?node=' + currentNode.id : ''}`)}
-					class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-5 w-5"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-						/>
-					</svg>
-					View Story Map
-				</button>
-			</div>
+<svelte:head>
+	<title>{world.title || 'Story'} - Cosmonaut</title>
+	<meta name="description" content={world.description || 'Explore an interactive story world.'} />
+</svelte:head>
 
-			<h1 class="mb-2 text-4xl font-bold text-gray-900">
-				{world.title || 'Untitled World'}
-			</h1>
-			{#if world.description}
-				<p class="text-gray-600">{world.description}</p>
-			{/if}
+<div class="min-h-screen bg-background">
+	{#if !isWorldComplete && !isWorldFailed}
+		<!-- World Generation Progress View -->
+		<header class="border-b border-border bg-card/50">
+			<div class="mx-auto flex max-w-3xl items-center gap-4 px-6 py-4">
+				<Button variant="ghost" size="sm" onclick={() => goto('/dashboard')} class="gap-2">
+					<ArrowLeft class="h-4 w-4" />
+					Back
+				</Button>
+				<div class="h-4 w-px bg-border"></div>
+				<div class="flex items-center gap-2">
+					<Sparkles class="h-5 w-5 text-primary" />
+					<span class="font-semibold text-foreground">Creating Your World</span>
+				</div>
+			</div>
 		</header>
 
-		{#if error}
-			<div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-				<p class="text-red-800">{error}</p>
-			</div>
-		{/if}
-
-		{#if currentNode?.ancestors && currentNode.ancestors.length > 0}
-			<nav class="mb-6 rounded-lg bg-white p-4 shadow-md">
-				<div class="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-					<span>Path:</span>
-					{#each currentNode.ancestors as ancestorId, index (ancestorId)}
-						<button
-							onclick={() => handleNavigateToNode(ancestorId)}
-							class="text-blue-600 underline hover:text-blue-800"
+		<main class="mx-auto max-w-3xl px-6 py-12">
+			<Card>
+				<CardContent class="py-12">
+					<div class="flex flex-col items-center">
+						<!-- Animated icon -->
+						<div
+							class="mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10"
 						>
-							Node {index + 1}
-						</button>
-						{#if index < currentNode.ancestors.length - 1}
-							<span>→</span>
-						{/if}
-					{/each}
-					{#if currentNode}
-						<span>→</span>
-						<span class="font-semibold text-gray-900">Current</span>
-					{/if}
-				</div>
-			</nav>
-		{/if}
+							<Sparkles class="h-10 w-10 animate-pulse text-primary" />
+						</div>
 
-		{#if currentNode?.parent_id}
-			<div class="mb-4">
-				<button
-					onclick={handleBack}
-					disabled={isLoading}
-					class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					{#if isLoading && !isProcessingChoice}
-						<LoadingSpinner size="sm" />
-					{/if}
-					← Back
-				</button>
-			</div>
-		{/if}
+						<h2 class="mb-2 text-2xl font-bold text-foreground">Creating Your World</h2>
+						<p class="mb-8 text-muted-foreground">{getStatusMessage(generationStatus)}</p>
 
-		<!-- Story Node Display -->
-		{#if isProcessingChoice}
-			<!-- Streaming View with Typewriter Effect -->
-			<article class="mb-6 rounded-lg bg-white p-6 shadow-md">
-				<div class="prose prose-lg mb-6 max-w-none">
-					<StreamingText
-						text={streamingText}
-						done={streamingDone}
-						onComplete={() => {
-							typewriterDone = true;
-						}}
-					/>
-				</div>
-
-				{#if isProcessingChoice}
-					<div class="flex items-center gap-2 text-sm text-gray-500">
-						<LoadingSpinner size="sm" />
-						<span>Generating story...</span>
-					</div>
-				{/if}
-			</article>
-		{:else if isLoading && !currentNode}
-			<div class="flex items-center justify-center py-12">
-				<LoadingSpinner size="lg" />
-			</div>
-		{:else if currentNode}
-			<article class="mb-6 rounded-lg bg-white p-6 shadow-md">
-				{#if currentNode.title}
-					<h2 class="mb-4 text-2xl font-bold text-gray-900">{currentNode.title}</h2>
-				{/if}
-
-				<div class="prose prose-lg mb-6 max-w-none">
-					<StreamingText text={currentNode.text} done={true} />
-				</div>
-
-				{#if currentNode.choices && currentNode.choices.length > 0}
-					<div class="mt-6 space-y-3">
-						{#each currentNode.choices as choice, index (index)}
-							<button
-								onclick={() => handleChoiceSelect(index)}
-								disabled={isLoading}
-								class={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-									choice.is_custom
-										? 'border-blue-300 bg-blue-50 hover:bg-blue-100'
-										: 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-								}`}
-							>
-								<div class="flex items-center gap-3">
-									<span class="text-gray-900">{choice.label}</span>
-									{#if choice.is_custom}
-										<span class="rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-											Custom action
-										</span>
-									{/if}
-								</div>
-								{#if choice.target === null}
-									<span class="text-sm text-gray-400">→</span>
-								{/if}
-							</button>
-						{/each}
-					</div>
-
-					<!-- Custom Choice Input -->
-					<div class="mt-6 border-t border-gray-200 pt-6">
-						<p class="mb-3 text-sm font-medium text-gray-600">Or write your own action...</p>
-						<div class="space-y-2">
-							<textarea
-								bind:value={customChoiceText}
-								maxlength={MAX_CUSTOM_CHOICE_LENGTH}
-								disabled={isLoading}
-								placeholder="Describe what you want to do..."
-								class="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-								rows="2"
-							></textarea>
-							<div class="flex items-center justify-between">
-								<span class="text-xs text-gray-400">
-									{customChoiceText.length}/{MAX_CUSTOM_CHOICE_LENGTH}
-								</span>
-								<button
-									onclick={handleCustomChoice}
-									disabled={isLoading || !customChoiceText.trim()}
-									class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-								>
-									{#if isLoading}
-										<LoadingSpinner size="sm" />
-									{:else}
-										Take Action
-									{/if}
-								</button>
+						<!-- Progress Bar -->
+						<div class="mb-8 w-full max-w-md">
+							<div class="h-2 w-full overflow-hidden rounded-full bg-secondary">
+								<div
+									class="h-full rounded-full bg-primary transition-all duration-500"
+									style="width: {getStatusProgress(generationStatus)}%"
+								></div>
 							</div>
 						</div>
+
+						<!-- Status Steps -->
+						<div class="w-full max-w-md space-y-3">
+							{#each generationStatuses as status (status)}
+								{@const isActive = isGenerationStatusActive(status)}
+								{@const isComplete = isGenerationStatusComplete(status)}
+								<div
+									class="flex items-center gap-4 rounded-lg px-4 py-3 transition-colors {isActive
+										? 'bg-primary/10'
+										: ''}"
+								>
+									<div
+										class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors {isComplete
+											? 'bg-primary text-primary-foreground'
+											: isActive
+												? 'border-2 border-primary bg-primary/20'
+												: 'border border-border bg-secondary'}"
+									>
+										{#if isComplete}
+											<Check class="h-4 w-4" />
+										{:else if isActive}
+											<div class="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
+										{:else}
+											<div class="h-2 w-2 rounded-full bg-muted-foreground/50"></div>
+										{/if}
+									</div>
+									<span
+										class="text-sm {isActive
+											? 'font-medium text-foreground'
+											: isComplete
+												? 'text-primary'
+												: 'text-muted-foreground'}"
+									>
+										{getStatusMessage(status)}
+									</span>
+								</div>
+							{/each}
+						</div>
 					</div>
-				{:else}
-					<div class="py-4 text-center text-gray-500 italic">The story ends here.</div>
-				{/if}
-			</article>
-		{:else}
-			<div class="py-12 text-center text-gray-500">No story node available.</div>
-		{/if}
-	</div>
+				</CardContent>
+			</Card>
+		</main>
+	{:else if isWorldFailed}
+		<!-- World Generation Failed View -->
+		<header class="border-b border-border bg-card/50">
+			<div class="mx-auto flex max-w-3xl items-center gap-4 px-6 py-4">
+				<Button variant="ghost" size="sm" onclick={() => goto('/dashboard')} class="gap-2">
+					<ArrowLeft class="h-4 w-4" />
+					Back
+				</Button>
+			</div>
+		</header>
+
+		<main class="mx-auto max-w-3xl px-6 py-12">
+			<Card class="border-destructive/50">
+				<CardContent class="py-12">
+					<div class="flex flex-col items-center">
+						<div
+							class="mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-destructive/30 bg-destructive/10"
+						>
+							<Sparkles class="h-10 w-10 text-destructive" />
+						</div>
+
+						<h2 class="mb-2 text-2xl font-bold text-foreground">World Generation Failed</h2>
+						<p class="mb-8 text-muted-foreground">
+							Something went wrong while creating your world. Please try again.
+						</p>
+
+						<Button onclick={() => goto('/worlds/new')} class="gap-2">
+							<Sparkles class="h-4 w-4" />
+							Try Again
+						</Button>
+					</div>
+				</CardContent>
+			</Card>
+		</main>
+	{:else}
+		<!-- World Header -->
+		<WorldHeader {world} currentNodeId={currentNode?.id} onWorldUpdate={handleWorldUpdate} />
+
+		<main class="mx-auto max-w-4xl px-6 py-8">
+			<!-- Error display -->
+			{#if error}
+				<Card class="mb-6 border-destructive/50 bg-destructive/10">
+					<CardContent class="py-4">
+						<p class="text-destructive">{error}</p>
+					</CardContent>
+				</Card>
+			{/if}
+
+			<!-- Path indicator -->
+			{#if currentNode}
+				<div class="mb-6 flex items-center justify-between">
+					<div class="flex items-center gap-2">
+						{#if canGoBack}
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={handleBack}
+								disabled={isLoading || isProcessingChoice}
+								class="gap-1"
+							>
+								<ChevronLeft class="h-4 w-4" />
+								Previous
+							</Button>
+						{/if}
+					</div>
+
+					<div class="flex items-center gap-2 text-sm text-muted-foreground">
+						<span>Node {pathLength}</span>
+						{#if pathLength > 1}
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={handleRestart}
+								disabled={isLoading || isProcessingChoice}
+								class="gap-1"
+							>
+								<RotateCcw class="h-4 w-4" />
+								Restart
+							</Button>
+						{/if}
+					</div>
+				</div>
+			{/if}
+
+			<!-- Story Content with Slide Transition -->
+			{#if isStreaming}
+				<!-- Streaming state - show streaming text -->
+				<StoryCard
+					text={streamingText}
+					choices={[]}
+					isTyping={true}
+					isLoading={true}
+					showCustomChoice={false}
+				/>
+			{:else if currentNode}
+				<SlideTransition key={currentNode.id} direction={slideDirection}>
+					<StoryCard
+						text={displayedText}
+						choices={currentNode.choices}
+						{isTyping}
+						{isEnding}
+						{isLoading}
+						showCustomChoice={!isTyping && !isEnding}
+						onChoiceSelect={handleChoiceSelect}
+						onCustomChoice={handleCustomChoice}
+						onRestart={handleRestart}
+					/>
+				</SlideTransition>
+			{:else if isLoading}
+				<!-- Loading state -->
+				<Card class="border-l-4 border-l-primary">
+					<CardContent class="flex items-center justify-center py-16">
+						<div class="flex items-center gap-3 text-muted-foreground">
+							<div class="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
+							<span>Loading story...</span>
+						</div>
+					</CardContent>
+				</Card>
+			{:else}
+				<!-- No node available -->
+				<Card class="border-dashed">
+					<CardContent class="flex flex-col items-center justify-center py-16">
+						<p class="mb-4 text-muted-foreground">No story node available.</p>
+						<Button variant="outline" onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
+					</CardContent>
+				</Card>
+			{/if}
+		</main>
+	{/if}
 </div>

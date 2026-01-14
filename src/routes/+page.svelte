@@ -1,103 +1,124 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getWorlds, deleteWorld } from '$lib/api/client';
-	import type { World } from '$lib/types/api';
-	import WorldCard from '$lib/components/WorldCard.svelte';
-	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import { useAuth } from '$lib/auth/auth.svelte';
+	import Starfield from '$lib/components/landing/Starfield.svelte';
+	import Hero from '$lib/components/landing/Hero.svelte';
+	import DemoStory from '$lib/components/landing/DemoStory.svelte';
+	import Features from '$lib/components/landing/Features.svelte';
+	import Footer from '$lib/components/landing/Footer.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Rocket, LogIn } from '@lucide/svelte';
 
-	let worlds = $state<World[]>([]);
-	let loading = $state(true);
-	let error = $state<string | null>(null);
+	const auth = useAuth();
 
-	onMount(async () => {
+	let isScrolled = $state(false);
+
+	async function handleGetStarted() {
 		try {
-			loading = true;
-			error = null;
-			worlds = await getWorlds();
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to load worlds';
-			console.error('Error loading worlds:', err);
-		} finally {
-			loading = false;
+			if (auth.isAuthenticated) {
+				goto('/dashboard');
+			} else {
+				await auth.login();
+			}
+		} catch (error) {
+			console.error('Failed to get started:', error);
 		}
-	});
-
-	function handleCreateWorld() {
-		goto('/worlds');
 	}
 
-	async function handleDeleteWorld(worldId: string) {
+	async function handleSignIn() {
 		try {
-			error = null;
-			await deleteWorld(worldId);
-			// Remove the world from the list
-			worlds = worlds.filter((w) => w.id !== worldId);
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to delete world';
-			console.error('Error deleting world:', err);
+			await auth.login();
+		} catch (error) {
+			console.error('Failed to sign in:', error);
 		}
+	}
+
+	// Track scroll for navbar
+	function handleScroll() {
+		isScrolled = window.scrollY > 50;
 	}
 </script>
 
-<div class="min-h-screen bg-gray-50">
-	<div class="mx-auto max-w-6xl px-4 py-8">
-		<header class="mb-8">
-			<div class="mb-4 flex items-center justify-between">
-				<h1 class="text-4xl font-bold text-gray-900">Cosmonaut</h1>
-				<button
-					onclick={handleCreateWorld}
-					class="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700"
-				>
-					Create World
-				</button>
-			</div>
-			<p class="text-gray-600">Explore interactive story worlds</p>
-		</header>
+<svelte:window onscroll={handleScroll} />
 
-		{#if loading}
-			<div class="flex items-center justify-center py-12">
-				<LoadingSpinner size="lg" />
+<svelte:head>
+	<title>Cosmonaut - Explore Infinite Story Worlds</title>
+	<meta
+		name="description"
+		content="Create, explore, and share interactive story worlds. Every choice shapes the narrative. Every world is an adventure waiting to unfold."
+	/>
+</svelte:head>
+
+<!-- Animated starfield background -->
+<Starfield />
+
+<!-- Navigation header -->
+<header
+	class="fixed top-0 right-0 left-0 z-50 transition-all duration-300 {isScrolled
+		? 'border-b border-border/50 bg-background/80 backdrop-blur-md'
+		: 'bg-transparent'}"
+>
+	<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+		<!-- Logo -->
+		<a href="/" class="flex items-center gap-2">
+			<div
+				class="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 transition-colors hover:border-primary/50"
+			>
+				<Rocket class="h-4 w-4 text-primary" />
 			</div>
-		{:else if error}
-			<div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-				<p class="text-red-800">Error: {error}</p>
-				<button
-					onclick={() => {
-						loading = true;
-						error = null;
-						getWorlds()
-							.then((w) => {
-								worlds = w;
-							})
-							.catch((err) => {
-								error = err instanceof Error ? err.message : 'Failed to load worlds';
-							})
-							.finally(() => {
-								loading = false;
-							});
-					}}
-					class="mt-2 text-red-600 underline hover:text-red-800"
+			<span class="font-semibold text-foreground">Cosmonaut</span>
+		</a>
+
+		<!-- Nav actions -->
+		<div class="flex items-center gap-3">
+			{#if auth.isAuthenticated}
+				<Button variant="ghost" size="sm" onclick={() => goto('/dashboard')}>Dashboard</Button>
+			{:else}
+				<Button
+					variant="ghost"
+					size="sm"
+					class="text-muted-foreground hover:text-foreground"
+					onclick={handleSignIn}
 				>
-					Try again
-				</button>
-			</div>
-		{:else if worlds.length === 0}
-			<div class="rounded-lg bg-white py-12 text-center shadow-md">
-				<p class="mb-4 text-gray-600">No worlds found.</p>
-				<button
-					onclick={handleCreateWorld}
-					class="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
-				>
-					Create your first world
-				</button>
-			</div>
-		{:else}
-			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-				{#each worlds as world (world.id)}
-					<WorldCard {world} onDelete={handleDeleteWorld} />
-				{/each}
-			</div>
-		{/if}
+					<LogIn class="mr-2 h-4 w-4" />
+					Sign In
+				</Button>
+				<Button size="sm" onclick={handleGetStarted}>Get Started</Button>
+			{/if}
+		</div>
 	</div>
-</div>
+</header>
+
+<!-- Main content -->
+<main>
+	<!-- Hero section -->
+	<Hero onGetStarted={handleGetStarted} onSignIn={handleSignIn} />
+
+	<!-- Demo story section -->
+	<DemoStory />
+
+	<!-- Features section -->
+	<Features />
+
+	<!-- Final CTA section -->
+	<section class="relative py-24">
+		<div class="mx-auto max-w-4xl px-6 text-center">
+			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">Ready to Create?</h2>
+			<p class="mx-auto mb-8 max-w-2xl text-muted-foreground">
+				Join thousands of storytellers crafting unique adventures. Your world is waiting to be
+				discovered.
+			</p>
+			<Button
+				size="lg"
+				class="gap-2 px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
+				onclick={handleGetStarted}
+			>
+				<Rocket class="h-5 w-5" />
+				Start Your Journey
+			</Button>
+		</div>
+	</section>
+</main>
+
+<!-- Footer -->
+<Footer />

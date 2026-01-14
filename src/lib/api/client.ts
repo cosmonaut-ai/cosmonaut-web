@@ -2,6 +2,7 @@ import type {
 	World,
 	StoryNode,
 	CreateWorldRequest,
+	UpdateWorldSharingRequest,
 	ApiError,
 	StreamingCallback,
 	ChooseRequest
@@ -103,6 +104,19 @@ export async function getWorld(worldId: string): Promise<World> {
  */
 export async function createWorld(data: CreateWorldRequest): Promise<World> {
 	return apiRequest<World>(`${API_BASE_URL}/worlds/`, {
+		method: 'POST',
+		body: JSON.stringify(data)
+	});
+}
+
+/**
+ * Update world sharing settings (visibility and shared users)
+ */
+export async function updateWorldSharing(
+	worldId: string,
+	data: UpdateWorldSharingRequest
+): Promise<World> {
+	return apiRequest<World>(`${API_BASE_URL}/worlds/${worldId}/sharing`, {
 		method: 'POST',
 		body: JSON.stringify(data)
 	});
@@ -278,8 +292,10 @@ export async function makeChoiceStreaming(
 			onTextUpdate(fullText, true);
 		}
 
+		// Wait briefly to ensure the node is fully created on the server
+		await new Promise((resolve) => setTimeout(resolve, 500));
+
 		// Fetch the full node to get all metadata (choices, etc.)
-		// This node is created by the streaming process
 		return await getNode(worldId, newNodeId);
 	} else {
 		// Handle JSON response (pre-generated node)

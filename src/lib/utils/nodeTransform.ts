@@ -1,7 +1,7 @@
 import type { StoryNode } from '$lib/types/api';
 import type { Node, Edge } from '@xyflow/svelte';
 
-export interface FlowNodeData {
+export interface FlowNodeData extends Record<string, unknown> {
 	storyNode: StoryNode;
 	isRoot: boolean;
 	isLeaf: boolean;

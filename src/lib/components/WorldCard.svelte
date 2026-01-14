@@ -150,7 +150,7 @@
 					<button
 						onclick={(e) => {
 							e.stopPropagation();
-							handleCancelDelete(e);
+							handleCancelDelete();
 						}}
 						disabled={deleting}
 						class="rounded bg-gray-200 px-3 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
@@ -160,7 +160,7 @@
 					<button
 						onclick={(e) => {
 							e.stopPropagation();
-							handleDelete(e);
+							handleDelete();
 						}}
 						disabled={deleting}
 						class="rounded bg-red-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -172,7 +172,7 @@
 				<button
 					onclick={(e) => {
 						e.stopPropagation();
-						handleDelete(e);
+						handleDelete();
 					}}
 					class="rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
 					aria-label="Delete world"

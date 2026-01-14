@@ -18,8 +18,15 @@
 
 	// Split by whitespace but keep the tokens.
 	let tokens = $derived(text.split(/(\s+)/).filter(Boolean));
-	let displayedCount = $state(done ? tokens.length : 0);
+	let displayedCount = $state(0);
 	let completed = $state(false);
+
+	// Initialize displayedCount based on done state
+	$effect(() => {
+		if (done && displayedCount === 0 && tokens.length > 0) {
+			displayedCount = tokens.length;
+		}
+	});
 
 	// Detect if the first piece of text we got was already marked as done
 	// (i.e. it wasn't really a stream, but a full response)

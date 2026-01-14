@@ -8,11 +8,27 @@ export type GenerationStatus =
 
 export type StoryNodeProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
+export type WorldVisibility = 'private' | 'public';
+
 export interface Choice {
 	label: string;
+	outcome?: string | null;
 	target: string | null;
+	is_created?: boolean;
 	is_custom?: boolean;
 	creator?: string | null;
+}
+
+export interface Character {
+	name: string | null;
+	description: string | null;
+	relationships: string[] | null;
+}
+
+export interface Location {
+	name: string | null;
+	description: string | null;
+	connections: string[] | null;
 }
 
 export interface StoryNode {
@@ -26,6 +42,7 @@ export interface StoryNode {
 	ancestors: string[];
 	processing_status: StoryNodeProcessingStatus;
 	created_at: string;
+	updated_at?: string;
 }
 
 export interface World {
@@ -33,28 +50,38 @@ export interface World {
 	title: string | null;
 	description: string | null;
 	genre: string | null;
+	score: string | null;
 	generation_status: GenerationStatus;
 	author_id: string | null;
 	root_node_id: string | null;
-	visibility: string | null;
+	visibility: WorldVisibility | null;
+	shared_with: string[] | null;
 	world_prompt: string | null;
 	setting: string | null;
-	characters: string[] | null;
+	narrative_context: string | null;
+	characters: Character[] | null;
+	locations: Location[] | null;
 	potential_endings: string[] | null;
-	story_background: string | null;
 	narrator_profile: string | null;
 	node_text_length: number | null;
+	story_max_nodes: number | null;
 	world_image_url: string | null;
 	world_image_alt_text: string | null;
+	world_image_width: string | null;
+	world_image_height: string | null;
+	world_image_size: string | null;
 	created_at: string;
 	updated_at: string;
 }
 
 export interface CreateWorldRequest {
 	world_prompt: string;
-	narrator_profile?: string;
-	node_text_length?: number;
-	visibility?: string;
+	visibility?: WorldVisibility;
+}
+
+export interface UpdateWorldSharingRequest {
+	shared_with?: string[] | null;
+	visibility?: WorldVisibility | null;
 }
 
 export interface ApiError {
