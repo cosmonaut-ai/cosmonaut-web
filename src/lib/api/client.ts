@@ -174,24 +174,46 @@ export async function getWorldNodes(
 }
 
 /**
- * Make a choice and stream the new story node text
- * Uses the streaming endpoint with signed cookies
+ * Choose an option and initialize a new story node (without generated text)
+ * This is step 1 of the two-step generation flow.
  * @param choice - Either { choiceIndex: number } for predefined choices or { customChoice: string } for custom text (max 200 chars)
+ * @returns The initialized StoryNode with generation_status: 'initialized' (no text yet)
  */
-export async function makeChoiceStreaming(
+export async function chooseOption(
 	worldId: string,
 	nodeId: string,
-	choice: { choiceIndex: number } | { customChoice: string },
-	onTextUpdate: StreamingCallback
+	choice: { choiceIndex: number } | { customChoice: string }
 ): Promise<StoryNode> {
-	const baseUrl = isLocalEnvironment ? API_BASE_URL : STREAMING_BASE_URL;
-	const url = `${baseUrl}/worlds/${worldId}/nodes/${nodeId}/choose`;
+	const url = `${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/choose`;
 
 	// Build request body based on choice type
 	const requestBody: ChooseRequest =
 		'choiceIndex' in choice
 			? { choice_index: choice.choiceIndex, custom_choice: null }
 			: { choice_index: null, custom_choice: choice.customChoice };
+
+	return apiRequest<StoryNode>(url, {
+		method: 'POST',
+		body: JSON.stringify(requestBody)
+	});
+}
+
+/**
+ * Generate story text for an initialized node (streaming)
+ * This is step 2 of the two-step generation flow.
+ * Only works for nodes with generation_status: 'initialized' or 'failed'
+ * @param worldId - The world ID
+ * @param nodeId - The node ID to generate text for
+ * @param onTextUpdate - Callback for streaming text updates
+ * @returns The completed StoryNode with generated text
+ */
+export async function generateNodeText(
+	worldId: string,
+	nodeId: string,
+	onTextUpdate: StreamingCallback
+): Promise<StoryNode> {
+	const baseUrl = isLocalEnvironment ? API_BASE_URL : STREAMING_BASE_URL;
+	const url = `${baseUrl}/worlds/${worldId}/nodes/${nodeId}/generate-text`;
 
 	// Ensure streaming session is valid (sets signed cookies)
 	if (!isLocalEnvironment) {
@@ -206,7 +228,6 @@ export async function makeChoiceStreaming(
 	let response = await fetch(url, {
 		method: 'POST',
 		headers,
-		body: JSON.stringify(requestBody),
 		credentials: 'include' // Include signed cookies
 	});
 
@@ -222,7 +243,6 @@ export async function makeChoiceStreaming(
 			response = await fetch(url, {
 				method: 'POST',
 				headers: retryHeaders,
-				body: JSON.stringify(requestBody),
 				credentials: 'include'
 			});
 		}
@@ -233,12 +253,6 @@ export async function makeChoiceStreaming(
 			detail: `HTTP ${response.status}: ${response.statusText}`
 		}));
 		throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-	}
-
-	// Get the new node ID from the response header
-	const newNodeId = response.headers.get('X-New-Node-Id');
-	if (!newNodeId) {
-		throw new Error('Server did not return X-New-Node-Id header');
 	}
 
 	// Check if this is a streaming response
@@ -292,61 +306,19 @@ export async function makeChoiceStreaming(
 			onTextUpdate(fullText, true);
 		}
 
-		// Wait briefly to ensure the node is fully created on the server
+		// Wait briefly to ensure the node is fully updated on the server
 		await new Promise((resolve) => setTimeout(resolve, 500));
 
-		// Fetch the full node to get all metadata (choices, etc.)
-		return await getNode(worldId, newNodeId);
+		// Fetch the full node to get all metadata (choices, title, etc.)
+		return await getNode(worldId, nodeId);
 	} else {
-		// Handle JSON response (pre-generated node)
+		// Handle JSON response (pre-generated node or already completed)
 		const node = (await response.json()) as StoryNode;
-		onTextUpdate(node.text, true);
+		if (node.text) {
+			onTextUpdate(node.text, true);
+		}
 		return node;
 	}
-}
-
-/**
- * Legacy makeChoice function - non-streaming fallback
- * For backwards compatibility with existing code
- */
-export async function makeChoice(
-	worldId: string,
-	nodeId: string,
-	choiceIndex: number
-): Promise<StoryNode> {
-	let resultNode: StoryNode | null = null;
-
-	await makeChoiceStreaming(worldId, nodeId, { choiceIndex }, (text, done) => {
-		if (done && !resultNode) {
-			// This shouldn't happen in normal flow, but handle gracefully
-			resultNode = {
-				id: '',
-				world_id: worldId,
-				title: null,
-				text,
-				story_summary: null,
-				choices: [],
-				parent_id: nodeId,
-				ancestors: [],
-				processing_status: 'completed',
-				created_at: new Date().toISOString()
-			};
-		}
-	});
-
-	// Wait for the streaming to complete and get the node
-	if (resultNode) {
-		return resultNode;
-	}
-
-	// Fallback: fetch the node directly after streaming
-	const parentNode = await getNode(worldId, nodeId);
-	const choice = parentNode.choices[choiceIndex];
-	if (choice?.target) {
-		return await getNode(worldId, choice.target);
-	}
-
-	throw new Error('Failed to get new node after choice');
 }
 
 /**

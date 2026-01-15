@@ -1,12 +1,24 @@
 import { Amplify } from 'aws-amplify';
 import { signInWithRedirect, signOut, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
 import { amplifyConfig, isLocalEnvironment, isAuthConfigured, API_BASE_URL } from '$lib/config';
+import { browser } from '$app/environment';
 
 // Auth state using Svelte 5 runes
 let isAuthenticated = $state(false);
 let isLoading = $state(true);
 let user = $state<UserInfo | null>(null);
 let authReadyPromise: Promise<void> | null = null;
+
+// Local storage key for persisting local dev auth
+const LOCAL_AUTH_KEY = 'cosmonaut-local-dev-auth';
+
+// Mock user for local development
+const LOCAL_DEV_USER: UserInfo = {
+	sub: 'local-dev-user-123',
+	email: 'developer@localhost',
+	name: 'Local Developer',
+	picture: undefined
+};
 
 export interface UserInfo {
 	sub: string;
@@ -32,9 +44,19 @@ export function initializeAuth(): Promise<void> {
 				isLoading = false;
 			}
 		} else if (isLocalEnvironment) {
-			// In local environment, mark as not loading but not authenticated
+			// In local environment, restore auth state from localStorage
+			if (browser) {
+				try {
+					const savedAuth = localStorage.getItem(LOCAL_AUTH_KEY);
+					if (savedAuth === 'true') {
+						isAuthenticated = true;
+						user = LOCAL_DEV_USER;
+					}
+				} catch {
+					// localStorage might not be available
+				}
+			}
 			isLoading = false;
-			isAuthenticated = false;
 		} else {
 			console.warn('Auth is not configured for non-local environment');
 			isLoading = false;
@@ -107,9 +129,23 @@ export async function checkAuthState(): Promise<void> {
 }
 
 /**
- * Sign in with Google OAuth
+ * Sign in with Google OAuth (or mock login in local development)
  */
 export async function login(): Promise<void> {
+	// In local environment, use mock authentication
+	if (isLocalEnvironment) {
+		isAuthenticated = true;
+		user = LOCAL_DEV_USER;
+		if (browser) {
+			try {
+				localStorage.setItem(LOCAL_AUTH_KEY, 'true');
+			} catch {
+				// localStorage might not be available
+			}
+		}
+		return;
+	}
+
 	if (!isAuthConfigured) {
 		console.warn('Cannot login: Auth is not configured');
 		return;
@@ -127,6 +163,21 @@ export async function login(): Promise<void> {
  * Sign out the current user
  */
 export async function logout(): Promise<void> {
+	// In local environment, clear mock authentication
+	if (isLocalEnvironment) {
+		isAuthenticated = false;
+		user = null;
+		authReadyPromise = null;
+		if (browser) {
+			try {
+				localStorage.removeItem(LOCAL_AUTH_KEY);
+			} catch {
+				// localStorage might not be available
+			}
+		}
+		return;
+	}
+
 	if (!isAuthConfigured) {
 		return;
 	}

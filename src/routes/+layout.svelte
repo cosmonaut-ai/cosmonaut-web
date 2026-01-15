@@ -6,17 +6,39 @@
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import { isLocalEnvironment } from '$lib/config';
 	import { Button } from '$lib/components/ui/button';
-	import { Rocket, LogIn, LogOut } from '@lucide/svelte';
+	import { Rocket, LogIn, LogOut, Loader2 } from '@lucide/svelte';
 
 	let { children } = $props();
 
 	const auth = useAuth();
 
+	let isSigningIn = $state(false);
+
 	// Check if we're on the landing page - it has its own header
 	const isLandingPage = $derived(page.url.pathname === '/');
 
-	// Show header on non-landing pages when not in local environment
-	const showGlobalHeader = $derived(!isLocalEnvironment && !isLandingPage);
+	// Show header on non-landing pages (works in both local and production)
+	const showGlobalHeader = $derived(!isLandingPage);
+
+	async function handleSignIn() {
+		if (isSigningIn) return;
+
+		try {
+			isSigningIn = true;
+			await auth.login();
+			// In local environment, redirect after login (OAuth redirects via callback)
+			if (isLocalEnvironment && auth.isAuthenticated) {
+				goto('/dashboard');
+			}
+		} catch (error) {
+			console.error('Failed to sign in:', error);
+		} finally {
+			// Only reset if we're still on this page (local env)
+			if (isLocalEnvironment) {
+				isSigningIn = false;
+			}
+		}
+	}
 </script>
 
 <svelte:head>
@@ -81,16 +103,16 @@
 						variant="ghost"
 						size="sm"
 						class="text-muted-foreground hover:text-foreground"
-						onclick={async () => {
-							try {
-								await auth.login();
-							} catch (error) {
-								console.error('Failed to sign in:', error);
-							}
-						}}
+						onclick={handleSignIn}
+						disabled={isSigningIn}
 					>
-						<LogIn class="h-4 w-4" />
-						<span class="ml-2">Sign In</span>
+						{#if isSigningIn}
+							<Loader2 class="h-4 w-4 animate-spin" />
+							<span class="ml-2">Signing in...</span>
+						{:else}
+							<LogIn class="h-4 w-4" />
+							<span class="ml-2">Sign In</span>
+						{/if}
 					</Button>
 				{/if}
 			</div>

@@ -1603,6 +1603,7 @@
 				"enum": [
 					"initialized",
 					"generating_lore",
+					"generating_start_node",
 					"generating_narrator_profile",
 					"completed",
 					"failed"

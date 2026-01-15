@@ -1,35 +1,61 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { useAuth } from '$lib/auth/auth.svelte';
+	import { isLocalEnvironment } from '$lib/config';
 	import Starfield from '$lib/components/landing/Starfield.svelte';
 	import Hero from '$lib/components/landing/Hero.svelte';
 	import DemoStory from '$lib/components/landing/DemoStory.svelte';
 	import Features from '$lib/components/landing/Features.svelte';
 	import Footer from '$lib/components/landing/Footer.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Rocket, LogIn } from '@lucide/svelte';
+	import { Rocket, LogIn, Loader2 } from '@lucide/svelte';
 
 	const auth = useAuth();
 
 	let isScrolled = $state(false);
+	let isSigningIn = $state(false);
 
 	async function handleGetStarted() {
+		if (isSigningIn) return;
+
 		try {
 			if (auth.isAuthenticated) {
 				goto('/dashboard');
 			} else {
+				isSigningIn = true;
 				await auth.login();
+				// In local environment, redirect after login (OAuth redirects via callback)
+				if (isLocalEnvironment && auth.isAuthenticated) {
+					goto('/dashboard');
+				}
 			}
 		} catch (error) {
 			console.error('Failed to get started:', error);
+		} finally {
+			// Only reset if we're still on this page (local env)
+			if (isLocalEnvironment) {
+				isSigningIn = false;
+			}
 		}
 	}
 
 	async function handleSignIn() {
+		if (isSigningIn) return;
+
 		try {
+			isSigningIn = true;
 			await auth.login();
+			// In local environment, redirect after login (OAuth redirects via callback)
+			if (isLocalEnvironment && auth.isAuthenticated) {
+				goto('/dashboard');
+			}
 		} catch (error) {
 			console.error('Failed to sign in:', error);
+		} finally {
+			// Only reset if we're still on this page (local env)
+			if (isLocalEnvironment) {
+				isSigningIn = false;
+			}
 		}
 	}
 
@@ -79,11 +105,22 @@
 					size="sm"
 					class="text-muted-foreground hover:text-foreground"
 					onclick={handleSignIn}
+					disabled={isSigningIn}
 				>
-					<LogIn class="mr-2 h-4 w-4" />
-					Sign In
+					{#if isSigningIn}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Signing in...
+					{:else}
+						<LogIn class="mr-2 h-4 w-4" />
+						Sign In
+					{/if}
 				</Button>
-				<Button size="sm" onclick={handleGetStarted}>Get Started</Button>
+				<Button size="sm" onclick={handleGetStarted} disabled={isSigningIn}>
+					{#if isSigningIn}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+					{/if}
+					Get Started
+				</Button>
 			{/if}
 		</div>
 	</div>
@@ -92,7 +129,7 @@
 <!-- Main content -->
 <main>
 	<!-- Hero section -->
-	<Hero onGetStarted={handleGetStarted} onSignIn={handleSignIn} />
+	<Hero onGetStarted={handleGetStarted} onSignIn={handleSignIn} isLoading={isSigningIn} />
 
 	<!-- Demo story section -->
 	<DemoStory />
@@ -112,8 +149,13 @@
 				size="lg"
 				class="gap-2 px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
 				onclick={handleGetStarted}
+				disabled={isSigningIn}
 			>
-				<Rocket class="h-5 w-5" />
+				{#if isSigningIn}
+					<Loader2 class="h-5 w-5 animate-spin" />
+				{:else}
+					<Rocket class="h-5 w-5" />
+				{/if}
 				Start Your Journey
 			</Button>
 		</div>

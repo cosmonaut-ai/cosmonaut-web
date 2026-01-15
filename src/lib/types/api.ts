@@ -1,12 +1,16 @@
-export type GenerationStatus =
+export type WorldGenerationStatus =
 	| 'initialized'
 	| 'generating_lore'
 	| 'generating_narrator_profile'
-	| 'generating_start_node'
 	| 'completed'
 	| 'failed';
 
+/** @deprecated Use WorldGenerationStatus instead */
+export type GenerationStatus = WorldGenerationStatus;
+
 export type StoryNodeProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export type StoryNodeGenerationStatus = 'initialized' | 'generating' | 'completed' | 'failed';
 
 export type WorldVisibility = 'private' | 'public';
 
@@ -35,12 +39,13 @@ export interface StoryNode {
 	id: string;
 	world_id: string;
 	title: string | null;
-	text: string;
+	text: string | null;
 	story_summary: string | null;
 	choices: Choice[];
 	parent_id: string | null;
 	ancestors: string[];
 	processing_status: StoryNodeProcessingStatus;
+	generation_status: StoryNodeGenerationStatus;
 	created_at: string;
 	updated_at?: string;
 }

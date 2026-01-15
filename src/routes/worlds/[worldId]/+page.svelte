@@ -3,7 +3,7 @@
 	import { navigating } from '$app/stores';
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
-	import { makeChoiceStreaming, getWorld } from '$lib/api/client';
+	import { chooseOption, generateNodeText, getWorld, getNode } from '$lib/api/client';
 	import type { PageData } from './$types';
 	import type { StoryNode, World, GenerationStatus } from '$lib/types/api';
 	import WorldHeader from '$lib/components/story/WorldHeader.svelte';
@@ -30,14 +30,8 @@
 	let streamingDone = $state(false);
 	let pendingNode = $state<StoryNode | null>(null);
 
-	// Typewriter state
-	let displayedText = $state('');
-	let isTyping = $state(false);
-	// Track whether to animate the next node (only for newly created nodes)
-	let shouldAnimateNextNode = $state(false);
-
 	const isNavigating = $derived(!!$navigating);
-	const isProcessingChoice = $derived(isStreaming || isTyping);
+	const isProcessingChoice = $derived(isStreaming);
 	const isLoading = $derived(loading || isNavigating);
 
 	// Generation status tracking
@@ -50,7 +44,6 @@
 		'initialized',
 		'generating_lore',
 		'generating_narrator_profile',
-		'generating_start_node',
 		'completed'
 	];
 
@@ -62,8 +55,6 @@
 				return 'Generating world lore and setting...';
 			case 'generating_narrator_profile':
 				return 'Creating narrative voice...';
-			case 'generating_start_node':
-				return 'Writing the opening scene...';
 			case 'completed':
 				return 'World created successfully!';
 			case 'failed':
@@ -78,11 +69,9 @@
 			case 'initialized':
 				return 10;
 			case 'generating_lore':
-				return 35;
+				return 40;
 			case 'generating_narrator_profile':
-				return 55;
-			case 'generating_start_node':
-				return 80;
+				return 70;
 			case 'completed':
 				return 100;
 			case 'failed':
@@ -162,14 +151,6 @@
 			if (nodeFromState) {
 				if (nodeFromState.id !== currentNode?.id) {
 					currentNode = nodeFromState;
-					// Only animate if this is a newly created node
-					if (shouldAnimateNextNode) {
-						startTypewriter(nodeFromState.text);
-					} else {
-						displayedText = nodeFromState.text;
-						isTyping = false;
-					}
-					shouldAnimateNextNode = false;
 				}
 				return;
 			}
@@ -180,14 +161,6 @@
 
 			if (dataNode && dataNode.id !== currentNode?.id) {
 				currentNode = dataNode;
-				// Only animate if this is a newly created node
-				if (shouldAnimateNextNode) {
-					startTypewriter(dataNode.text);
-				} else {
-					displayedText = dataNode.text;
-					isTyping = false;
-				}
-				shouldAnimateNextNode = false;
 			}
 		});
 	});
@@ -204,33 +177,13 @@
 		}
 	});
 
-	function startTypewriter(text: string) {
-		displayedText = '';
-		isTyping = true;
-
-		let index = 0;
-		const speed = 8;
-
-		const interval = setInterval(() => {
-			if (index < text.length) {
-				displayedText = text.slice(0, index + 1);
-				index++;
-			} else {
-				clearInterval(interval);
-				isTyping = false;
-			}
-		}, speed);
-	}
-
-	// Handle streaming completion - transition from streaming to typewriter
+	// Handle streaming completion
 	$effect(() => {
 		if (streamingDone && pendingNode) {
 			// Capture the node reference before untrack to avoid null issues
 			const nodeToProcess = pendingNode;
 			untrack(() => {
 				currentNode = nodeToProcess;
-				// New nodes from streaming should always animate
-				startTypewriter(nodeToProcess.text);
 
 				if (nodeToProcess.id) {
 					pushState(`?node=${nodeToProcess.id}`, { currentNode: nodeToProcess });
@@ -240,33 +193,95 @@
 				streamingText = '';
 				streamingDone = false;
 				pendingNode = null;
-				shouldAnimateNextNode = false;
 			});
+		}
+	});
+
+	// Handle nodes that need text generation when loaded
+	// This handles: page refresh on a generating node, navigating to an initialized node, or retrying failed nodes
+	$effect(() => {
+		if (!currentNode || isStreaming || loading) return;
+
+		const nodeGenStatus = currentNode.generation_status;
+		const nodeToGenerate = currentNode;
+
+		// If node needs text generation, start it
+		if (nodeGenStatus === 'initialized' || nodeGenStatus === 'failed') {
+			untrack(() => {
+				isStreaming = true;
+				streamingText = '';
+				streamingDone = false;
+				loading = true;
+
+				generateNodeText(world.id, nodeToGenerate.id, (text, done) => {
+					streamingText = text;
+					if (done) streamingDone = true;
+				})
+					.then((completedNode) => {
+						pendingNode = completedNode;
+						isStreaming = false;
+					})
+					.catch((err) => {
+						error = err instanceof Error ? err.message : 'Failed to generate text';
+						console.error('Error generating text:', err);
+						isStreaming = false;
+						streamingText = '';
+						streamingDone = false;
+					})
+					.finally(() => {
+						loading = false;
+					});
+			});
+			return;
+		}
+
+		// If node is currently generating (by another client/tab), poll for updates
+		if (nodeGenStatus === 'generating') {
+			let cancelled = false;
+			const pollInterval = 2000;
+
+			async function pollNodeStatus() {
+				while (!cancelled && currentNode?.id === nodeToGenerate.id) {
+					try {
+						const updatedNode = await getNode(world.id, nodeToGenerate.id);
+						if (cancelled) return;
+
+						if (updatedNode.generation_status === 'completed') {
+							currentNode = updatedNode;
+							return;
+						}
+
+						if (updatedNode.generation_status === 'failed') {
+							error = 'Text generation failed. Retrying...';
+							currentNode = updatedNode;
+							return;
+						}
+
+						await new Promise((r) => setTimeout(r, pollInterval));
+					} catch (err) {
+						console.error('Error polling node status:', err);
+						if (!cancelled) {
+							await new Promise((r) => setTimeout(r, pollInterval));
+						}
+					}
+				}
+			}
+
+			pollNodeStatus();
+
+			return () => {
+				cancelled = true;
+			};
 		}
 	});
 
 	async function handleChoiceSelect(choiceIndex: number) {
 		if (!currentNode || loading || isProcessingChoice) return;
-
-		const choice = currentNode.choices[choiceIndex];
-
-		// If choice already has a target, navigate to it (no animation for existing nodes)
-		if (choice?.target) {
-			slideDirection = 'forward';
-			shouldAnimateNextNode = false;
-			goto(`?node=${choice.target}`, { replaceState: false, noScroll: true });
-			return;
-		}
-
-		// Otherwise, generate new node (will be animated after streaming)
-		shouldAnimateNextNode = true;
 		await executeChoice({ choiceIndex });
 	}
 
 	async function handleCustomChoice(text: string) {
 		if (!currentNode || loading || isProcessingChoice) return;
-		// Custom choices always create new nodes, so animate
-		shouldAnimateNextNode = true;
 		await executeChoice({ customChoice: text });
 	}
 
@@ -275,20 +290,35 @@
 
 		try {
 			loading = true;
-			isStreaming = true;
-			streamingText = '';
-			streamingDone = false;
-			pendingNode = null;
 			error = null;
 			slideDirection = 'forward';
 
-			const newNode = await makeChoiceStreaming(world.id, currentNode.id, choice, (text, done) => {
-				streamingText = text;
-				if (done) streamingDone = true;
-			});
+			// Step 1: ALWAYS call /choose first - it returns either a new initialized node or an existing one
+			const node = await chooseOption(world.id, currentNode.id, choice);
 
-			isStreaming = false;
-			pendingNode = newNode;
+			// Step 2: Navigate to the node
+			currentNode = node;
+			pushState(`?node=${node.id}`, { currentNode: node });
+
+			// Step 3: Check if node needs text generation
+			if (node.generation_status === 'completed' && node.text) {
+				// Node already has generated text - nothing more to do
+			} else if (node.generation_status === 'initialized' || node.generation_status === 'failed') {
+				// Node needs text generation - stream it
+				isStreaming = true;
+				streamingText = '';
+				streamingDone = false;
+				pendingNode = null;
+
+				const completedNode = await generateNodeText(world.id, node.id, (text, done) => {
+					streamingText = text;
+					if (done) streamingDone = true;
+				});
+
+				isStreaming = false;
+				pendingNode = completedNode;
+			}
+			// If node.generation_status === 'generating', the effect will handle polling
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to make choice';
 			console.error('Error making choice:', err);
@@ -492,49 +522,53 @@
 				</div>
 			{/if}
 
-			<!-- Story Content with Slide Transition -->
-			{#if isStreaming}
-				<!-- Streaming state - show streaming text -->
+		<!-- Story Content with Slide Transition -->
+		{#if isStreaming}
+			<div class="-mx-6 sm:mx-0">
+				<!-- Streaming state - show text as it arrives -->
 				<StoryCard
-					text={streamingText}
+					text={streamingText.trim()}
 					choices={[]}
 					isTyping={true}
 					isLoading={true}
 					showCustomChoice={false}
 				/>
-			{:else if currentNode}
+			</div>
+		{:else if currentNode}
+			<div class="-mx-6 sm:mx-0">
 				<SlideTransition key={currentNode.id} direction={slideDirection}>
 					<StoryCard
-						text={displayedText}
+						text={currentNode.text?.trim() ?? ''}
 						choices={currentNode.choices}
-						{isTyping}
+						isTyping={false}
 						{isEnding}
 						{isLoading}
-						showCustomChoice={!isTyping && !isEnding}
+						showCustomChoice={!isEnding}
 						onChoiceSelect={handleChoiceSelect}
 						onCustomChoice={handleCustomChoice}
 						onRestart={handleRestart}
 					/>
 				</SlideTransition>
-			{:else if isLoading}
-				<!-- Loading state -->
-				<Card class="border-l-4 border-l-primary">
-					<CardContent class="flex items-center justify-center py-16">
-						<div class="flex items-center gap-3 text-muted-foreground">
-							<div class="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
-							<span>Loading story...</span>
-						</div>
-					</CardContent>
-				</Card>
-			{:else}
-				<!-- No node available -->
-				<Card class="border-dashed">
-					<CardContent class="flex flex-col items-center justify-center py-16">
-						<p class="mb-4 text-muted-foreground">No story node available.</p>
-						<Button variant="outline" onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
-					</CardContent>
-				</Card>
-			{/if}
+			</div>
+		{:else if isLoading}
+			<!-- Loading state -->
+			<Card class="border-l-4 border-l-primary">
+				<CardContent class="flex items-center justify-center py-16">
+					<div class="flex items-center gap-3 text-muted-foreground">
+						<div class="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
+						<span>Loading story...</span>
+					</div>
+				</CardContent>
+			</Card>
+		{:else}
+			<!-- No node available -->
+			<Card class="border-dashed">
+				<CardContent class="flex flex-col items-center justify-center py-16">
+					<p class="mb-4 text-muted-foreground">No story node available.</p>
+					<Button variant="outline" onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
+				</CardContent>
+			</Card>
+		{/if}
 		</main>
 	{/if}
 </div>

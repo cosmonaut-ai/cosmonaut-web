@@ -17,15 +17,15 @@
 			await new Promise((resolve) => setTimeout(resolve, 500));
 
 			if (getIsAuthenticated()) {
-				// Successfully authenticated, redirect to home
-				goto('/');
+				// Successfully authenticated, redirect to dashboard
+				goto('/dashboard');
 			} else {
 				// Check again after a delay
 				await new Promise((resolve) => setTimeout(resolve, 1000));
 				await checkAuthState();
 
 				if (getIsAuthenticated()) {
-					goto('/');
+					goto('/dashboard');
 				} else {
 					error = 'Authentication failed. Please try again.';
 				}

@@ -1,17 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useAuth } from '$lib/auth/auth.svelte';
 	import { deleteWorld } from '$lib/api/client';
 	import type { World } from '$lib/types/api';
 	import type { PageData } from './$types';
 	import WorldCard from '$lib/components/dashboard/WorldCard.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
-	import { Plus, Rocket, TrendingUp, Users, LogOut } from '@lucide/svelte';
+	import { Plus, Rocket, TrendingUp, Users } from '@lucide/svelte';
 
 	let { data }: { data: PageData } = $props();
-
-	const auth = useAuth();
 
 	let localWorlds = $state<World[] | null>(null);
 	const worlds = $derived(localWorlds ?? data.worlds);
@@ -24,10 +21,6 @@
 			console.error('Failed to delete world:', err);
 		}
 	}
-
-	function handleSignOut() {
-		auth.logout();
-	}
 </script>
 
 <svelte:head>
@@ -36,32 +29,6 @@
 </svelte:head>
 
 <div class="min-h-screen bg-background">
-	<!-- Header -->
-	<header class="border-b border-border bg-card/50">
-		<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-			<!-- Logo -->
-			<a href="/" class="flex items-center gap-2">
-				<div
-					class="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/30 bg-primary/10"
-				>
-					<Rocket class="h-4 w-4 text-primary" />
-				</div>
-				<span class="font-semibold text-foreground">Cosmonaut</span>
-			</a>
-
-			<!-- User info & actions -->
-			<div class="flex items-center gap-4">
-				{#if auth.user}
-					<span class="text-sm text-muted-foreground">{auth.user.email}</span>
-				{/if}
-				<Button variant="ghost" size="sm" onclick={handleSignOut} class="gap-2">
-					<LogOut class="h-4 w-4" />
-					Sign Out
-				</Button>
-			</div>
-		</div>
-	</header>
-
 	<main class="mx-auto max-w-7xl px-6 py-12">
 		<!-- Your Worlds Section -->
 		<section class="mb-16">

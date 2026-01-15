@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Rocket, LogIn } from '@lucide/svelte';
+	import { Rocket, LogIn, Loader2 } from '@lucide/svelte';
 
 	interface Props {
 		onGetStarted?: () => void | Promise<void>;
 		onSignIn?: () => void | Promise<void>;
+		isLoading?: boolean;
 	}
 
-	let { onGetStarted, onSignIn }: Props = $props();
+	let { onGetStarted, onSignIn, isLoading = false }: Props = $props();
 </script>
 
 <section class="relative flex min-h-screen flex-col items-center justify-center px-6 py-24">
@@ -45,10 +46,15 @@
 				size="lg"
 				class="group gap-2 px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
 				onclick={onGetStarted}
+				disabled={isLoading}
 			>
-				<Rocket
-					class="h-5 w-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-				/>
+				{#if isLoading}
+					<Loader2 class="h-5 w-5 animate-spin" />
+				{:else}
+					<Rocket
+						class="h-5 w-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+					/>
+				{/if}
 				Begin Your Journey
 			</Button>
 			<Button
@@ -56,9 +62,15 @@
 				size="lg"
 				class="gap-2 text-muted-foreground hover:text-foreground"
 				onclick={onSignIn}
+				disabled={isLoading}
 			>
-				<LogIn class="h-5 w-5" />
-				Sign In
+				{#if isLoading}
+					<Loader2 class="h-5 w-5 animate-spin" />
+					Signing in...
+				{:else}
+					<LogIn class="h-5 w-5" />
+					Sign In
+				{/if}
 			</Button>
 		</div>
 
