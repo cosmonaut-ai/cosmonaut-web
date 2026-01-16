@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { Handle, Position } from '@xyflow/svelte';
 	import type { FlowNodeData } from '$lib/utils/nodeTransform';
+	import {
+		Tooltip,
+		TooltipContent,
+		TooltipProvider,
+		TooltipTrigger
+	} from '$lib/components/ui/tooltip';
 
 	interface Props {
 		data: FlowNodeData;
@@ -8,23 +14,6 @@
 	}
 
 	let { data, selected = false }: Props = $props();
-
-	let showTooltip = $state(false);
-	let tooltipTimeout: ReturnType<typeof setTimeout> | null = null;
-
-	function handleMouseEnter() {
-		tooltipTimeout = setTimeout(() => {
-			showTooltip = true;
-		}, 500);
-	}
-
-	function handleMouseLeave() {
-		if (tooltipTimeout) {
-			clearTimeout(tooltipTimeout);
-			tooltipTimeout = null;
-		}
-		showTooltip = false;
-	}
 
 	function handleClick() {
 		if (data.onNodeClick) {
@@ -39,61 +28,66 @@
 		}
 	}
 
-	const nodeClasses = $derived(() => {
+	const nodeClasses = $derived.by(() => {
 		const baseClasses =
 			'px-4 py-3 rounded-lg border-2 shadow-md transition-all duration-200 cursor-pointer min-w-[200px] max-w-[250px]';
 		const selectedClasses = selected
 			? 'border-primary bg-primary/10 shadow-lg shadow-primary/20 scale-105'
 			: 'border-border bg-card hover:border-primary/50 hover:shadow-lg';
 		const rootClasses = data.isRoot
-			? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+			? 'ring-2 ring-green-500 ring-offset-2 ring-offset-background'
 			: '';
 		const leafClasses = data.isLeaf
-			? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-background'
+			? 'ring-2 ring-orange-500 ring-offset-2 ring-offset-background'
 			: '';
+		const currentClasses = data.isCurrent ? 'current-node' : '';
 
-		return `${baseClasses} ${selectedClasses} ${rootClasses} ${leafClasses}`;
+		return `${baseClasses} ${selectedClasses} ${rootClasses} ${leafClasses} ${currentClasses}`;
 	});
 </script>
 
-<div
-	class={nodeClasses()}
-	onmouseenter={handleMouseEnter}
-	onmouseleave={handleMouseLeave}
-	onclick={handleClick}
-	onkeydown={handleKeydown}
-	role="button"
-	tabindex="0"
->
-	<!-- Input handle (top) -->
-	{#if !data.isRoot}
-		<Handle type="target" position={Position.Top} class="border-border! bg-muted-foreground!" />
-	{/if}
-
-	<!-- Node content -->
-	<div class="space-y-2">
-		<div class="flex items-center justify-between gap-2">
-			<h3 class="line-clamp-2 text-sm font-semibold text-card-foreground">
-				{data.storyNode.title || 'Untitled Node'}
-			</h3>
-			{#if data.isRoot}
-				<span class="text-xs font-medium text-primary">START</span>
-			{:else if data.isLeaf}
-				<span class="text-xs font-medium text-amber-500">END</span>
+<TooltipProvider delayDuration={500}>
+	<Tooltip>
+		<TooltipTrigger
+			type="button"
+			class={nodeClasses}
+			onclick={handleClick}
+			onkeydown={handleKeydown}
+		>
+			<!-- Input handle (top) -->
+			{#if !data.isRoot}
+				<Handle type="target" position={Position.Top} class="border-border! bg-muted-foreground!" />
 			{/if}
-		</div>
 
-		{#if data.storyNode.choices.length > 0}
-			<div class="text-xs text-muted-foreground">
-				{data.storyNode.choices.length} choice{data.storyNode.choices.length !== 1 ? 's' : ''}
+			<!-- Node content -->
+			<div class="space-y-2">
+				<div class="flex items-center justify-between gap-2">
+					<h3 class="line-clamp-2 text-sm font-semibold text-card-foreground">
+						{data.storyNode.title || 'Untitled Node'}
+					</h3>
+					{#if data.isRoot}
+						<span class="text-xs font-medium text-green-500">START</span>
+					{:else if data.isLeaf}
+						<span class="text-xs font-medium text-orange-500">END</span>
+					{/if}
+				</div>
+
+				{#if data.storyNode.choices.length > 0}
+					<div class="text-xs text-muted-foreground">
+						{data.storyNode.choices.length} choice{data.storyNode.choices.length !== 1 ? 's' : ''}
+					</div>
+				{/if}
 			</div>
-		{/if}
-	</div>
 
-	<!-- Tooltip -->
-	{#if showTooltip}
-		<div
-			class="pointer-events-none absolute top-full left-1/2 z-50 mt-2 w-80 -translate-x-1/2 rounded-lg border border-border bg-popover p-4 shadow-xl"
+			<!-- Output handle (bottom) -->
+			{#if !data.isLeaf}
+				<Handle type="source" position={Position.Bottom} class="border-primary/50! bg-primary!" />
+			{/if}
+		</TooltipTrigger>
+		<TooltipContent
+			side="bottom"
+			sideOffset={8}
+			class="pointer-events-none w-80 rounded-lg border-border bg-popover p-4 text-sm shadow-xl"
 		>
 			<div class="space-y-2">
 				<h4 class="font-semibold text-popover-foreground">
@@ -116,20 +110,18 @@
 					</div>
 				{/if}
 			</div>
-			<!-- Tooltip arrow -->
-			<div
-				class="pointer-events-none absolute top-0 left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-t border-l border-border bg-popover"
-			></div>
-		</div>
-	{/if}
-
-	<!-- Output handle (bottom) -->
-	{#if !data.isLeaf}
-		<Handle type="source" position={Position.Bottom} class="border-primary/50! bg-primary!" />
-	{/if}
-</div>
+		</TooltipContent>
+	</Tooltip>
+</TooltipProvider>
 
 <style>
+	:global(.current-node) {
+		border-color: var(--chart-2);
+		box-shadow:
+			0 0 0 2px color-mix(in oklch, var(--chart-2) 35%, transparent),
+			0 8px 20px color-mix(in oklch, var(--chart-2) 25%, transparent);
+	}
+
 	:global(.svelte-flow__node.selected) {
 		outline: none;
 	}

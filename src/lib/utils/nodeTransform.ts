@@ -5,6 +5,7 @@ export interface FlowNodeData extends Record<string, unknown> {
 	storyNode: StoryNode;
 	isRoot: boolean;
 	isLeaf: boolean;
+	isCurrent?: boolean;
 	onNodeClick?: (nodeId: string) => void;
 }
 

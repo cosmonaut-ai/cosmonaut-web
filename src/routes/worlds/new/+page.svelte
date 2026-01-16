@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { createWorld } from '$lib/api/client';
+	import { useCreateWorld } from '$lib/queries';
+	import { showError } from '$lib/utils/toast';
 	import type { WorldVisibility } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import {
 		Card,
 		CardContent,
@@ -15,15 +17,16 @@
 	import * as Select from '$lib/components/ui/select';
 	import { Rocket, ArrowLeft, Shuffle } from '@lucide/svelte';
 
-	let loading = $state(false);
-	let error = $state<string | null>(null);
-
 	// Form state
 	let worldPrompt = $state('');
 	let visibility = $state<WorldVisibility>('private');
 	let prompts = $state<string[]>([]);
 	let promptsLoaded = $state(false);
 	let promptsLoading = $state(false);
+
+	// Use mutation for creating world
+	const createMutation = useCreateWorld();
+	const loading = $derived(createMutation.isPending);
 
 	function getRandomPrompt(list: string[]): string | null {
 		if (!list.length) return null;
@@ -73,28 +76,22 @@
 
 	async function handleCreateWorld() {
 		if (!worldPrompt.trim()) {
-			error = 'World prompt is required';
+			showError('World prompt is required');
 			return;
 		}
 
-		try {
-			loading = true;
-			error = null;
-
-			// Create the world (kicks off async generation)
-			const world = await createWorld({
+		createMutation.mutate(
+			{
 				world_prompt: worldPrompt.trim(),
 				visibility
-			});
-
-			// Immediately navigate to the world page
-			// The world page will show generation progress if not complete
-			goto(`/worlds/${world.id}`);
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to create world';
-			console.error('Error creating world:', err);
-			loading = false;
-		}
+			},
+			{
+				onSuccess: (world) => {
+					// Navigate to the world page (will show generation progress)
+					goto(`/worlds/${world.id}`);
+				}
+			}
+		);
 	}
 </script>
 
@@ -103,7 +100,7 @@
 	<meta name="description" content="Create a new interactive story world." />
 </svelte:head>
 
-<div class="min-h-screen bg-background">
+<div class="h-full overflow-y-auto bg-background">
 	<!-- Header -->
 	<header class="border-b border-border bg-card/50">
 		<div class="mx-auto flex max-w-3xl items-center gap-4 px-6 py-4">
@@ -120,14 +117,6 @@
 	</header>
 
 	<main class="mx-auto max-w-3xl px-6 py-12">
-		{#if error}
-			<Card class="mb-6 border-destructive/50 bg-destructive/10">
-				<CardContent class="py-4">
-					<p class="text-destructive">{error}</p>
-				</CardContent>
-			</Card>
-		{/if}
-
 		<!-- Creation Form -->
 		<Card>
 			<CardHeader>
@@ -158,7 +147,11 @@
 								disabled={loading || promptsLoading}
 								class="h-8 gap-2 text-xs"
 							>
-								<Shuffle class="h-3 w-3" />
+								{#if promptsLoading}
+									<Spinner class="h-3 w-3" />
+								{:else}
+									<Shuffle class="h-3 w-3" />
+								{/if}
 								Random Prompt
 							</Button>
 						</div>
@@ -207,8 +200,13 @@
 							Cancel
 						</Button>
 						<Button type="submit" disabled={loading || !worldPrompt.trim()} class="flex-1 gap-2">
-							<Rocket class="h-4 w-4" />
-							Create World
+							{#if loading}
+								<Spinner />
+								Creating...
+							{:else}
+								<Rocket class="h-4 w-4" />
+								Create World
+							{/if}
 						</Button>
 					</div>
 				</form>

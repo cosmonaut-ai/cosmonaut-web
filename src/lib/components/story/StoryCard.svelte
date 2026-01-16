@@ -2,6 +2,7 @@
 	import type { Choice } from '$lib/types/api';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { ChevronRight, RotateCcw, Check } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
@@ -44,11 +45,11 @@
 	}
 </script>
 
-<Card class="rounded-none border-l-0 sm:rounded-lg sm:border-l-4 border-l-primary bg-card">
+<Card class="rounded-none border-l-0 border-l-primary bg-card sm:rounded-lg sm:border-l-4">
 	<CardContent class="p-6 sm:p-8">
 		<!-- Story text -->
 		<div
-			class="prose prose-sm sm:prose-lg max-w-none font-mono leading-relaxed text-card-foreground prose-invert"
+			class="prose prose-sm max-w-none font-mono leading-relaxed text-card-foreground prose-invert sm:prose-lg"
 		>
 			{#each text.split('\n\n') as paragraph, i (i)}
 				<p class="mb-4 last:mb-0">
@@ -89,25 +90,25 @@
 								{i + 1}
 							{/if}
 						</span>
-					<div class="flex flex-1 flex-wrap items-center gap-2">
-						<span class={choice.is_created ? 'text-muted-foreground' : 'text-foreground'}
-							>{choice.label}</span
-						>
-						{#if choice.is_created}
-							<span
-								class="shrink-0 rounded-full border border-muted-foreground/30 bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+						<div class="flex flex-1 flex-wrap items-center gap-2">
+							<span class={choice.is_created ? 'text-muted-foreground' : 'text-foreground'}
+								>{choice.label}</span
 							>
-								Explored
-							</span>
-						{/if}
-						{#if choice.is_custom}
-							<span
-								class="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-							>
-								Custom
-							</span>
-						{/if}
-					</div>
+							{#if choice.is_created}
+								<span
+									class="shrink-0 rounded-full border border-muted-foreground/30 bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+								>
+									Explored
+								</span>
+							{/if}
+							{#if choice.is_custom}
+								<span
+									class="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+								>
+									Custom
+								</span>
+							{/if}
+						</div>
 						<ChevronRight
 							class="ml-auto h-5 w-5 transition-transform group-hover:translate-x-1 {choice.is_created
 								? 'text-muted-foreground/50 group-hover:text-muted-foreground'
@@ -139,7 +140,12 @@
 									onclick={handleCustomChoice}
 									disabled={isLoading || !customChoiceText.trim()}
 								>
-									Take Action
+									{#if isLoading}
+										<Spinner />
+										Processing...
+									{:else}
+										Take Action
+									{/if}
 								</Button>
 							</div>
 						</div>
@@ -167,7 +173,7 @@
 		<!-- Loading state indicator -->
 		{#if isLoading && !isTyping}
 			<div class="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-				<div class="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
+				<Spinner class="h-4 w-4" />
 				<span>Generating story...</span>
 			</div>
 		{/if}

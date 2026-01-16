@@ -1,0 +1,91 @@
+import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
+import { getWorlds, getWorld, createWorld, deleteWorld, updateWorldSharing } from '$lib/api/client';
+import type { CreateWorldRequest, UpdateWorldSharingRequest, World } from '$lib/types/api';
+import { showError, showSuccess } from '$lib/utils/toast';
+
+/**
+ * Query keys for worlds - use these for cache invalidation
+ */
+export const worldKeys = {
+	all: ['worlds'] as const,
+	detail: (id: string) => ['worlds', id] as const
+};
+
+/**
+ * Query hook to fetch all worlds for the current user
+ */
+export function useWorlds() {
+	return createQuery(() => ({
+		queryKey: worldKeys.all,
+		queryFn: getWorlds
+	}));
+}
+
+/**
+ * Query hook to fetch a specific world by ID
+ * Supports polling for world generation status
+ */
+export function useWorld(worldId: string, options?: { enablePolling?: boolean }) {
+	return createQuery(() => ({
+		queryKey: worldKeys.detail(worldId),
+		queryFn: () => getWorld(worldId),
+		enabled: !!worldId,
+		refetchInterval: (query: { state: { data?: World } }) => {
+			if (!options?.enablePolling) return false;
+			const status = query.state.data?.generation_status;
+			return status === 'completed' || status === 'failed' ? false : 2000;
+		}
+	}));
+}
+
+/**
+ * Mutation hook to create a new world
+ */
+export function useCreateWorld() {
+	const client = useQueryClient();
+	return createMutation(() => ({
+		mutationFn: (data: CreateWorldRequest) => createWorld(data),
+		onSuccess: () => {
+			client.invalidateQueries({ queryKey: worldKeys.all });
+			showSuccess('World created', 'Your world is being generated');
+		},
+		onError: (error: Error) => {
+			showError('Failed to create world', error.message);
+		}
+	}));
+}
+
+/**
+ * Mutation hook to delete a world
+ */
+export function useDeleteWorld() {
+	const client = useQueryClient();
+	return createMutation(() => ({
+		mutationFn: (worldId: string) => deleteWorld(worldId),
+		onSuccess: () => {
+			client.invalidateQueries({ queryKey: worldKeys.all });
+			showSuccess('World deleted');
+		},
+		onError: (error: Error) => {
+			showError('Failed to delete world', error.message);
+		}
+	}));
+}
+
+/**
+ * Mutation hook to update world sharing settings
+ */
+export function useUpdateWorldSharing(worldId: string) {
+	const client = useQueryClient();
+	return createMutation(() => ({
+		mutationFn: (data: UpdateWorldSharingRequest) => updateWorldSharing(worldId, data),
+		onSuccess: (updatedWorld: World) => {
+			client.setQueryData(worldKeys.detail(worldId), updatedWorld);
+			client.invalidateQueries({ queryKey: worldKeys.all });
+			showSuccess('Sharing settings updated');
+		},
+		onError: (error: Error) => {
+			showError('Failed to update sharing settings', error.message);
+		}
+	}));
+}

@@ -1,12 +1,15 @@
 <script lang="ts">
 	import type { World, WorldVisibility } from '$lib/types/api';
-	import { updateWorldSharing } from '$lib/api/client';
+	import { useUpdateWorldSharing } from '$lib/queries';
+	import { showError, showSuccess } from '$lib/utils/toast';
+	import { browser } from '$app/environment';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
 	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Share2, X, Plus, Globe, Lock } from '@lucide/svelte';
+	import { Share2, X, Plus, Globe, Lock, Link } from '@lucide/svelte';
 
 	interface Props {
 		world: World;
@@ -17,20 +20,28 @@
 
 	let { world, open, onOpenChange, onWorldUpdate }: Props = $props();
 
-	let visibility = $state<WorldVisibility>('private');
-	let sharedWith = $state<string[]>([]);
-	let newEmail = $state('');
-	let saving = $state(false);
-	let error = $state<string | null>(null);
+	const worldId = $derived(world.id);
 
-	// Sync state with world prop changes
-	$effect(() => {
-		visibility = world.visibility || 'private';
-		sharedWith = [...(world.shared_with || [])];
+	let visibility = $derived<WorldVisibility>(world.visibility || 'private');
+	let sharedWith = $derived<string[]>([...(world.shared_with || [])]);
+	let newEmail = $state('');
+
+	// Use mutation for updating sharing settings
+	const updateMutation = $derived.by(() => useUpdateWorldSharing(worldId));
+	const saving = $derived(updateMutation.isPending);
+	const hasChanges = $derived.by(() => {
+		const currentVisibility = world.visibility || 'private';
+		const currentSharedWith = world.shared_with || [];
+		return visibility !== currentVisibility || !areEmailListsEqual(sharedWith, currentSharedWith);
 	});
 
 	function isValidEmail(email: string): boolean {
 		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+	}
+
+	function areEmailListsEqual(a: string[], b: string[]) {
+		if (a.length !== b.length) return false;
+		return a.every((value, index) => value === b[index]);
 	}
 
 	function addEmail() {
@@ -38,48 +49,65 @@
 		if (!email) return;
 
 		if (!isValidEmail(email)) {
-			error = 'Please enter a valid email address';
+			showError('Please enter a valid email address');
 			return;
 		}
 
 		if (sharedWith.includes(email)) {
-			error = 'This email is already added';
+			showError('This email is already added');
 			return;
 		}
 
 		sharedWith = [...sharedWith, email];
 		newEmail = '';
-		error = null;
 	}
 
 	function removeEmail(email: string) {
 		sharedWith = sharedWith.filter((e) => e !== email);
 	}
 
-	async function handleSave() {
-		saving = true;
-		error = null;
-
-		try {
-			const updatedWorld = await updateWorldSharing(world.id, {
+	function handleSave() {
+		updateMutation.mutate(
+			{
 				visibility,
 				shared_with: sharedWith
-			});
-
-			onWorldUpdate?.(updatedWorld);
-			onOpenChange(false);
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to update sharing settings';
-			console.error('Error updating sharing:', err);
-		} finally {
-			saving = false;
-		}
+			},
+			{
+				onSuccess: (updatedWorld) => {
+					onWorldUpdate?.(updatedWorld);
+					onOpenChange(false);
+				}
+			}
+		);
 	}
 
 	function handleKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			addEmail();
+		}
+	}
+
+	function getWorldLink() {
+		if (!browser) return '';
+		return `${window.location.origin}/worlds/${world.id}`;
+	}
+
+	async function copyWorldLink() {
+		const link = getWorldLink();
+		if (!link) {
+			showError('Link not available');
+			return;
+		}
+
+		try {
+			if (!navigator.clipboard?.writeText) {
+				throw new Error('Clipboard unavailable');
+			}
+			await navigator.clipboard.writeText(link);
+			showSuccess('Link copied');
+		} catch {
+			showError('Failed to copy link');
 		}
 	}
 </script>
@@ -107,17 +135,27 @@
 						if (v) visibility = v as WorldVisibility;
 					}}
 				>
-					<Select.Trigger class="w-full">
-						<div class="flex items-center gap-2">
-							{#if visibility === 'public'}
-								<Globe class="h-4 w-4 text-primary" />
-								<span>Public</span>
-							{:else}
-								<Lock class="h-4 w-4 text-muted-foreground" />
-								<span>Private</span>
-							{/if}
-						</div>
-					</Select.Trigger>
+					<div class="flex items-center gap-2">
+						<Select.Trigger class="flex-1">
+							<div class="flex items-center gap-2">
+								{#if visibility === 'public'}
+									<Globe class="h-4 w-4 text-primary" />
+									<span>Public</span>
+								{:else}
+									<Lock class="h-4 w-4 text-muted-foreground" />
+									<span>Private</span>
+								{/if}
+							</div>
+						</Select.Trigger>
+						<Button
+							variant="outline"
+							size="icon"
+							onclick={copyWorldLink}
+							aria-label="Copy world link"
+						>
+							<Link class="h-4 w-4" />
+						</Button>
+					</div>
 					<Select.Content>
 						<Select.Item value="private">
 							<div class="flex items-center gap-2">
@@ -141,6 +179,11 @@
 						</Select.Item>
 					</Select.Content>
 				</Select.Root>
+				<p class="text-xs text-muted-foreground">
+					{visibility === 'public'
+						? 'Anyone with the link can view'
+						: 'Only invited users can view'}
+				</p>
 			</div>
 
 			<!-- Add users -->
@@ -190,19 +233,19 @@
 					</div>
 				</div>
 			{/if}
-
-			<!-- Error message -->
-			{#if error}
-				<p class="text-sm text-destructive">{error}</p>
-			{/if}
 		</div>
 
 		<Dialog.Footer>
 			<Button variant="outline" onclick={() => onOpenChange(false)} disabled={saving}>
 				Cancel
 			</Button>
-			<Button onclick={handleSave} disabled={saving}>
-				{saving ? 'Saving...' : 'Save Changes'}
+			<Button onclick={handleSave} disabled={saving || !hasChanges}>
+				{#if saving}
+					<Spinner class="mr-2" />
+					Saving...
+				{:else}
+					Save Changes
+				{/if}
 			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>

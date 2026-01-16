@@ -8,6 +8,6 @@
 	});
 </script>
 
-<div class="flex min-h-screen items-center justify-center bg-background">
+<div class="flex h-full items-center justify-center bg-background">
 	<p class="text-muted-foreground">Redirecting to dashboard...</p>
 </div>

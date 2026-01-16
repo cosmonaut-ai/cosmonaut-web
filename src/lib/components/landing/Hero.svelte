@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Rocket, LogIn, Loader2 } from '@lucide/svelte';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { Rocket, LogIn } from '@lucide/svelte';
 
 	interface Props {
 		onGetStarted?: () => void | Promise<void>;
@@ -49,7 +50,7 @@
 				disabled={isLoading}
 			>
 				{#if isLoading}
-					<Loader2 class="h-5 w-5 animate-spin" />
+					<Spinner class="h-5 w-5" />
 				{:else}
 					<Rocket
 						class="h-5 w-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
@@ -65,7 +66,7 @@
 				disabled={isLoading}
 			>
 				{#if isLoading}
-					<Loader2 class="h-5 w-5 animate-spin" />
+					<Spinner class="h-5 w-5" />
 					Signing in...
 				{:else}
 					<LogIn class="h-5 w-5" />

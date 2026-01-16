@@ -4,6 +4,10 @@
 	let canvas: HTMLCanvasElement;
 	let animationId: number;
 
+	function canvasAttachment(node: HTMLCanvasElement) {
+		canvas = node;
+	}
+
 	interface Star {
 		x: number;
 		y: number;
@@ -34,41 +38,80 @@
 		let scrollY = 0;
 		let targetScrollY = 0;
 
-		function resize() {
-			width = window.innerWidth;
-			height = window.innerHeight;
-			canvas.width = width;
-			canvas.height = height;
-			initStars();
+		function createStar(x?: number, y?: number) {
+			const depth = Math.random();
+			const baseX = x ?? Math.random() * width;
+			const baseY = y ?? Math.random() * height;
+
+			return {
+				x: baseX,
+				y: baseY,
+				baseX,
+				baseY,
+				size: Math.random() * 1.5 + 0.3 + depth * 0.8,
+				opacity: Math.random() * 0.6 + 0.2 + depth * 0.2,
+				speed: Math.random() * 0.3 + 0.05,
+				twinkleSpeed: Math.random() * 0.015 + 0.005,
+				twinkleOffset: Math.random() * Math.PI * 2,
+				twinkleIntensity: Math.random() * 0.4 + 0.1,
+				nextFlicker: Math.random() * 10000,
+				flickerDuration: 0,
+				isFlickering: false,
+				flickerStart: 0,
+				depth
+			};
+		}
+
+		function ensureStarCount() {
+			const starCount = Math.floor((width * height) / 2500);
+			if (stars.length < starCount) {
+				const additions = starCount - stars.length;
+				for (let i = 0; i < additions; i++) {
+					stars.push(createStar());
+				}
+			} else if (stars.length > starCount) {
+				stars.length = starCount;
+			}
 		}
 
 		function initStars() {
 			const starCount = Math.floor((width * height) / 2500);
 			stars = [];
-
 			for (let i = 0; i < starCount; i++) {
-				const x = Math.random() * width;
-				const y = Math.random() * height;
-				const depth = Math.random();
-
-				stars.push({
-					x,
-					y,
-					baseX: x,
-					baseY: y,
-					size: Math.random() * 1.5 + 0.3 + depth * 0.8,
-					opacity: Math.random() * 0.6 + 0.2 + depth * 0.2,
-					speed: Math.random() * 0.3 + 0.05,
-					twinkleSpeed: Math.random() * 0.015 + 0.005,
-					twinkleOffset: Math.random() * Math.PI * 2,
-					twinkleIntensity: Math.random() * 0.4 + 0.1,
-					nextFlicker: Math.random() * 10000,
-					flickerDuration: 0,
-					isFlickering: false,
-					flickerStart: 0,
-					depth
-				});
+				stars.push(createStar());
 			}
+		}
+
+		function resize() {
+			const nextWidth = window.innerWidth;
+			const nextHeight = window.innerHeight;
+			if (!nextWidth || !nextHeight) return;
+
+			if (nextWidth === width && nextHeight === height) return;
+
+			const prevWidth = width;
+			const prevHeight = height;
+			width = nextWidth;
+			height = nextHeight;
+			canvas.width = width;
+			canvas.height = height;
+
+			if (!prevWidth || !prevHeight || stars.length === 0) {
+				initStars();
+				return;
+			}
+
+			const scaleX = width / prevWidth;
+			const scaleY = height / prevHeight;
+
+			for (const star of stars) {
+				star.baseX *= scaleX;
+				star.baseY *= scaleY;
+				star.x = star.baseX;
+				star.y = star.baseY;
+			}
+
+			ensureStarCount();
 		}
 
 		function handleScroll() {
@@ -199,5 +242,8 @@
 	});
 </script>
 
-<canvas bind:this={canvas} class="pointer-events-none fixed inset-0 -z-10" aria-hidden="true"
+<canvas
+	{@attach canvasAttachment}
+	class="pointer-events-none fixed inset-0 -z-10"
+	aria-hidden="true"
 ></canvas>

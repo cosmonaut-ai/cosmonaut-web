@@ -8,7 +8,8 @@
 	import Features from '$lib/components/landing/Features.svelte';
 	import Footer from '$lib/components/landing/Footer.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Rocket, LogIn, Loader2 } from '@lucide/svelte';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { Rocket, LogIn } from '@lucide/svelte';
 
 	const auth = useAuth();
 
@@ -108,16 +109,18 @@
 					disabled={isSigningIn}
 				>
 					{#if isSigningIn}
-						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						<Spinner />
 						Signing in...
 					{:else}
-						<LogIn class="mr-2 h-4 w-4" />
+						<LogIn class="h-4 w-4" />
 						Sign In
 					{/if}
 				</Button>
 				<Button size="sm" onclick={handleGetStarted} disabled={isSigningIn}>
 					{#if isSigningIn}
-						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						<Spinner />
+					{:else}
+						<Rocket class="h-4 w-4" />
 					{/if}
 					Get Started
 				</Button>
@@ -152,7 +155,7 @@
 				disabled={isSigningIn}
 			>
 				{#if isSigningIn}
-					<Loader2 class="h-5 w-5 animate-spin" />
+					<Spinner class="h-5 w-5" />
 				{:else}
 					<Rocket class="h-5 w-5" />
 				{/if}

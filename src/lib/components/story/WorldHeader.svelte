@@ -3,28 +3,20 @@
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import ShareModal from './ShareModal.svelte';
-	import { ArrowLeft, Share2, Map, Rocket, Globe, Lock } from '@lucide/svelte';
+	import { ArrowLeft, Share2, Rocket, Globe, Lock } from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 
 	interface Props {
 		world: World;
-		currentNodeId?: string | null;
 		onWorldUpdate?: (world: World) => void;
 	}
 
-	let { world, currentNodeId, onWorldUpdate }: Props = $props();
+	let { world, onWorldUpdate }: Props = $props();
 
 	let shareModalOpen = $state(false);
 
 	function handleBack() {
 		goto('/dashboard');
-	}
-
-	function handleViewGraph() {
-		const url = currentNodeId
-			? `/worlds/${world.id}/graph?node=${currentNodeId}`
-			: `/worlds/${world.id}/graph`;
-		goto(url);
 	}
 </script>
 
@@ -37,16 +29,10 @@
 				Dashboard
 			</Button>
 
-			<div class="flex items-center gap-2">
-				<Button variant="outline" size="sm" onclick={() => (shareModalOpen = true)} class="gap-2">
-					<Share2 class="h-4 w-4" />
-					Share
-				</Button>
-				<Button variant="outline" size="sm" onclick={handleViewGraph} class="gap-2">
-					<Map class="h-4 w-4" />
-					Story Map
-				</Button>
-			</div>
+			<Button variant="outline" size="sm" onclick={() => (shareModalOpen = true)} class="gap-2">
+				<Share2 class="h-4 w-4" />
+				Share
+			</Button>
 		</div>
 
 		<!-- World info -->

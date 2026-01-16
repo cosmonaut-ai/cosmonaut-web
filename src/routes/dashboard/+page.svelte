@@ -1,25 +1,24 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { deleteWorld } from '$lib/api/client';
-	import type { World } from '$lib/types/api';
-	import type { PageData } from './$types';
+	import { useWorlds, useDeleteWorld } from '$lib/queries';
 	import WorldCard from '$lib/components/dashboard/WorldCard.svelte';
+	import WorldCardSkeleton from '$lib/components/dashboard/WorldCardSkeleton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Plus, Rocket, TrendingUp, Users } from '@lucide/svelte';
 
-	let { data }: { data: PageData } = $props();
+	const worldsQuery = useWorlds();
+	const deleteMutation = useDeleteWorld();
 
-	let localWorlds = $state<World[] | null>(null);
-	const worlds = $derived(localWorlds ?? data.worlds);
+	let deletingWorldId = $state<string | null>(null);
 
-	async function handleDeleteWorld(worldId: string) {
-		try {
-			await deleteWorld(worldId);
-			localWorlds = worlds.filter((w) => w.id !== worldId);
-		} catch (err) {
-			console.error('Failed to delete world:', err);
-		}
+	function handleDeleteWorld(worldId: string) {
+		deletingWorldId = worldId;
+		deleteMutation.mutate(worldId, {
+			onSettled: () => {
+				deletingWorldId = null;
+			}
+		});
 	}
 </script>
 
@@ -28,7 +27,7 @@
 	<meta name="description" content="Manage your story worlds and explore new adventures." />
 </svelte:head>
 
-<div class="min-h-screen bg-background">
+<div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-7xl px-6 py-12">
 		<!-- Your Worlds Section -->
 		<section class="mb-16">
@@ -43,7 +42,25 @@
 				</Button>
 			</div>
 
-			{#if worlds.length === 0}
+			{#if worldsQuery.isLoading}
+				<!-- Loading state - show skeleton cards -->
+				<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+					{#each [1, 2, 3] as i (i)}
+						<WorldCardSkeleton />
+					{/each}
+				</div>
+			{:else if worldsQuery.isError}
+				<Card class="border-destructive/50 bg-destructive/10">
+					<CardContent class="py-8 text-center">
+						<p class="text-destructive">
+							Failed to load worlds: {worldsQuery.error?.message ?? 'Unknown error'}
+						</p>
+						<Button variant="outline" class="mt-4" onclick={() => worldsQuery.refetch()}>
+							Try Again
+						</Button>
+					</CardContent>
+				</Card>
+			{:else if worldsQuery.data?.length === 0}
 				<!-- Empty state -->
 				<Card class="border-dashed">
 					<CardContent class="flex flex-col items-center justify-center py-16">
@@ -65,8 +82,12 @@
 			{:else}
 				<!-- Worlds grid -->
 				<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-					{#each worlds as world (world.id)}
-						<WorldCard {world} onDelete={handleDeleteWorld} />
+					{#each worldsQuery.data ?? [] as world (world.id)}
+						<WorldCard
+							{world}
+							onDelete={handleDeleteWorld}
+							isDeleting={deletingWorldId === world.id}
+						/>
 					{/each}
 				</div>
 			{/if}

@@ -1,0 +1,389 @@
+<script lang="ts">
+	import { goto } from '$app/navigation';
+	import { untrack } from 'svelte';
+	import { generateNodeText } from '$lib/api/client';
+	import { useQueryClient } from '@tanstack/svelte-query';
+	import { useNode, useChooseOption, updateNodeInCache, type ChoiceOption } from '$lib/queries';
+	import { showError } from '$lib/utils/toast';
+	import type { StoryNode } from '$lib/types/api';
+	import StoryCard from './StoryCard.svelte';
+	import SlideTransition from './SlideTransition.svelte';
+	import { Card, CardContent } from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket } from '@lucide/svelte';
+
+	interface Props {
+		worldId: string;
+		rootNodeId: string | null;
+		nodeId: string;
+	}
+
+	let { worldId, rootNodeId, nodeId }: Props = $props();
+
+	// Local state for node (used during navigation and streaming)
+	let currentNodeOverride = $state<StoryNode | null>(null);
+	let loading = $state(false);
+
+	// Navigation direction for slide animation
+	let slideDirection = $state<'forward' | 'back'>('forward');
+
+	// Streaming state
+	let isStreaming = $state(false);
+	let streamingText = $state('');
+	let streamingDone = $state(false);
+	let pendingNode = $state<StoryNode | null>(null);
+
+	// Track which node we've already started generating to prevent duplicate calls
+	let generatingNodeId = $state<string | null>(null);
+
+	// Use TanStack Query for node data (pass getters to ensure reactivity)
+	// Enable polling when node is in 'generating' status
+	const nodeQuery = useNode(
+		() => worldId,
+		() => nodeId,
+		{ enablePolling: true }
+	);
+
+	// Get stable values - prefer override (most recent) over query data
+	const effectiveNodeId = $derived(currentNodeOverride?.id ?? nodeQuery.data?.id);
+	const effectiveNodeStatus = $derived(
+		currentNodeOverride?.generation_status ?? nodeQuery.data?.generation_status
+	);
+
+	// Check if node is being generated elsewhere (poll until complete)
+	const isNodeGenerating = $derived(effectiveNodeStatus === 'generating' && !isStreaming);
+
+	// Check if node generation failed
+	const isNodeFailed = $derived(effectiveNodeStatus === 'failed');
+
+	// The current node is either the override (during streaming/navigation) or from the query
+	const currentNode = $derived(currentNodeOverride ?? nodeQuery.data ?? null);
+
+	const queryClient = useQueryClient();
+
+	// Use mutation for choosing options
+	const chooseMutation = useChooseOption(() => worldId);
+
+	const isProcessingChoice = $derived(isStreaming || isNodeGenerating);
+	const isLoading = $derived(loading || nodeQuery.isLoading || isNodeGenerating);
+
+	// Store last visited node in localStorage
+	$effect(() => {
+		if (currentNode?.id && worldId) {
+			try {
+				const key = `cosmonaut-last-node-${worldId}`;
+				localStorage.setItem(key, currentNode.id);
+			} catch {
+				// localStorage might not be available
+			}
+		}
+	});
+
+	// Handle streaming completion
+	$effect(() => {
+		if (streamingDone && pendingNode) {
+			const nodeToProcess = pendingNode;
+			untrack(() => {
+				currentNodeOverride = nodeToProcess;
+
+				if (nodeToProcess.id) {
+					goto(`/worlds/${worldId}/nodes/${nodeToProcess.id}`, {
+						replaceState: true,
+						noScroll: true
+					});
+				}
+
+				isStreaming = false;
+				streamingText = '';
+				streamingDone = false;
+				pendingNode = null;
+				// Clear generation guard on successful completion
+				generatingNodeId = null;
+			});
+		}
+	});
+
+	// Handle nodes that need text generation when loaded
+	// Uses effectiveNodeId/Status which prefers override over query data
+	$effect(() => {
+		const currentId = effectiveNodeId;
+		const currentStatus = effectiveNodeStatus;
+
+		// Skip if no node, already streaming, loading, or already generating this node
+		if (!currentId || isStreaming || loading) return;
+		if (generatingNodeId === currentId) return;
+
+		// If node is being generated elsewhere, let polling handle it
+		if (currentStatus === 'generating') return;
+
+		// If node is already completed or failed, nothing to do
+		if (currentStatus === 'completed' || currentStatus === 'failed') return;
+
+		// If node needs text generation (initialized only - failed nodes show error page)
+		if (currentStatus === 'initialized') {
+			const nodeIdToGenerate = currentId;
+			const currentWorldId = worldId;
+
+			untrack(() => {
+				generatingNodeId = nodeIdToGenerate;
+				isStreaming = true;
+				streamingText = '';
+				streamingDone = false;
+				loading = true;
+
+				generateNodeText(currentWorldId, nodeIdToGenerate, (text, done) => {
+					streamingText = text;
+					if (done) streamingDone = true;
+				})
+					.then((completedNode) => {
+						updateNodeInCache(queryClient, currentWorldId, completedNode);
+						pendingNode = completedNode;
+						isStreaming = false;
+					})
+					.catch((err) => {
+						showError('Failed to generate text', err instanceof Error ? err.message : String(err));
+						isStreaming = false;
+						streamingText = '';
+						streamingDone = false;
+						// Clear generating guard so retry is possible
+						generatingNodeId = null;
+					})
+					.finally(() => {
+						loading = false;
+					});
+			});
+		}
+	});
+
+	// Clear override and generation guard when nodeId changes (e.g., back/forward navigation)
+	$effect(() => {
+		if (nodeId && currentNodeOverride?.id !== nodeId) {
+			currentNodeOverride = null;
+			// Clear generation guard for the new node
+			if (generatingNodeId !== nodeId) {
+				generatingNodeId = null;
+			}
+		}
+	});
+
+	async function handleChoiceSelect(choiceIndex: number) {
+		if (!currentNode || loading || isProcessingChoice) return;
+		await executeChoice({ choiceIndex });
+	}
+
+	async function handleCustomChoice(text: string) {
+		if (!currentNode || loading || isProcessingChoice) return;
+		await executeChoice({ customChoice: text });
+	}
+
+	async function executeChoice(choice: ChoiceOption) {
+		if (!currentNode) return;
+
+		try {
+			loading = true;
+			slideDirection = 'forward';
+
+			// Step 1: Call /choose - returns either a new initialized node or an existing one
+			const node = await chooseMutation.mutateAsync({
+				nodeId: currentNode.id,
+				choice
+			});
+
+			// Step 2: Navigate to the node and set override
+			// The generation effect will handle text generation if needed
+			currentNodeOverride = node;
+			goto(`/worlds/${worldId}/nodes/${node.id}`, { replaceState: false, noScroll: true });
+		} catch (err) {
+			showError('Failed to make choice', err instanceof Error ? err.message : String(err));
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handleBack() {
+		if (!currentNode?.parent_id || isProcessingChoice) return;
+		slideDirection = 'back';
+		currentNodeOverride = null;
+		goto(`/worlds/${worldId}/nodes/${currentNode.parent_id}`, {
+			replaceState: false,
+			noScroll: true
+		});
+	}
+
+	async function handleRestart() {
+		if (!rootNodeId || isProcessingChoice) return;
+		slideDirection = 'back';
+		currentNodeOverride = null;
+		goto(`/worlds/${worldId}/nodes/${rootNodeId}`, {
+			replaceState: false,
+			noScroll: true
+		});
+	}
+
+	const isEnding = $derived(!currentNode?.choices || currentNode.choices.length === 0);
+	const canGoBack = $derived(!!currentNode?.parent_id);
+	const pathLength = $derived((currentNode?.ancestors?.length || 0) + 1);
+</script>
+
+<main class="mx-auto max-w-4xl px-6 py-8">
+	<!-- Path indicator -->
+	{#if currentNode}
+		<div class="mb-6 flex items-center justify-between">
+			<div class="flex items-center gap-2">
+				{#if canGoBack}
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={handleBack}
+						disabled={isLoading || isProcessingChoice}
+						class="gap-1"
+					>
+						<ChevronLeft class="h-4 w-4" />
+						Previous
+					</Button>
+				{/if}
+			</div>
+
+			<div class="flex items-center gap-2 text-sm text-muted-foreground">
+				<span>Node {pathLength}</span>
+				{#if pathLength > 1}
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={handleRestart}
+						disabled={isLoading || isProcessingChoice}
+						class="gap-1"
+					>
+						<RotateCcw class="h-4 w-4" />
+						Restart
+					</Button>
+				{/if}
+				<Button
+					variant="ghost"
+					size="sm"
+					onclick={() => goto(`/worlds/${worldId}/graph?node=${nodeId}`)}
+					disabled={isProcessingChoice}
+					class="gap-1"
+				>
+					<Map class="h-4 w-4" />
+					Map
+				</Button>
+			</div>
+		</div>
+	{/if}
+
+	<!-- Story Content with Slide Transition -->
+	{#if isStreaming || isNodeGenerating || isNodeFailed || currentNode}
+		<div class="-mx-6 sm:mx-0">
+			<!-- Key on the current node ID (or a streaming key when streaming a new node) -->
+			<!-- This ensures transition plays when switching between nodes OR entering streaming -->
+			<SlideTransition key={currentNode?.id ?? 'streaming'} direction={slideDirection}>
+				{#if isStreaming}
+					<!-- Streaming state - show text as it arrives -->
+					<StoryCard
+						text={streamingText.trim()}
+						choices={[]}
+						isTyping={true}
+						isLoading={true}
+						showCustomChoice={false}
+					/>
+				{:else if isNodeGenerating}
+					<!-- Node is being generated by another session - show loading state -->
+					<StoryCard
+						text=""
+						choices={[]}
+						isTyping={true}
+						isLoading={true}
+						showCustomChoice={false}
+					/>
+				{:else if isNodeFailed}
+					<!-- Node generation failed - show error page -->
+					<Card class="border-destructive bg-destructive/5">
+						<CardContent class="flex flex-col items-center justify-center py-16">
+							<AlertTriangle class="mb-4 h-12 w-12 text-destructive" />
+							<h2 class="mb-2 text-xl font-semibold text-destructive">Generation Failed</h2>
+							<p class="mb-6 max-w-md text-center text-muted-foreground">
+								Something went wrong while generating this part of the story. You can go back and
+								try a different choice.
+							</p>
+							<div class="flex gap-3">
+								{#if canGoBack}
+									<Button variant="outline" onclick={handleBack}>
+										<ChevronLeft class="mr-2 h-4 w-4" />
+										Go Back
+									</Button>
+								{/if}
+								{#if pathLength > 1}
+									<Button variant="outline" onclick={handleRestart}>
+										<RotateCcw class="mr-2 h-4 w-4" />
+										Restart Story
+									</Button>
+								{/if}
+								<Button variant="outline" onclick={() => goto('/dashboard')}>
+									Return to Dashboard
+								</Button>
+							</div>
+						</CardContent>
+					</Card>
+				{:else if currentNode}
+					<StoryCard
+						text={currentNode.text?.trim() ?? ''}
+						choices={currentNode.choices}
+						isTyping={false}
+						{isEnding}
+						{isLoading}
+						showCustomChoice={!isEnding}
+						onChoiceSelect={handleChoiceSelect}
+						onCustomChoice={handleCustomChoice}
+						onRestart={handleRestart}
+					/>
+				{/if}
+			</SlideTransition>
+		</div>
+	{:else if isLoading}
+		<!-- Loading state -->
+		<Card class="border-l-4 border-l-primary">
+			<CardContent class="flex items-center justify-center py-16">
+				<div class="flex items-center gap-3 text-muted-foreground">
+					<Spinner class="h-4 w-4" />
+					<span>Loading story...</span>
+				</div>
+			</CardContent>
+		</Card>
+	{:else}
+		<!-- No node available -->
+		<Card class="border-dashed">
+			<CardContent class="flex flex-col items-center justify-center gap-4 py-16 text-center">
+				<div class="rounded-full border border-dashed border-muted-foreground/40 bg-muted/20 p-3">
+					<Rocket class="h-8 w-8 text-muted-foreground" />
+				</div>
+				<div class="space-y-2">
+					<h2 class="text-lg font-semibold">Looks like you're a bit lost...</h2>
+					<p class="text-sm text-muted-foreground">
+						We couldn't figure out where you're trying to get to! Try viewing the map or starting at
+						the beginning.
+					</p>
+				</div>
+				<div class="flex flex-col gap-3 sm:flex-row">
+					<Button
+						variant="outline"
+						onclick={() => goto(`/worlds/${worldId}/map`)}
+						disabled={isProcessingChoice}
+					>
+						<Map class="mr-2 h-4 w-4" />
+						View Map
+					</Button>
+					<Button
+						variant="outline"
+						onclick={handleRestart}
+						disabled={!rootNodeId || isProcessingChoice}
+					>
+						<RotateCcw class="mr-2 h-4 w-4" />
+						Start at Beginning
+					</Button>
+				</div>
+			</CardContent>
+		</Card>
+	{/if}
+</main>

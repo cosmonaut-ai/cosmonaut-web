@@ -4,28 +4,50 @@
 	import { SvelteFlow, Controls, Background, BackgroundVariant, MiniMap } from '@xyflow/svelte';
 	import type { NodeTypes } from '@xyflow/svelte';
 	import '@xyflow/svelte/dist/style.css';
-	import type { PageData } from './$types';
+	import { useWorldNodes } from '$lib/queries';
 	import { transformNodesToFlow } from '$lib/utils/nodeTransform';
 	import FlowNode from '$lib/components/FlowNode.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { ArrowLeft, Rocket } from '@lucide/svelte';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { Card, CardContent } from '$lib/components/ui/card';
+	import { BookOpen } from '@lucide/svelte';
 
-	let { data }: { data: PageData } = $props();
+	// Get worldId from params (guaranteed to exist in this route)
+	const worldId = page.params.worldId!;
+
+	// Use TanStack Query for nodes data
+	const nodesQuery = useWorldNodes(worldId);
+
+	const storyNodes = $derived(nodesQuery.data ?? []);
+	const isLoading = $derived(nodesQuery.isLoading);
+
+	// Get current node from URL if present
+	const currentNodeId = $derived(page.url.searchParams.get('node'));
 
 	// Handle node click - navigate to the story page with that node
 	function handleNodeClick(nodeId: string) {
-		goto(`/worlds/${data.world.id}?node=${nodeId}`);
+		goto(`/worlds/${worldId}/nodes/${nodeId}`);
 	}
 
 	// Transform story nodes to flow format and add click handlers
 	const { nodes: flowNodes, edges: flowEdges } = $derived.by(() => {
-		const result = transformNodesToFlow(data.nodes);
+		if (!storyNodes.length) return { nodes: [], edges: [] };
+		const result = transformNodesToFlow(storyNodes);
 		// Add click handler to all nodes
 		result.nodes.forEach((node) => {
 			node.data.onNodeClick = handleNodeClick;
+			node.data.isCurrent = node.id === currentNodeId;
 		});
 		return result;
 	});
+
+	const graphColors = {
+		start: 'oklch(0.723 0.219 142.5)', // green-500
+		end: 'oklch(0.705 0.191 47.604)', // orange-500
+		current: 'var(--chart-2)',
+		default: 'var(--secondary)'
+	};
 
 	// Use $state.raw for performance with large node arrays
 	const nodes = $derived(flowNodes);
@@ -36,118 +58,116 @@
 		custom: FlowNode
 	} as NodeTypes;
 
-	// Get current node from URL if present
-	const currentNodeId = $derived(page.url.searchParams.get('node'));
-
-	function handleBack() {
-		const url = currentNodeId
-			? `/worlds/${data.world.id}?node=${currentNodeId}`
-			: `/worlds/${data.world.id}`;
+	function handleBackToStory() {
+		const url = currentNodeId ? `/worlds/${worldId}/nodes/${currentNodeId}` : `/worlds/${worldId}`;
 		goto(url);
 	}
 </script>
 
-<svelte:head>
-	<title>{data.world.title || 'World'} - Story Map</title>
-</svelte:head>
-
-<div class="flex h-screen flex-col bg-background">
-	<!-- Header -->
-	<header class="border-b border-border bg-card/50">
-		<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-			<div class="flex items-center gap-4">
-				<Button variant="ghost" size="sm" onclick={handleBack} class="gap-2">
-					<ArrowLeft class="h-4 w-4" />
-					Back to Story
-				</Button>
-				<div class="h-6 w-px bg-border"></div>
-				<div class="flex items-center gap-3">
-					<div
-						class="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10"
-					>
-						<Rocket class="h-5 w-5 text-primary" />
-					</div>
-					<div>
-						<h1 class="font-bold text-foreground">
-							{data.world.title || 'Untitled World'}
-						</h1>
-						<p class="text-sm text-muted-foreground">Story Map</p>
-					</div>
-				</div>
-			</div>
-
-			<!-- Legend -->
-			<div class="flex items-center gap-4 text-sm text-muted-foreground">
-				<div class="flex items-center gap-2">
-					<div
-						class="h-3 w-3 rounded-full bg-primary ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
-					></div>
-					<span>Start</span>
-				</div>
-				<div class="flex items-center gap-2">
-					<div
-						class="h-3 w-3 rounded-full bg-amber-500 ring-2 ring-amber-500/30 ring-offset-2 ring-offset-background"
-					></div>
-					<span>End</span>
-				</div>
-				{#if currentNodeId}
-					<div class="flex items-center gap-2">
-						<div
-							class="h-3 w-3 rounded-full bg-blue-500 ring-2 ring-blue-500/30 ring-offset-2 ring-offset-background"
-						></div>
-						<span>Current</span>
-					</div>
-				{/if}
+<!-- WorldHeader is rendered by the layout -->
+<div class="relative h-full w-full">
+	{#if isLoading}
+		<div class="flex h-full items-center justify-center">
+			<Card>
+				<CardContent class="flex items-center gap-3 py-8">
+					<Spinner class="h-5 w-5" />
+					<span class="text-muted-foreground">Loading story map...</span>
+				</CardContent>
+			</Card>
+		</div>
+	{:else if nodes.length === 0}
+		<div class="flex h-full items-center justify-center">
+			<div class="text-center">
+				<p class="text-lg text-muted-foreground">No story nodes found</p>
+				<p class="mt-2 text-sm text-muted-foreground/70">
+					Start creating your story to see the map
+				</p>
 			</div>
 		</div>
-	</header>
-
-	<!-- Flow visualization -->
-	<div class="flex-1">
-		{#if nodes.length === 0}
-			<div class="flex h-full items-center justify-center">
-				<div class="text-center">
-					<p class="text-lg text-muted-foreground">No story nodes found</p>
-					<p class="mt-2 text-sm text-muted-foreground/70">
-						Start creating your story to see the map
-					</p>
+	{:else}
+		<!-- Overlay controls -->
+		<div class="pointer-events-none absolute inset-x-0 top-0 z-10 px-6 py-8">
+			<div class="mx-auto flex max-w-4xl items-center justify-between gap-4">
+				<!-- Legend badges -->
+				<div class="pointer-events-auto flex items-center gap-2">
+					<Badge class="legend-badge legend-badge-start shadow-lg">Start</Badge>
+					<Badge class="legend-badge legend-badge-end shadow-lg">End</Badge>
+					{#if currentNodeId}
+						<Badge class="legend-badge legend-badge-current shadow-lg">Current</Badge>
+					{/if}
 				</div>
+
+				<!-- Back button -->
+				<Button
+					variant="outline"
+					size="sm"
+					onclick={handleBackToStory}
+					class="pointer-events-auto gap-1.5 shadow-lg"
+				>
+					<BookOpen class="h-4 w-4" />
+					Story
+				</Button>
 			</div>
-		{:else}
-			<SvelteFlow
-				{nodes}
-				{edges}
-				{nodeTypes}
-				fitView
-				fitViewOptions={{ padding: 0.2 }}
-				minZoom={0.1}
-				maxZoom={2}
-				defaultEdgeOptions={{
-					type: 'smoothstep',
-					animated: false,
-					style: 'stroke: oklch(0.9536 0.0872 97.9082); stroke-width: 2px;'
+		</div>
+
+		<SvelteFlow
+			{nodes}
+			{edges}
+			{nodeTypes}
+			fitView
+			fitViewOptions={{ padding: 0.2 }}
+			minZoom={0.1}
+			maxZoom={2}
+			defaultEdgeOptions={{
+				type: 'smoothstep',
+				animated: false,
+				style: 'stroke: oklch(0.9536 0.0872 97.9082); stroke-width: 2px;'
+			}}
+		>
+			<Controls />
+			<Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+			<MiniMap
+				nodeColor={(node) => {
+					if (node.id === currentNodeId) return graphColors.current;
+					if (node.data?.isRoot) return graphColors.start;
+					if (node.data?.isLeaf) return graphColors.end;
+					return graphColors.default;
 				}}
-			>
-				<Controls />
-				<Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-				<MiniMap
-					nodeColor={(node) => {
-						if (node.id === currentNodeId) return 'oklch(0.623 0.214 259.1)'; // blue-500
-						if (node.data?.isRoot) return 'oklch(0.9536 0.0872 97.9082)'; // primary (golden)
-						if (node.data?.isLeaf) return 'oklch(0.769 0.188 70.08)'; // amber-500
-						return 'oklch(0.377 0.0482 247.087)'; // secondary
-					}}
-					nodeStrokeWidth={3}
-					pannable
-					zoomable
-					maskColor="oklch(0.2132 0.0183 245.2123 / 0.8)"
-				/>
-			</SvelteFlow>
-		{/if}
-	</div>
+				nodeStrokeWidth={3}
+				pannable
+				zoomable
+				maskColor="oklch(0.2132 0.0183 245.2123 / 0.8)"
+			/>
+		</SvelteFlow>
+	{/if}
 </div>
 
 <style>
+	/* Legend badge styling matching flow node colors */
+	:global(.legend-badge) {
+		border-width: 2px !important;
+	}
+
+	:global(.legend-badge-start) {
+		/* Green (green-500) */
+		background-color: color-mix(in oklch, oklch(0.723 0.219 142.5) 15%, var(--card)) !important;
+		border-color: oklch(0.723 0.219 142.5) !important;
+		color: oklch(0.723 0.219 142.5) !important;
+	}
+
+	:global(.legend-badge-end) {
+		/* Orange (orange-500) */
+		background-color: color-mix(in oklch, oklch(0.705 0.191 47.604) 15%, var(--card)) !important;
+		border-color: oklch(0.705 0.191 47.604) !important;
+		color: oklch(0.705 0.191 47.604) !important;
+	}
+
+	:global(.legend-badge-current) {
+		background-color: color-mix(in oklch, var(--chart-2) 15%, var(--card)) !important;
+		border-color: var(--chart-2) !important;
+		color: var(--chart-2) !important;
+	}
+
 	/* Dark theme styling for SvelteFlow - using oklch color format */
 	:global(.svelte-flow) {
 		background-color: var(--background) !important;

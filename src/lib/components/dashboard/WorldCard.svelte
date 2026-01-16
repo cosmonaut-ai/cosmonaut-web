@@ -10,44 +10,47 @@
 	} from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import {
+		Dialog,
+		DialogContent,
+		DialogDescription,
+		DialogFooter,
+		DialogHeader,
+		DialogTitle
+	} from '$lib/components/ui/dialog';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { Trash2 } from '@lucide/svelte';
 
 	interface Props {
 		world: World;
-		onDelete: (worldId: string) => Promise<void>;
+		onDelete: (worldId: string) => void;
+		isDeleting?: boolean;
 	}
 
-	let { world, onDelete }: Props = $props();
+	let { world, onDelete, isDeleting = false }: Props = $props();
 
-	let showDeleteConfirm = $state(false);
-	let deleting = $state(false);
+	let showDeleteDialog = $state(false);
 
 	function handleClick() {
+		if (isDeleting) return;
 		goto(`/worlds/${world.id}`);
 	}
 
-	async function handleDelete(e: Event) {
+	function handleDeleteClick(e: Event) {
 		e.stopPropagation();
-
-		if (!showDeleteConfirm) {
-			showDeleteConfirm = true;
-			return;
-		}
-
-		try {
-			deleting = true;
-			await onDelete(world.id);
-		} catch (err) {
-			console.error('Error deleting world:', err);
-		} finally {
-			deleting = false;
-			showDeleteConfirm = false;
-		}
+		if (isDeleting) return;
+		showDeleteDialog = true;
 	}
 
-	function handleCancelDelete(e: Event) {
-		e.stopPropagation();
-		showDeleteConfirm = false;
+	function handleConfirmDelete() {
+		onDelete(world.id);
+		// Don't close the dialog - it will close when deletion is complete
+		// as the card will be removed from the list
+	}
+
+	function handleCancelDelete() {
+		if (isDeleting) return;
+		showDeleteDialog = false;
 	}
 
 	function getStatusBadgeVariant(
@@ -137,38 +140,46 @@
 				{new Date(world.created_at).toLocaleDateString()}
 			</span>
 
-			{#if showDeleteConfirm}
-				<div class="flex gap-2">
-					<Button
-						variant="ghost"
-						size="sm"
-						onclick={handleCancelDelete}
-						disabled={deleting}
-						class="h-7 px-2 text-xs"
-					>
-						Cancel
-					</Button>
-					<Button
-						variant="destructive"
-						size="sm"
-						onclick={handleDelete}
-						disabled={deleting}
-						class="h-7 px-2 text-xs"
-					>
-						{deleting ? 'Deleting...' : 'Confirm'}
-					</Button>
-				</div>
-			{:else}
-				<Button
-					variant="ghost"
-					size="sm"
-					onclick={handleDelete}
-					class="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-					aria-label="Delete world"
-				>
+			<Button
+				variant="ghost"
+				size="sm"
+				onclick={handleDeleteClick}
+				disabled={isDeleting}
+				class="h-7 w-7 p-0 text-muted-foreground hover:text-destructive disabled:opacity-50"
+				aria-label="Delete world"
+			>
+				{#if isDeleting}
+					<Spinner class="h-4 w-4" />
+				{:else}
 					<Trash2 class="h-4 w-4" />
-				</Button>
-			{/if}
+				{/if}
+			</Button>
 		</div>
 	</CardContent>
 </Card>
+
+<Dialog
+	bind:open={showDeleteDialog}
+	onOpenChange={(open) => !isDeleting && (showDeleteDialog = open)}
+>
+	<DialogContent showCloseButton={!isDeleting} onclick={(e: Event) => e.stopPropagation()}>
+		<DialogHeader>
+			<DialogTitle>Delete World</DialogTitle>
+			<DialogDescription>
+				Are you sure you want to delete "{world.title || 'Untitled World'}"? This action cannot be
+				undone and all story progress will be permanently lost.
+			</DialogDescription>
+		</DialogHeader>
+		<DialogFooter>
+			<Button variant="outline" onclick={handleCancelDelete} disabled={isDeleting}>Cancel</Button>
+			<Button variant="destructive" onclick={handleConfirmDelete} disabled={isDeleting}>
+				{#if isDeleting}
+					<Spinner class="mr-2 h-4 w-4" />
+					Deleting...
+				{:else}
+					Delete
+				{/if}
+			</Button>
+		</DialogFooter>
+	</DialogContent>
+</Dialog>
