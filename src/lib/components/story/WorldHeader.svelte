@@ -42,7 +42,7 @@
 		<!-- World info — links to world home page -->
 		<button
 			onclick={handleWorldHome}
-			class="world-info-link group flex w-full cursor-pointer items-start gap-4 rounded-lg p-2 -m-2 text-left transition-all duration-200 hover:bg-primary/5"
+			class="world-info-link group -m-2 flex w-full cursor-pointer items-start gap-4 rounded-lg p-2 text-left transition-all duration-200 hover:bg-primary/5"
 			aria-label="Go to world home page"
 		>
 			<!-- Icon -->
@@ -55,7 +55,9 @@
 			<!-- Title and meta -->
 			<div class="min-w-0 flex-1">
 				<div class="flex items-center gap-3">
-					<h1 class="truncate text-xl font-bold text-foreground transition-colors duration-200 group-hover:text-primary">
+					<h1
+						class="truncate text-xl font-bold text-foreground transition-colors duration-200 group-hover:text-primary"
+					>
 						{world.title || 'Untitled World'}
 					</h1>
 					<Badge variant="outline" class="shrink-0 gap-1">

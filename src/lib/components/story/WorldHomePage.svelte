@@ -82,8 +82,6 @@
 	function handleViewMap() {
 		goto(`/worlds/${world.id}/graph`);
 	}
-
-
 </script>
 
 <div class="world-home">
@@ -149,13 +147,19 @@
 
 			<!-- Description -->
 			{#if hasDescription}
-				<p class="hero-enter hero-enter-3 mb-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+				<p
+					class="hero-enter hero-enter-3 mb-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg"
+				>
 					{world.description}
 				</p>
 			{/if}
 
 			<!-- Badges row -->
-			<div class="hero-enter {hasDescription ? 'hero-enter-4' : 'hero-enter-3'} flex flex-wrap items-center gap-3">
+			<div
+				class="hero-enter {hasDescription
+					? 'hero-enter-4'
+					: 'hero-enter-3'} flex flex-wrap items-center gap-3"
+			>
 				{#if world.genre}
 					<Badge variant="secondary" class="gap-1.5 border-primary/20 bg-primary/10 text-primary">
 						<Sparkles class="h-3 w-3" />

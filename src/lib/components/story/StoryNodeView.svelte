@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { untrack } from 'svelte';
-	import { generateNodeText } from '$lib/api/client';
+	import { generateNodeText, retryNodeProcessing } from '$lib/api/client';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { useNode, useChooseOption, updateNodeInCache, type ChoiceOption } from '$lib/queries';
 	import { showError } from '$lib/utils/toast';
@@ -37,6 +37,9 @@
 	// Track which node we've already started generating to prevent duplicate calls
 	let generatingNodeId = $state<string | null>(null);
 
+	// Track which node we've already started retrying processing for to prevent duplicate calls
+	let retryingProcessingNodeId = $state<string | null>(null);
+
 	// Use TanStack Query for node data (pass getters to ensure reactivity)
 	// Enable polling when node is in 'generating' status
 	const nodeQuery = useNode(
@@ -49,6 +52,9 @@
 	const effectiveNodeId = $derived(currentNodeOverride?.id ?? nodeQuery.data?.id);
 	const effectiveNodeStatus = $derived(
 		currentNodeOverride?.generation_status ?? nodeQuery.data?.generation_status
+	);
+	const effectiveProcessingStatus = $derived(
+		currentNodeOverride?.processing_status ?? nodeQuery.data?.processing_status
 	);
 
 	// Check if node is being generated elsewhere (poll until complete)
@@ -156,6 +162,39 @@
 		}
 	});
 
+	// Automatically retry processing for nodes with failed processing_status
+	// This is invisible to the user - background processing (fact extraction + Pinecone upsert)
+	// is re-enqueued when visiting a node that previously failed
+	$effect(() => {
+		const currentId = effectiveNodeId;
+		const processingStatus = effectiveProcessingStatus;
+
+		// Only retry if node has failed processing status
+		if (!currentId || processingStatus !== 'failed') return;
+		// Skip if already retrying this node
+		if (retryingProcessingNodeId === currentId) return;
+
+		const nodeIdToRetry = currentId;
+		const currentWorldId = worldId;
+
+		untrack(() => {
+			retryingProcessingNodeId = nodeIdToRetry;
+
+			retryNodeProcessing(currentWorldId, nodeIdToRetry)
+				.then((updatedNode) => {
+					// Update cache with the node's new processing_status (pending)
+					updateNodeInCache(queryClient, currentWorldId, updatedNode);
+				})
+				.catch((err) => {
+					// Silently log error - this is invisible to the user
+					// The retry can be attempted again on the next visit
+					console.warn('Failed to retry node processing:', err);
+					// Clear retry guard so it can be attempted again
+					retryingProcessingNodeId = null;
+				});
+		});
+	});
+
 	// Clear override and generation guard when nodeId changes (e.g., back/forward navigation)
 	$effect(() => {
 		if (nodeId && currentNodeOverride?.id !== nodeId) {
@@ -163,6 +202,10 @@
 			// Clear generation guard for the new node
 			if (generatingNodeId !== nodeId) {
 				generatingNodeId = null;
+			}
+			// Clear processing retry guard for the new node
+			if (retryingProcessingNodeId !== nodeId) {
+				retryingProcessingNodeId = null;
 			}
 		}
 	});

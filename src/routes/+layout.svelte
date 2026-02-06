@@ -12,7 +12,7 @@
 	import { ModeWatcher, setMode } from 'mode-watcher';
 	import { QueryClientProvider } from '@tanstack/svelte-query';
 	import { queryClient } from '$lib/queries/client';
-	import { Rocket, LogIn, LogOut } from '@lucide/svelte';
+	import { LogIn, LogOut } from '@lucide/svelte';
 
 	let { children } = $props();
 

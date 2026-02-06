@@ -309,6 +309,21 @@ export async function generateNodeText(
 }
 
 /**
+ * Retry background processing for a node with failed processing_status
+ * This re-enqueues fact extraction and Pinecone upsert for nodes that
+ * completed text generation but failed subsequent async processing.
+ * @param worldId - The world ID
+ * @param nodeId - The node ID to retry processing for
+ * @returns The updated StoryNode with processing_status reset to 'pending'
+ */
+export async function retryNodeProcessing(worldId: string, nodeId: string): Promise<StoryNode> {
+	return apiRequest<StoryNode>(
+		`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/retry-processing`,
+		{ method: 'POST' }
+	);
+}
+
+/**
  * Poll for world generation completion
  * Returns when generation_status is 'completed' or 'failed'
  */
