@@ -93,10 +93,11 @@
 	<section class="hero-section relative flex min-h-[60vh] items-end overflow-hidden">
 		<!-- Background image or fallback gradient -->
 		{#if world.world_image_url}
-			<div
-				class="hero-bg absolute inset-0 bg-cover bg-center"
-				style="background-image: url('{world.world_image_url}');"
-			></div>
+			<img
+				src={world.world_image_url}
+				alt={world.world_image_alt_text || world.title || 'World image'}
+				class="hero-img absolute inset-0 h-full w-full object-cover object-center"
+			/>
 		{:else}
 			<div class="hero-bg-fallback absolute inset-0"></div>
 		{/if}
@@ -436,16 +437,9 @@
 	   HERO — Background & Overlays
 	   ══════════════════════════════════════════════════════════════════ */
 
-	.hero-bg {
-		background-size: cover;
-		background-position: center;
-	}
-
-	/* Parallax depth — motion-safe only */
-	@media (prefers-reduced-motion: no-preference) {
-		.hero-bg {
-			background-attachment: fixed;
-		}
+	.hero-img {
+		object-fit: cover;
+		object-position: center;
 	}
 
 	/* Animated gradient fallback when no image */
