@@ -100,7 +100,7 @@
 		</div>
 	</div>
 {:else if isMainWorldPage}
-	<!-- Main world page just needs to redirect -->
+	<!-- Main world page — has its own navigation -->
 	<div class="h-full overflow-y-auto bg-background">
 		{@render children()}
 	</div>

@@ -2,6 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { useWorld } from '$lib/queries';
+	import type { World } from '$lib/types/api';
+	import WorldHomePage from '$lib/components/story/WorldHomePage.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
 
@@ -20,21 +22,23 @@
 	const world = $derived(worldQuery.data);
 	const isWorldComplete = $derived(world?.generation_status === 'completed');
 
-	// Redirect to node page when world is complete
+	// Only redirect when a specific node is requested via ?node= query param
+	// (e.g. navigating back from the graph page to a specific story node)
 	$effect(() => {
-		if (isWorldComplete) {
-			// Use node from URL if provided, otherwise use root node
-			const targetNodeId = nodeIdFromUrl ?? world?.root_node_id;
-			if (targetNodeId) {
-				goto(`/worlds/${worldId}/nodes/${targetNodeId}`, { replaceState: true });
-			}
+		if (isWorldComplete && nodeIdFromUrl) {
+			goto(`/worlds/${worldId}/nodes/${nodeIdFromUrl}`, { replaceState: true });
 		}
 	});
+
+	function handleWorldUpdate(_: World) {
+		worldQuery.refetch();
+	}
 </script>
 
-<!-- This page handles redirect when world is complete -->
-<!-- Loading/error/generation states are handled by the layout -->
-{#if isWorldComplete}
+<!-- World home page when complete, loading state handled by layout -->
+{#if isWorldComplete && !nodeIdFromUrl && world}
+	<WorldHomePage {world} onWorldUpdate={handleWorldUpdate} />
+{:else if isWorldComplete && nodeIdFromUrl}
 	<main class="mx-auto max-w-4xl px-6 py-8">
 		<Card>
 			<CardContent class="flex items-center justify-center py-16">
