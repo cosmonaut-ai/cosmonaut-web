@@ -18,6 +18,10 @@
 	function handleBack() {
 		goto('/dashboard');
 	}
+
+	function handleWorldHome() {
+		goto(`/worlds/${world.id}`);
+	}
 </script>
 
 <header class="border-b border-border bg-card/50">
@@ -35,11 +39,15 @@
 			</Button>
 		</div>
 
-		<!-- World info -->
-		<div class="flex items-start gap-4">
+		<!-- World info — links to world home page -->
+		<button
+			onclick={handleWorldHome}
+			class="world-info-link group flex w-full cursor-pointer items-start gap-4 rounded-lg p-2 -m-2 text-left transition-all duration-200 hover:bg-primary/5"
+			aria-label="Go to world home page"
+		>
 			<!-- Icon -->
 			<div
-				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10"
+				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 transition-all duration-200 group-hover:border-primary/50 group-hover:bg-primary/15"
 			>
 				<img src="/planet.png" alt="Planet" class="h-8 w-8" />
 			</div>
@@ -47,7 +55,7 @@
 			<!-- Title and meta -->
 			<div class="min-w-0 flex-1">
 				<div class="flex items-center gap-3">
-					<h1 class="truncate text-xl font-bold text-foreground">
+					<h1 class="truncate text-xl font-bold text-foreground transition-colors duration-200 group-hover:text-primary">
 						{world.title || 'Untitled World'}
 					</h1>
 					<Badge variant="outline" class="shrink-0 gap-1">
@@ -69,7 +77,7 @@
 					<Badge variant="secondary" class="mt-2">{world.genre}</Badge>
 				{/if}
 			</div>
-		</div>
+		</button>
 	</div>
 </header>
 
