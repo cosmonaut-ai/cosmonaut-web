@@ -24,8 +24,22 @@
 	}
 </script>
 
-<header class="border-b border-border bg-card/50">
-	<div class="mx-auto max-w-4xl px-6 py-4">
+<header class="relative isolate overflow-hidden border-b border-border">
+	<!-- Background image with blur and darken overlay -->
+	{#if world.world_image_url}
+		<div class="absolute inset-0 z-0 overflow-hidden">
+			<img
+				src={world.world_image_url}
+				alt=""
+				class="h-full w-full scale-110 object-cover blur-sm"
+			/>
+			<div class="absolute inset-0 bg-background/75"></div>
+		</div>
+	{:else}
+		<div class="absolute inset-0 z-0 bg-card/50"></div>
+	{/if}
+
+	<div class="relative z-10 mx-auto max-w-4xl px-6 py-4">
 		<!-- Top row: navigation and actions -->
 		<div class="mb-4 flex items-center justify-between">
 			<Button variant="ghost" size="sm" onclick={handleBack} class="gap-2">
@@ -60,7 +74,7 @@
 					>
 						{world.title || 'Untitled World'}
 					</h1>
-					<Badge variant="outline" class="shrink-0 gap-1">
+					<Badge variant="outline" class="shrink-0 gap-1 border-border/50 bg-background/50">
 						{#if world.visibility === 'public'}
 							<Globe class="h-3 w-3" />
 							Public

@@ -51,7 +51,7 @@
 	<CardContent class="p-6 sm:p-8">
 		<!-- Story text -->
 		<div
-			class="prose prose-sm max-w-none font-mono leading-relaxed text-card-foreground prose-invert sm:prose-lg"
+			class="prose prose-sm max-w-none leading-relaxed text-card-foreground prose-invert sm:prose-lg"
 			aria-live="polite"
 			aria-busy={isTyping}
 		>
@@ -137,7 +137,7 @@
 								maxlength={MAX_CUSTOM_CHOICE_LENGTH}
 								disabled={isLoading}
 								placeholder="Describe what you want to do..."
-								class="story-textarea min-h-20 resize-none font-mono"
+								class="story-textarea min-h-20 resize-none"
 							/>
 							<div class="flex items-center justify-between">
 								<span class="text-xs text-muted-foreground">
