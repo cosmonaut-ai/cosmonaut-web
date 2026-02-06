@@ -130,9 +130,9 @@
 		<!-- Logo -->
 		<a href="/" class="flex items-center gap-2">
 			<div
-				class="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 transition-colors hover:border-primary/50"
+				class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 transition-colors"
 			>
-				<Rocket class="h-4 w-4 text-primary" />
+				<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
 			</div>
 			<span class="font-semibold text-foreground">Cosmonaut</span>
 		</a>
