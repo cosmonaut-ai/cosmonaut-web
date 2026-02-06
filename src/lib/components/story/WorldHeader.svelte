@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import ShareModal from './ShareModal.svelte';
-	import { ArrowLeft, Share2, Rocket, Globe, Lock } from '@lucide/svelte';
+	import { ArrowLeft, Share2, Globe, Lock } from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 
 	interface Props {
@@ -41,7 +41,7 @@
 			<div
 				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10"
 			>
-				<Rocket class="h-6 w-6 text-primary" />
+				<img src="/planet.png" alt="Planet" class="h-8 w-8" />
 			</div>
 
 			<!-- Title and meta -->
