@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { useCreateWorld } from '$lib/queries';
-	import { showError } from '$lib/utils/toast';
 	import type { WorldVisibility } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -23,10 +22,24 @@
 	let prompts = $state<string[]>([]);
 	let promptsLoaded = $state(false);
 	let promptsLoading = $state(false);
+	let hasAttemptedSubmit = $state(false);
 
 	// Use mutation for creating world
 	const createMutation = useCreateWorld();
 	const loading = $derived(createMutation.isPending);
+
+	// Inline validation
+	const MAX_PROMPT_LENGTH = 2000;
+	const promptTrimmed = $derived(worldPrompt.trim());
+	const promptTooLong = $derived(worldPrompt.length > MAX_PROMPT_LENGTH);
+	const promptEmpty = $derived(promptTrimmed.length === 0);
+	const promptError = $derived.by(() => {
+		if (!hasAttemptedSubmit && !promptTooLong) return '';
+		if (promptEmpty) return 'A world prompt is required to create your world.';
+		if (promptTooLong)
+			return `Prompt is too long (${worldPrompt.length}/${MAX_PROMPT_LENGTH} characters).`;
+		return '';
+	});
 
 	function getRandomPrompt(list: string[]): string | null {
 		if (!list.length) return null;
@@ -75,8 +88,9 @@
 	}
 
 	async function handleCreateWorld() {
-		if (!worldPrompt.trim()) {
-			showError('World prompt is required');
+		hasAttemptedSubmit = true;
+
+		if (promptEmpty || promptTooLong) {
 			return;
 		}
 
@@ -161,12 +175,32 @@
 							placeholder="Describe the world you want to create, e.g., 'A cyberpunk city where AI and humans coexist' or 'A medieval kingdom on the brink of war with a dark secret in the royal court'"
 							required
 							disabled={loading}
-							class="min-h-32 resize-none font-mono"
+							maxlength={MAX_PROMPT_LENGTH}
+							aria-invalid={promptError ? 'true' : undefined}
+							aria-describedby="prompt-help prompt-error"
+							class="min-h-32 resize-none font-mono {promptError
+								? 'border-destructive focus-visible:ring-destructive'
+								: ''}"
 						/>
-						<p class="text-xs text-muted-foreground">
-							Include setting, tone, key characters, or any specific elements you'd like in your
-							story.
-						</p>
+						<div class="flex items-start justify-between gap-4">
+							<div class="flex-1">
+								{#if promptError}
+									<p id="prompt-error" class="text-xs text-destructive">{promptError}</p>
+								{:else}
+									<p id="prompt-help" class="text-xs text-muted-foreground">
+										Include setting, tone, key characters, or any specific elements you'd like in
+										your story.
+									</p>
+								{/if}
+							</div>
+							<span
+								class="shrink-0 text-xs tabular-nums {promptTooLong
+									? 'font-medium text-destructive'
+									: 'text-muted-foreground'}"
+							>
+								{worldPrompt.length}/{MAX_PROMPT_LENGTH}
+							</span>
+						</div>
 					</div>
 
 					<!-- Visibility -->

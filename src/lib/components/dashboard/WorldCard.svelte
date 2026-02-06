@@ -25,11 +25,17 @@
 		world: World;
 		onDelete: (worldId: string) => void;
 		isDeleting?: boolean;
+		/** Stagger index for entrance animation (0-based) */
+		index?: number;
 	}
 
-	let { world, onDelete, isDeleting = false }: Props = $props();
+	let { world, onDelete, isDeleting = false, index = 0 }: Props = $props();
 
 	let showDeleteDialog = $state(false);
+
+	const isGenerating = $derived(
+		world.generation_status !== 'completed' && world.generation_status !== 'failed'
+	);
 
 	function handleClick() {
 		if (isDeleting) return;
@@ -87,10 +93,12 @@
 </script>
 
 <Card
-	class="group cursor-pointer overflow-hidden transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+	class="world-card group cursor-pointer overflow-hidden"
+	style="--entrance-delay: {index * 60}ms"
 	onclick={handleClick}
 	role="button"
 	tabindex={0}
+	aria-label="Open world: {world.title || 'Untitled World'}"
 	onkeydown={(e) => {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
@@ -98,23 +106,26 @@
 		}
 	}}
 >
-	<!-- Image or Gradient Header -->
+	<!-- Image or Animated Gradient Header -->
 	{#if world.world_image_url}
 		<div class="h-40 w-full overflow-hidden bg-card">
 			<img
 				src={world.world_image_url}
 				alt={world.world_image_alt_text || world.title || 'World image'}
-				class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+				class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
 			/>
 		</div>
 	{:else}
-		<div class="h-40 w-full bg-gradient-to-br from-primary/20 via-accent/10 to-secondary/20"></div>
+		<div class="world-card-gradient h-40 w-full"></div>
 	{/if}
 
 	<CardHeader class="pb-3">
 		<div class="flex items-start justify-between gap-3">
 			<CardTitle class="line-clamp-1 text-lg">{world.title || 'Untitled World'}</CardTitle>
-			<Badge variant={getStatusBadgeVariant(world.generation_status)} class="shrink-0">
+			<Badge
+				variant={getStatusBadgeVariant(world.generation_status)}
+				class="shrink-0 {isGenerating ? 'world-badge-generating' : ''}"
+			>
 				{getStatusText(world.generation_status)}
 			</Badge>
 		</div>
@@ -145,8 +156,8 @@
 				size="sm"
 				onclick={handleDeleteClick}
 				disabled={isDeleting}
-				class="h-7 w-7 p-0 text-muted-foreground hover:text-destructive disabled:opacity-50"
-				aria-label="Delete world"
+				class="h-9 w-9 p-0 text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
+				aria-label="Delete world: {world.title || 'Untitled World'}"
 			>
 				{#if isDeleting}
 					<Spinner class="h-4 w-4" />
@@ -183,3 +194,100 @@
 		</DialogFooter>
 	</DialogContent>
 </Dialog>
+
+<style>
+	/* ── Entrance animation ── */
+	:global(.world-card) {
+		animation: card-enter 0.5s ease-out both;
+		animation-delay: var(--entrance-delay, 0ms);
+	}
+
+	@keyframes card-enter {
+		from {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* ── Hover lift & glow ── */
+	:global(.world-card) {
+		transition:
+			transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+			box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+			border-color 0.3s ease;
+	}
+
+	:global(.world-card:hover) {
+		transform: translateY(-3px);
+		border-color: var(--primary);
+		box-shadow:
+			0 8px 24px oklch(from var(--primary) l c h / 0.1),
+			0 2px 8px oklch(0 0 0 / 0.15);
+	}
+
+	:global(.world-card:active) {
+		transform: translateY(-1px);
+		transition-duration: 0.1s;
+	}
+
+	/* ── Animated gradient fallback ── */
+	.world-card-gradient {
+		background: linear-gradient(
+			135deg,
+			oklch(from var(--primary) l c h / 0.2) 0%,
+			oklch(from var(--accent) l c h / 0.12) 50%,
+			oklch(from var(--secondary) l c h / 0.2) 100%
+		);
+		background-size: 200% 200%;
+		animation: gradient-shift 8s ease-in-out infinite;
+	}
+
+	@keyframes gradient-shift {
+		0%,
+		100% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+	}
+
+	/* ── Generating badge pulse ── */
+	:global(.world-badge-generating) {
+		animation: badge-pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes badge-pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.6;
+		}
+	}
+
+	/* ── Reduced motion ── */
+	@media (prefers-reduced-motion: reduce) {
+		:global(.world-card) {
+			animation: none;
+			opacity: 1;
+		}
+		:global(.world-card:hover) {
+			transform: none;
+		}
+		:global(.world-card:active) {
+			transform: none;
+		}
+		.world-card-gradient {
+			animation: none;
+		}
+		:global(.world-badge-generating) {
+			animation: none;
+		}
+	}
+</style>

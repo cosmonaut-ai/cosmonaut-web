@@ -1,5 +1,45 @@
 <script lang="ts">
 	import { Sparkles, GitBranch, Eye } from '@lucide/svelte';
+	import { browser } from '$app/environment';
+
+	/** Detect prefers-reduced-motion */
+	const prefersReducedMotion = browser
+		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		: false;
+
+	// Track visibility for each feature card
+	let visible = $state([false, false, false]);
+
+	function observeFeature(node: HTMLElement, index: number) {
+		if (prefersReducedMotion) {
+			// Instantly visible when motion is reduced
+			visible[index] = true;
+			return;
+		}
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						// Stagger: delay based on index
+						setTimeout(() => {
+							visible[index] = true;
+						}, index * 150);
+						observer.unobserve(node);
+					}
+				}
+			},
+			{ threshold: 0.2 }
+		);
+
+		observer.observe(node);
+
+		return {
+			destroy() {
+				observer.disconnect();
+			}
+		};
+	}
 </script>
 
 <section class="relative py-24">
@@ -20,9 +60,12 @@
 		<!-- Three focused features -->
 		<div class="grid gap-12 md:grid-cols-3">
 			<!-- Feature 1: Describe -->
-			<div class="text-center">
+			<div
+				class="feature-card text-center {visible[0] ? 'feature-visible' : 'feature-hidden'}"
+				use:observeFeature={0}
+			>
 				<div
-					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10"
+					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 hover:scale-110 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
 				>
 					<Sparkles class="h-8 w-8 text-primary" />
 				</div>
@@ -34,9 +77,12 @@
 			</div>
 
 			<!-- Feature 2: Branch -->
-			<div class="text-center">
+			<div
+				class="feature-card text-center {visible[1] ? 'feature-visible' : 'feature-hidden'}"
+				use:observeFeature={1}
+			>
 				<div
-					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10"
+					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 hover:scale-110 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
 				>
 					<GitBranch class="h-8 w-8 text-primary" />
 				</div>
@@ -48,9 +94,12 @@
 			</div>
 
 			<!-- Feature 3: See -->
-			<div class="text-center">
+			<div
+				class="feature-card text-center {visible[2] ? 'feature-visible' : 'feature-hidden'}"
+				use:observeFeature={2}
+			>
 				<div
-					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10"
+					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 hover:scale-110 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
 				>
 					<Eye class="h-8 w-8 text-primary" />
 				</div>
@@ -70,3 +119,33 @@
 		</div>
 	</div>
 </section>
+
+<style>
+	.feature-card {
+		transition:
+			opacity 0.6s ease-out,
+			transform 0.6s ease-out;
+	}
+
+	.feature-hidden {
+		opacity: 0;
+		transform: translateY(24px);
+	}
+
+	.feature-visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	/* Respect reduced motion at the CSS level as well */
+	@media (prefers-reduced-motion: reduce) {
+		.feature-card {
+			transition: none;
+		}
+
+		.feature-hidden {
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

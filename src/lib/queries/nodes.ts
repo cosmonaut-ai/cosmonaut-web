@@ -98,5 +98,6 @@ export function updateNodeInCache(
 	node: StoryNode
 ) {
 	client.setQueryData(nodeKeys.detail(worldId, node.id), node);
-	client.invalidateQueries({ queryKey: nodeKeys.all(worldId) });
+	// Use exact: true to prevent invalidating individual node detail queries (prefix matching)
+	client.invalidateQueries({ queryKey: nodeKeys.all(worldId), exact: true });
 }

@@ -25,6 +25,7 @@
 	let visibility = $derived<WorldVisibility>(world.visibility || 'private');
 	let sharedWith = $derived<string[]>([...(world.shared_with || [])]);
 	let newEmail = $state('');
+	let emailTouched = $state(false);
 
 	// Use mutation for updating sharing settings
 	const updateMutation = $derived.by(() => useUpdateWorldSharing(worldId));
@@ -39,27 +40,36 @@
 		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 	}
 
+	// Inline email validation
+	const emailError = $derived.by(() => {
+		const trimmed = newEmail.trim();
+		if (!emailTouched || !trimmed) return '';
+		if (!isValidEmail(trimmed)) return 'Please enter a valid email address.';
+		if (sharedWith.includes(trimmed.toLowerCase())) return 'This email is already added.';
+		return '';
+	});
+
 	function areEmailListsEqual(a: string[], b: string[]) {
 		if (a.length !== b.length) return false;
 		return a.every((value, index) => value === b[index]);
 	}
 
 	function addEmail() {
+		emailTouched = true;
 		const email = newEmail.trim().toLowerCase();
 		if (!email) return;
 
 		if (!isValidEmail(email)) {
-			showError('Please enter a valid email address');
-			return;
+			return; // Inline error message will display
 		}
 
 		if (sharedWith.includes(email)) {
-			showError('This email is already added');
-			return;
+			return; // Inline error message will display
 		}
 
 		sharedWith = [...sharedWith, email];
 		newEmail = '';
+		emailTouched = false;
 	}
 
 	function removeEmail(email: string) {
@@ -195,18 +205,27 @@
 						placeholder="Enter email address"
 						bind:value={newEmail}
 						onkeydown={handleKeyDown}
+						oninput={() => {
+							emailTouched = true;
+						}}
 						disabled={saving}
-						class="flex-1"
+						aria-invalid={emailError ? 'true' : undefined}
+						aria-describedby={emailError ? 'email-error' : undefined}
+						class="flex-1 {emailError ? 'border-destructive focus-visible:ring-destructive' : ''}"
 					/>
 					<Button
 						variant="outline"
 						size="icon"
 						onclick={addEmail}
 						disabled={saving || !newEmail.trim()}
+						aria-label="Add email"
 					>
 						<Plus class="h-4 w-4" />
 					</Button>
 				</div>
+				{#if emailError}
+					<p id="email-error" class="text-xs text-destructive">{emailError}</p>
+				{/if}
 			</div>
 
 			<!-- Shared users list -->
@@ -224,9 +243,10 @@
 									size="icon"
 									onclick={() => removeEmail(email)}
 									disabled={saving}
-									class="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+									class="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+									aria-label="Remove {email}"
 								>
-									<X class="h-3 w-3" />
+									<X class="h-3.5 w-3.5" />
 								</Button>
 							</div>
 						{/each}

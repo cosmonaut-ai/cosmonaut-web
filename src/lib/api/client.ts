@@ -10,6 +10,15 @@ import type {
 import { API_BASE_URL, STREAMING_BASE_URL, isLocalEnvironment } from '$lib/config';
 import { getAuthToken, refreshStreamingSession } from '$lib/auth/auth.svelte';
 
+/** Delay after streaming completes to ensure server-side persistence before re-fetching */
+const POST_STREAM_DELAY_MS = 500;
+
+/** Default polling interval for world generation status */
+const POLL_INTERVAL_MS = 2_000;
+
+/** Maximum number of polling attempts before timing out */
+const MAX_POLL_ATTEMPTS = 120;
+
 /**
  * Get authorization headers for API requests
  * @param forceRefresh - If true, forces a token refresh
@@ -30,7 +39,8 @@ async function getAuthHeaders(forceRefresh = false): Promise<HeadersInit> {
 }
 
 /**
- * Handle API response and throw on error
+ * Handle API response and throw on error.
+ * Gracefully handles 204 No Content (e.g. DELETE) by returning undefined.
  */
 async function handleResponse<T>(response: Response): Promise<T> {
 	if (!response.ok) {
@@ -38,6 +48,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
 			detail: `HTTP ${response.status}: ${response.statusText}`
 		}));
 		throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+	}
+	// Handle empty responses (204 No Content or zero-length body)
+	if (response.status === 204 || response.headers.get('content-length') === '0') {
+		return undefined as T;
 	}
 	return response.json();
 }
@@ -126,34 +140,7 @@ export async function updateWorldSharing(
  * Delete a world and all associated data
  */
 export async function deleteWorld(worldId: string): Promise<void> {
-	const headers = await getAuthHeaders();
-	const response = await fetch(`${API_BASE_URL}/worlds/${worldId}`, {
-		method: 'DELETE',
-		headers
-	});
-
-	if (response.status === 401 && !isLocalEnvironment) {
-		const retryHeaders = await getAuthHeaders(true);
-		await refreshStreamingSession();
-		const retryResponse = await fetch(`${API_BASE_URL}/worlds/${worldId}`, {
-			method: 'DELETE',
-			headers: retryHeaders
-		});
-		if (!retryResponse.ok) {
-			const error: ApiError = await retryResponse.json().catch(() => ({
-				detail: `HTTP ${retryResponse.status}: ${retryResponse.statusText}`
-			}));
-			throw new Error(error.detail || `HTTP ${retryResponse.status}: ${retryResponse.statusText}`);
-		}
-		return;
-	}
-
-	if (!response.ok) {
-		const error: ApiError = await response.json().catch(() => ({
-			detail: `HTTP ${response.status}: ${response.statusText}`
-		}));
-		throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-	}
+	await apiRequest<void>(`${API_BASE_URL}/worlds/${worldId}`, { method: 'DELETE' });
 }
 
 /**
@@ -307,7 +294,7 @@ export async function generateNodeText(
 		}
 
 		// Wait briefly to ensure the node is fully updated on the server
-		await new Promise((resolve) => setTimeout(resolve, 500));
+		await new Promise((resolve) => setTimeout(resolve, POST_STREAM_DELAY_MS));
 
 		// Fetch the full node to get all metadata (choices, title, etc.)
 		return await getNode(worldId, nodeId);
@@ -328,8 +315,8 @@ export async function generateNodeText(
 export async function pollWorldCompletion(
 	worldId: string,
 	onStatusUpdate?: (status: string) => void,
-	maxAttempts = 120,
-	intervalMs = 2000
+	maxAttempts = MAX_POLL_ATTEMPTS,
+	intervalMs = POLL_INTERVAL_MS
 ): Promise<World> {
 	for (let i = 0; i < maxAttempts; i++) {
 		const world = await getWorld(worldId);

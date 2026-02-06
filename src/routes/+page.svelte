@@ -10,11 +10,46 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Rocket, LogIn } from '@lucide/svelte';
+	import { browser } from '$app/environment';
 
 	const auth = useAuth();
 
 	let isScrolled = $state(false);
 	let isSigningIn = $state(false);
+
+	const prefersReducedMotion = browser
+		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		: false;
+
+	/** Scroll-triggered visibility for the final CTA section */
+	let ctaVisible = $state(false);
+
+	function observeCta(node: HTMLElement) {
+		if (prefersReducedMotion) {
+			ctaVisible = true;
+			return;
+		}
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						ctaVisible = true;
+						observer.unobserve(node);
+					}
+				}
+			},
+			{ threshold: 0.2 }
+		);
+
+		observer.observe(node);
+
+		return {
+			destroy() {
+				observer.disconnect();
+			}
+		};
+	}
 
 	async function handleGetStarted() {
 		if (isSigningIn) return;
@@ -42,6 +77,12 @@
 
 	async function handleSignIn() {
 		if (isSigningIn) return;
+
+		// If already authenticated, navigate to dashboard instead of re-triggering OAuth
+		if (auth.isAuthenticated) {
+			goto('/dashboard');
+			return;
+		}
 
 		try {
 			isSigningIn = true;
@@ -141,7 +182,10 @@
 	<Features />
 
 	<!-- Final CTA section -->
-	<section class="relative py-24">
+	<section
+		class="cta-section relative py-24 {ctaVisible ? 'cta-visible' : 'cta-hidden'}"
+		use:observeCta
+	>
 		<div class="mx-auto max-w-4xl px-6 text-center">
 			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">Ready to Create?</h2>
 			<p class="mx-auto mb-8 max-w-2xl text-muted-foreground">
@@ -167,3 +211,29 @@
 
 <!-- Footer -->
 <Footer />
+
+<style>
+	.cta-section {
+		transition:
+			opacity 0.7s ease-out,
+			transform 0.7s ease-out;
+	}
+	.cta-hidden {
+		opacity: 0;
+		transform: translateY(24px);
+	}
+	.cta-visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.cta-section {
+			transition: none;
+		}
+		.cta-hidden {
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

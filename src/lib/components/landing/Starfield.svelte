@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 
 	let canvas: HTMLCanvasElement;
 	let animationId: number;
+
+	/** Detect prefers-reduced-motion at mount time */
+	const prefersReducedMotion = browser
+		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		: false;
 
 	function canvasAttachment(node: HTMLCanvasElement) {
 		canvas = node;
@@ -231,8 +237,14 @@
 
 		resize();
 		window.addEventListener('resize', resize);
-		window.addEventListener('scroll', handleScroll, { passive: true });
-		animationId = requestAnimationFrame(draw);
+
+		if (prefersReducedMotion) {
+			// Draw a single static frame -- no animation loop, no scroll parallax
+			draw(0);
+		} else {
+			window.addEventListener('scroll', handleScroll, { passive: true });
+			animationId = requestAnimationFrame(draw);
+		}
 
 		return () => {
 			window.removeEventListener('resize', resize);

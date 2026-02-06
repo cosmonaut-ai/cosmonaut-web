@@ -30,7 +30,7 @@
 
 	const nodeClasses = $derived.by(() => {
 		const baseClasses =
-			'px-4 py-3 rounded-lg border-2 shadow-md transition-all duration-200 cursor-pointer min-w-[200px] max-w-[250px]';
+			'flow-node px-4 py-3 rounded-lg border-2 shadow-md cursor-pointer min-w-[200px] max-w-[250px]';
 		const selectedClasses = selected
 			? 'border-primary bg-primary/10 shadow-lg shadow-primary/20 scale-105'
 			: 'border-border bg-card hover:border-primary/50 hover:shadow-lg';
@@ -115,14 +115,75 @@
 </TooltipProvider>
 
 <style>
+	/* ── Flow node entrance ── */
+	:global(.flow-node) {
+		animation: node-enter 0.4s ease-out both;
+		transition:
+			transform 0.2s ease,
+			border-color 0.2s ease,
+			box-shadow 0.2s ease;
+	}
+
+	:global(.flow-node:hover) {
+		transform: translateY(-2px);
+	}
+
+	:global(.flow-node:active) {
+		transform: translateY(0);
+		transition-duration: 0.1s;
+	}
+
+	@keyframes node-enter {
+		from {
+			opacity: 0;
+			transform: scale(0.92);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	/* ── Current node pulsing ring ── */
 	:global(.current-node) {
 		border-color: var(--chart-2);
 		box-shadow:
 			0 0 0 2px color-mix(in oklch, var(--chart-2) 35%, transparent),
 			0 8px 20px color-mix(in oklch, var(--chart-2) 25%, transparent);
+		animation: current-pulse 2.5s ease-in-out infinite;
+	}
+
+	@keyframes current-pulse {
+		0%, 100% {
+			box-shadow:
+				0 0 0 2px color-mix(in oklch, var(--chart-2) 35%, transparent),
+				0 8px 20px color-mix(in oklch, var(--chart-2) 25%, transparent);
+		}
+		50% {
+			box-shadow:
+				0 0 0 4px color-mix(in oklch, var(--chart-2) 25%, transparent),
+				0 8px 24px color-mix(in oklch, var(--chart-2) 35%, transparent);
+		}
 	}
 
 	:global(.svelte-flow__node.selected) {
 		outline: none;
+	}
+
+	/* ── Reduced motion ── */
+	@media (prefers-reduced-motion: reduce) {
+		:global(.flow-node) {
+			animation: none;
+			opacity: 1;
+		}
+		:global(.flow-node:hover) {
+			transform: none;
+		}
+		:global(.flow-node:active) {
+			transform: none;
+		}
+		:global(.current-node) {
+			animation: none;
+		}
 	}
 </style>

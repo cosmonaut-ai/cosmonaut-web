@@ -61,19 +61,19 @@
 					</CardContent>
 				</Card>
 			{:else if worldsQuery.data?.length === 0}
-				<!-- Empty state -->
-				<Card class="border-dashed">
-					<CardContent class="flex flex-col items-center justify-center py-16">
-						<div
-							class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10"
-						>
+				<!-- Empty state — polished -->
+				<Card class="empty-card border-dashed">
+					<CardContent class="relative flex flex-col items-center justify-center overflow-hidden py-16">
+						<!-- Radial glow behind icon -->
+						<div class="empty-glow" aria-hidden="true"></div>
+						<div class="empty-icon relative mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
 							<Rocket class="h-8 w-8 text-primary" />
 						</div>
 						<h3 class="mb-2 text-xl font-semibold text-foreground">No worlds yet</h3>
 						<p class="mb-6 max-w-md text-center text-muted-foreground">
 							Create your first interactive story world and start exploring infinite narratives.
 						</p>
-						<Button onclick={() => goto('/worlds/new')} class="gap-2">
+						<Button onclick={() => goto('/worlds/new')} class="empty-cta gap-2">
 							<Plus class="h-4 w-4" />
 							Create Your First World
 						</Button>
@@ -82,11 +82,12 @@
 			{:else}
 				<!-- Worlds grid -->
 				<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-					{#each worldsQuery.data ?? [] as world (world.id)}
+					{#each worldsQuery.data ?? [] as world, i (world.id)}
 						<WorldCard
 							{world}
 							onDelete={handleDeleteWorld}
 							isDeleting={deletingWorldId === world.id}
+							index={i}
 						/>
 					{/each}
 				</div>
@@ -138,3 +139,48 @@
 		</section>
 	</main>
 </div>
+
+<style>
+	/* ── Empty state glow ── */
+	.empty-glow {
+		position: absolute;
+		top: 20%;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 200px;
+		height: 200px;
+		border-radius: 50%;
+		background: radial-gradient(circle, oklch(from var(--primary) l c h / 0.08) 0%, transparent 70%);
+		filter: blur(40px);
+		pointer-events: none;
+	}
+
+	/* Rocket icon gentle pulse */
+	.empty-icon {
+		animation: icon-float 3s ease-in-out infinite;
+	}
+
+	@keyframes icon-float {
+		0%, 100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-4px);
+		}
+	}
+
+	/* CTA button subtle glow */
+	:global(.empty-cta) {
+		box-shadow: 0 0 20px oklch(from var(--primary) l c h / 0.15);
+		transition: box-shadow 0.3s ease;
+	}
+	:global(.empty-cta:hover) {
+		box-shadow: 0 0 28px oklch(from var(--primary) l c h / 0.25);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.empty-icon {
+			animation: none;
+		}
+	}
+</style>

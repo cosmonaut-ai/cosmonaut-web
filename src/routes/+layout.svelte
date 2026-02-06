@@ -40,6 +40,12 @@
 	async function handleSignIn() {
 		if (isSigningIn) return;
 
+		// If already authenticated, navigate to dashboard instead of re-triggering OAuth
+		if (auth.isAuthenticated) {
+			goto('/dashboard');
+			return;
+		}
+
 		try {
 			isSigningIn = true;
 			await auth.login();

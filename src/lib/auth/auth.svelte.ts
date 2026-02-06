@@ -130,8 +130,15 @@ export async function checkAuthState(): Promise<void> {
 
 /**
  * Sign in with Google OAuth (or mock login in local development)
+ * Safe to call when already authenticated -- will no-op and return early.
  */
 export async function login(): Promise<void> {
+	// Guard: prevent signInWithRedirect when a session already exists
+	// (AWS Amplify throws UserAlreadyAuthenticatedException otherwise)
+	if (isAuthenticated) {
+		return;
+	}
+
 	// In local environment, use mock authentication
 	if (isLocalEnvironment) {
 		isAuthenticated = true;

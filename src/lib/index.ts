@@ -1,1 +1,2 @@
-// place files you want to import through the `$lib` alias in this folder.
+// Barrel exports for the $lib alias
+// Individual modules are imported directly (e.g. $lib/auth/auth.svelte, $lib/queries)

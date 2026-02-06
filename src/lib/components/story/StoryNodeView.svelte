@@ -246,7 +246,6 @@
 			</div>
 
 			<div class="flex items-center gap-2 text-sm text-muted-foreground">
-				<span>Node {pathLength}</span>
 				{#if pathLength > 1}
 					<Button
 						variant="ghost"

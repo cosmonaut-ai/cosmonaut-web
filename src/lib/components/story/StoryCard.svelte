@@ -45,11 +45,13 @@
 	}
 </script>
 
-<Card class="rounded-none border-l-0 border-l-primary bg-card sm:rounded-lg sm:border-l-4">
+<Card class="story-card rounded-none border-l-0 border-l-primary bg-card sm:rounded-lg sm:border-l-4">
 	<CardContent class="p-6 sm:p-8">
 		<!-- Story text -->
 		<div
 			class="prose prose-sm max-w-none font-mono leading-relaxed text-card-foreground prose-invert sm:prose-lg"
+			aria-live="polite"
+			aria-busy={isTyping}
 		>
 			{#each text.split('\n\n') as paragraph, i (i)}
 				<p class="mb-4 last:mb-0">
@@ -58,7 +60,8 @@
 				</p>
 			{/each}
 			{#if isTyping}
-				<span class="inline-block h-5 w-2 animate-pulse bg-primary"></span>
+				<span class="story-cursor" aria-hidden="true"></span>
+				<span class="sr-only">Generating story text...</span>
 			{/if}
 		</div>
 
@@ -75,9 +78,12 @@
 					<button
 						onclick={() => onChoiceSelect?.(i)}
 						disabled={isLoading}
-						class="group flex w-full items-center gap-4 rounded-lg border p-4 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50 {choice.is_created
-							? 'border-muted bg-muted/30 hover:border-muted-foreground/30 hover:bg-muted/50'
-							: 'border-border bg-background/50 hover:border-primary/50 hover:bg-primary/5'}"
+						aria-label="Choose: {choice.label}{choice.is_created ? ' (already explored)' : ''}"
+						class="story-choice group flex w-full items-center gap-4 rounded-lg border p-4 text-left disabled:cursor-not-allowed disabled:opacity-50
+						{choice.is_created
+							? 'border-muted bg-muted/30 opacity-60 hover:border-muted-foreground/30 hover:bg-muted/50 hover:opacity-80'
+							: 'border-border bg-background/50 hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/5'}"
+						style="--choice-delay: {i * 70}ms"
 					>
 						<span
 							class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-medium transition-colors {choice.is_created
@@ -129,7 +135,7 @@
 								maxlength={MAX_CUSTOM_CHOICE_LENGTH}
 								disabled={isLoading}
 								placeholder="Describe what you want to do..."
-								class="min-h-20 resize-none font-mono"
+								class="story-textarea min-h-20 resize-none font-mono"
 							/>
 							<div class="flex items-center justify-between">
 								<span class="text-xs text-muted-foreground">
@@ -160,7 +166,11 @@
 				class="mt-8 border-t border-border pt-8 text-center"
 				in:fade={{ duration: 300, delay: 100 }}
 			>
-				<p class="mb-6 text-muted-foreground">✦ This path has ended ✦</p>
+				<p class="story-ending mb-6 text-muted-foreground">
+					<span class="story-star story-star-1">✦</span>
+					This path has ended
+					<span class="story-star story-star-2">✦</span>
+				</p>
 				{#if onRestart}
 					<Button variant="outline" onclick={onRestart} class="gap-2">
 						<RotateCcw class="h-4 w-4" />
@@ -172,10 +182,126 @@
 
 		<!-- Loading state indicator -->
 		{#if isLoading && !isTyping}
-			<div class="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-				<Spinner class="h-4 w-4" />
+			<div
+				class="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
+				role="status"
+				aria-live="polite"
+			>
+				<Spinner class="h-4 w-4" aria-hidden="true" />
 				<span>Generating story...</span>
 			</div>
 		{/if}
 	</CardContent>
 </Card>
+
+<style>
+	/* ── Typing cursor — gold glow caret ── */
+	.story-cursor {
+		display: inline-block;
+		width: 2.5px;
+		height: 1.15em;
+		vertical-align: text-bottom;
+		background: var(--primary);
+		border-radius: 1px;
+		animation: cursor-blink 1s steps(2) infinite;
+		box-shadow:
+			0 0 6px oklch(from var(--primary) l c h / 0.6),
+			0 0 14px oklch(from var(--primary) l c h / 0.25);
+	}
+
+	@keyframes cursor-blink {
+		0% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0;
+		}
+	}
+
+	/* ── Choice button stagger entrance ── */
+	.story-choice {
+		animation: choice-enter 0.4s ease-out both;
+		animation-delay: var(--choice-delay, 0ms);
+		transition:
+			border-color 0.2s ease,
+			background-color 0.2s ease,
+			box-shadow 0.25s ease,
+			opacity 0.2s ease,
+			transform 0.2s ease;
+	}
+
+	.story-choice:hover {
+		transform: translateX(2px);
+	}
+
+	@keyframes choice-enter {
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* ── Custom choice textarea focus glow ── */
+	:global(.story-textarea:focus) {
+		box-shadow: 0 0 0 2px oklch(from var(--primary) l c h / 0.2) !important;
+	}
+
+	/* ── Story card left border glow ── */
+	:global(.story-card) {
+		border-left-color: var(--primary) !important;
+	}
+
+	@media (min-width: 640px) {
+		:global(.story-card) {
+			box-shadow: -2px 0 12px oklch(from var(--primary) l c h / 0.06);
+		}
+	}
+
+	/* ── Ending star flourish ── */
+	.story-star {
+		display: inline-block;
+		color: var(--primary);
+		animation: star-twinkle 2s ease-in-out infinite;
+	}
+	.story-star-1 {
+		animation-delay: 0s;
+	}
+	.story-star-2 {
+		animation-delay: 1s;
+	}
+
+	@keyframes star-twinkle {
+		0%,
+		100% {
+			opacity: 0.5;
+			transform: scale(1);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1.2);
+		}
+	}
+
+	/* ── Reduced motion ── */
+	@media (prefers-reduced-motion: reduce) {
+		.story-cursor {
+			animation: none;
+			opacity: 1;
+		}
+		.story-choice {
+			animation: none;
+			opacity: 1;
+		}
+		.story-choice:hover {
+			transform: none;
+		}
+		.story-star {
+			animation: none;
+			opacity: 0.7;
+		}
+	}
+</style>

@@ -9,8 +9,7 @@
 	import FlowNode from '$lib/components/FlowNode.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { Card, CardContent } from '$lib/components/ui/card';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { BookOpen } from '@lucide/svelte';
 
 	// Get worldId from params (guaranteed to exist in this route)
@@ -67,13 +66,27 @@
 <!-- WorldHeader is rendered by the layout -->
 <div class="relative h-full w-full">
 	{#if isLoading}
-		<div class="flex h-full items-center justify-center">
-			<Card>
-				<CardContent class="flex items-center gap-3 py-8">
-					<Spinner class="h-5 w-5" />
-					<span class="text-muted-foreground">Loading story map...</span>
-				</CardContent>
-			</Card>
+		<div
+			class="flex h-full items-center justify-center"
+			role="status"
+			aria-label="Loading story map"
+		>
+			<div class="flex flex-col items-center gap-4">
+				<!-- Skeleton placeholder mimicking the graph layout -->
+				<div class="flex items-center gap-6">
+					<Skeleton class="h-10 w-24 rounded-lg" />
+					<Skeleton class="h-1 w-12 rounded" />
+					<Skeleton class="h-10 w-24 rounded-lg" />
+					<Skeleton class="h-1 w-12 rounded" />
+					<Skeleton class="h-10 w-24 rounded-lg" />
+				</div>
+				<div class="flex items-center gap-6">
+					<Skeleton class="h-10 w-24 rounded-lg" />
+					<Skeleton class="h-1 w-12 rounded" />
+					<Skeleton class="h-10 w-24 rounded-lg" />
+				</div>
+				<p class="text-sm text-muted-foreground">Loading story map...</p>
+			</div>
 		</div>
 	{:else if nodes.length === 0}
 		<div class="flex h-full items-center justify-center">
