@@ -93,9 +93,7 @@
 	}
 
 	function isStepComplete(status: GenerationStatus): boolean {
-		return (
-			getProgress(generationStatus) > getProgress(status) || generationStatus === 'completed'
-		);
+		return getProgress(generationStatus) > getProgress(status) || generationStatus === 'completed';
 	}
 
 	function isStepActive(status: GenerationStatus): boolean {
@@ -413,11 +411,7 @@
 		position: absolute;
 		inset: 3px;
 		border-radius: 50%;
-		background: radial-gradient(
-			circle at 32% 28%,
-			rgba(255, 255, 255, 0.55) 0%,
-			transparent 55%
-		);
+		background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55) 0%, transparent 55%);
 	}
 
 	/* ── Text ── */

@@ -22,13 +22,16 @@
 		<Card class="border-destructive/30">
 			<CardContent class="py-12">
 				<div class="flex flex-col items-center">
-					<div class="gen-failed-icon mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-destructive/30 bg-destructive/10">
+					<div
+						class="gen-failed-icon mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-destructive/30 bg-destructive/10"
+					>
 						<Sparkles class="h-10 w-10 text-destructive" />
 					</div>
 
 					<h2 class="mb-2 text-2xl font-bold text-foreground">Something Went Wrong</h2>
 					<p class="mb-2 max-w-md text-center text-muted-foreground">
-						We hit a snag while forging your world. These things happen — the cosmos can be unpredictable.
+						We hit a snag while forging your world. These things happen — the cosmos can be
+						unpredictable.
 					</p>
 					<p class="mb-8 text-center text-sm text-muted-foreground/70">
 						Your prompt is safe. Give it another shot and we'll try again.

@@ -20,7 +20,9 @@
 
 	<div class="relative z-10 mx-auto max-w-4xl text-center">
 		<!-- Decorative stars -->
-		<div class="hero-enter hero-enter-1 mb-8 flex items-center justify-center gap-3 text-primary/60">
+		<div
+			class="hero-enter hero-enter-1 mb-8 flex items-center justify-center gap-3 text-primary/60"
+		>
 			<span class="hero-twinkle hero-twinkle-1 text-2xl">✦</span>
 			<span class="text-sm tracking-[0.3em] text-muted-foreground uppercase">
 				Explore Infinite Worlds
@@ -29,20 +31,26 @@
 		</div>
 
 		<!-- Main title with glow effect -->
-		<h1 class="hero-title hero-enter hero-enter-2 mb-6 text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl">
+		<h1
+			class="hero-title hero-enter hero-enter-2 mb-6 text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl"
+		>
 			<span class="text-foreground">Welcome to</span>
 			<br />
 			<span class="text-primary">Cosmonaut</span>
 		</h1>
 
 		<!-- Subtitle -->
-		<p class="hero-enter hero-enter-3 mx-auto mb-12 max-w-2xl text-lg text-muted-foreground sm:text-xl">
+		<p
+			class="hero-enter hero-enter-3 mx-auto mb-12 max-w-2xl text-lg text-muted-foreground sm:text-xl"
+		>
 			Create, explore, and share interactive story worlds. Every choice shapes the narrative. Every
 			world is an adventure waiting to unfold.
 		</p>
 
 		<!-- CTA Buttons -->
-		<div class="hero-enter hero-enter-4 flex flex-col items-center justify-center gap-4 sm:flex-row">
+		<div
+			class="hero-enter hero-enter-4 flex flex-col items-center justify-center gap-4 sm:flex-row"
+		>
 			<Button
 				size="lg"
 				class="group gap-2 px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
@@ -142,7 +150,8 @@
 	}
 
 	@keyframes twinkle {
-		0%, 100% {
+		0%,
+		100% {
 			opacity: 0.4;
 			transform: scale(1) rotate(0deg);
 		}

@@ -154,7 +154,8 @@
 	}
 
 	@keyframes current-pulse {
-		0%, 100% {
+		0%,
+		100% {
 			box-shadow:
 				0 0 0 2px color-mix(in oklch, var(--chart-2) 35%, transparent),
 				0 8px 20px color-mix(in oklch, var(--chart-2) 25%, transparent);

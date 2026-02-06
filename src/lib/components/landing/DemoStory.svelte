@@ -299,7 +299,8 @@
 	}
 
 	@keyframes star-twinkle {
-		0%, 100% {
+		0%,
+		100% {
 			opacity: 0.5;
 			transform: scale(1);
 		}

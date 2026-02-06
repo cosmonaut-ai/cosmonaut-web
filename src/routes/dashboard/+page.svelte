@@ -63,10 +63,14 @@
 			{:else if worldsQuery.data?.length === 0}
 				<!-- Empty state — polished -->
 				<Card class="empty-card border-dashed">
-					<CardContent class="relative flex flex-col items-center justify-center overflow-hidden py-16">
+					<CardContent
+						class="relative flex flex-col items-center justify-center overflow-hidden py-16"
+					>
 						<!-- Radial glow behind icon -->
 						<div class="empty-glow" aria-hidden="true"></div>
-						<div class="empty-icon relative mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
+						<div
+							class="empty-icon relative mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10"
+						>
 							<Rocket class="h-8 w-8 text-primary" />
 						</div>
 						<h3 class="mb-2 text-xl font-semibold text-foreground">No worlds yet</h3>
@@ -150,7 +154,11 @@
 		width: 200px;
 		height: 200px;
 		border-radius: 50%;
-		background: radial-gradient(circle, oklch(from var(--primary) l c h / 0.08) 0%, transparent 70%);
+		background: radial-gradient(
+			circle,
+			oklch(from var(--primary) l c h / 0.08) 0%,
+			transparent 70%
+		);
 		filter: blur(40px);
 		pointer-events: none;
 	}
@@ -161,7 +169,8 @@
 	}
 
 	@keyframes icon-float {
-		0%, 100% {
+		0%,
+		100% {
 			transform: translateY(0);
 		}
 		50% {

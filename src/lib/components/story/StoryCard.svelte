@@ -45,7 +45,9 @@
 	}
 </script>
 
-<Card class="story-card rounded-none border-l-0 border-l-primary bg-card sm:rounded-lg sm:border-l-4">
+<Card
+	class="story-card rounded-none border-l-0 border-l-primary bg-card sm:rounded-lg sm:border-l-4"
+>
 	<CardContent class="p-6 sm:p-8">
 		<!-- Story text -->
 		<div
