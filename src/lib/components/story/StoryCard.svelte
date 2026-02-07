@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { Choice } from '$lib/types/api';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { ChevronRight, RotateCcw, Check } from '@lucide/svelte';
+	import { ChevronRight, RotateCcw, Check, Sparkles } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 
 	interface Props {
@@ -13,6 +14,7 @@
 		isTyping?: boolean;
 		isEnding?: boolean;
 		isLoading?: boolean;
+		isAtQuotaLimit?: boolean;
 		showCustomChoice?: boolean;
 		onChoiceSelect?: (choiceIndex: number) => void;
 		onCustomChoice?: (text: string) => void;
@@ -25,11 +27,14 @@
 		isTyping = false,
 		isEnding = false,
 		isLoading = false,
+		isAtQuotaLimit = false,
 		showCustomChoice = true,
 		onChoiceSelect,
 		onCustomChoice,
 		onRestart
 	}: Props = $props();
+
+	const isDisabled = $derived(isLoading || isAtQuotaLimit);
 
 	let customChoiceText = $state('');
 	const MAX_CUSTOM_CHOICE_LENGTH = 200;
@@ -73,16 +78,37 @@
 				class="mt-8 space-y-3 border-t border-border pt-8"
 				in:fade={{ duration: 300, delay: 100 }}
 			>
+				<!-- Quota limit banner -->
+				{#if isAtQuotaLimit}
+					<div
+						class="mb-4 flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3"
+					>
+						<Sparkles class="h-4 w-4 shrink-0 text-primary" />
+						<p class="flex-1 text-sm text-muted-foreground">
+							You've reached your generation limit for this period.
+						</p>
+						<Button
+							variant="link"
+							size="sm"
+							class="h-auto shrink-0 gap-1.5 p-0 text-primary"
+							onclick={() => goto('/pricing')}
+						>
+							View Plans
+						</Button>
+					</div>
+				{/if}
+
 				<p class="mb-4 text-sm font-medium tracking-wider text-muted-foreground uppercase">
 					What do you do?
 				</p>
 				{#each choices as choice, i (choice.label)}
+				{@const choiceDisabled = isLoading || (isAtQuotaLimit && !choice.is_created)}
 				<button
 					onclick={() => onChoiceSelect?.(i)}
-					disabled={isLoading}
+					disabled={choiceDisabled}
 					aria-label="Choose: {choice.label}{choice.is_created ? ' (already explored)' : ''}"
 					class="story-choice group flex w-full items-center gap-4 rounded-lg border p-4 text-left
-					{isLoading
+					{choiceDisabled
 						? 'cursor-not-allowed opacity-50'
 						: choice.is_created
 							? 'border-muted bg-muted/30 opacity-60 hover:border-muted-foreground/30 hover:bg-muted/50 hover:opacity-80'
@@ -128,7 +154,7 @@
 				{/each}
 
 				<!-- Custom Choice Input -->
-				{#if showCustomChoice && onCustomChoice}
+				{#if showCustomChoice && onCustomChoice && !isAtQuotaLimit}
 					<div class="mt-6 border-t border-border pt-6">
 						<p class="mb-3 text-sm font-medium text-muted-foreground">
 							Or write your own action...
@@ -137,7 +163,7 @@
 							<Textarea
 								bind:value={customChoiceText}
 								maxlength={MAX_CUSTOM_CHOICE_LENGTH}
-								disabled={isLoading}
+								disabled={isDisabled}
 								placeholder="Describe what you want to do..."
 								class="story-textarea min-h-20 resize-none"
 							/>
@@ -148,7 +174,7 @@
 								<Button
 									size="sm"
 									onclick={handleCustomChoice}
-									disabled={isLoading || !customChoiceText.trim()}
+									disabled={isDisabled || !customChoiceText.trim()}
 								>
 									{#if isLoading}
 										<Spinner />

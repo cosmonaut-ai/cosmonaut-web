@@ -7,6 +7,7 @@
 		useNode,
 		useChooseOption,
 		updateNodeInCache,
+		useUsage,
 		usageKeys,
 		type ChoiceOption
 	} from '$lib/queries';
@@ -89,6 +90,11 @@
 	// Use mutation for choosing options
 	const chooseMutation = useChooseOption(() => worldId);
 
+	// Proactive quota check
+	const usageQuery = useUsage();
+	const usage = $derived(usageQuery.data);
+	const isAtNodeLimit = $derived(usage ? usage.nodes_used >= usage.nodes_limit : false);
+
 	const isProcessingChoice = $derived(isStreaming || isNodeGenerating || chooseMutation.isPending);
 	const isLoading = $derived(loading || nodeQuery.isLoading || isNodeGenerating || chooseMutation.isPending);
 
@@ -170,26 +176,9 @@
 						// Show upgrade prompt instead of generic error toast
 						showQuotaPrompt = true;
 						queryClient.invalidateQueries({ queryKey: usageKeys.all });
-
-						// Navigate back so background shows meaningful content
-						const parentId =
-							currentNodeOverride?.parent_id ?? nodeQuery.data?.parent_id;
-						slideDirection = 'back';
-						currentNodeOverride = null;
-						generatingNodeId = null;
-
-						if (parentId) {
-							// Non-root: go back to the parent story node
-							goto(`/worlds/${worldId}/nodes/${parentId}`, {
-								replaceState: true,
-								noScroll: true
-							});
-						} else {
-							// Root node: go back to the world home page
-							goto(`/worlds/${worldId}`, {
-								replaceState: true
-							});
-						}
+						// Keep generatingNodeId set so the effect doesn't re-trigger
+						// (the node stays 'initialized' on the server, and retrying
+						// would just hit the quota limit again in an infinite loop)
 					} else {
 						showError(
 							'Failed to generate text',
@@ -491,6 +480,7 @@
 						isTyping={false}
 						{isEnding}
 						{isLoading}
+						isAtQuotaLimit={isAtNodeLimit}
 						showCustomChoice={!isEnding}
 						onChoiceSelect={handleChoiceSelect}
 						onCustomChoice={handleCustomChoice}
