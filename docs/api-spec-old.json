@@ -1,0 +1,1622 @@
+{
+	"openapi": "3.1.0",
+	"info": {
+		"title": "Cosmonaut AI API",
+		"version": "0.1.0"
+	},
+	"paths": {
+		"/health": {
+			"get": {
+				"summary": "Health",
+				"description": "Lightweight health probe for uptime checks.",
+				"operationId": "health_health_get",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/worlds/": {
+			"get": {
+				"tags": ["worlds"],
+				"summary": "List available worlds",
+				"description": "Return a discoverable set of worlds (paged feed TBD).",
+				"operationId": "list_worlds_worlds__get",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/WorldMetaDTO-Output"
+									},
+									"type": "array",
+									"title": "Response List Worlds Worlds  Get"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["worlds"],
+				"summary": "Initialize a new world",
+				"description": "Create a new world.",
+				"operationId": "create_world_worlds__post",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/WorldCreateRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorldMetaDTO-Output"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				]
+			}
+		},
+		"/worlds/{world_id}": {
+			"get": {
+				"tags": ["worlds"],
+				"summary": "Fetch a single world by identifier",
+				"description": "Retrieve a single world by its identifier.",
+				"operationId": "get_world_worlds__world_id__get",
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "world_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the world",
+							"title": "World Id"
+						},
+						"description": "Identifier for the world"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorldMetaDTO-Output"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["worlds"],
+				"summary": "Update fields on an existing world",
+				"description": "Apply partial updates to an existing world.",
+				"operationId": "update_world_worlds__world_id__patch",
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "world_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the world",
+							"title": "World Id"
+						},
+						"description": "Identifier for the world"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/WorldMetaDTO-Input"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorldMetaDTO-Output"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"tags": ["worlds"],
+				"summary": "Delete a world",
+				"description": "Delete a world and any associated state (implementation pending).",
+				"operationId": "delete_world_worlds__world_id__delete",
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "world_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the world",
+							"title": "World Id"
+						},
+						"description": "Identifier for the world"
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "Successful Response"
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/worlds/{world_id}/sharing": {
+			"post": {
+				"tags": ["worlds"],
+				"summary": "Share a world with a user",
+				"description": "Share a world with a user.",
+				"operationId": "update_sharing_worlds__world_id__sharing_post",
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "world_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the world",
+							"title": "World Id"
+						},
+						"description": "Identifier for the world"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/WorldUpdateSharingRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorldMetaDTO-Output"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/worlds/{world_id}/nodes/": {
+			"get": {
+				"tags": ["story-nodes"],
+				"summary": "List all nodes in a world",
+				"description": "Return all story nodes for a given world.",
+				"operationId": "list_nodes_worlds__world_id__nodes__get",
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "world_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the world",
+							"title": "World Id"
+						},
+						"description": "Identifier for the world"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/StoryNodeDTO"
+									},
+									"title": "Response List Nodes Worlds  World Id  Nodes  Get"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/worlds/{world_id}/nodes/{node_id}": {
+			"get": {
+				"tags": ["story-nodes"],
+				"summary": "Fetch a single story node",
+				"description": "Retrieve a single story node by its identifier.",
+				"operationId": "get_node_worlds__world_id__nodes__node_id__get",
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "world_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the world",
+							"title": "World Id"
+						},
+						"description": "Identifier for the world"
+					},
+					{
+						"name": "node_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the node",
+							"title": "Node Id"
+						},
+						"description": "Identifier for the node"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/StoryNodeDTO"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/worlds/{world_id}/nodes/{node_id}/choose": {
+			"post": {
+				"tags": ["story-nodes"],
+				"summary": "Choose an option and initialize the next story node",
+				"description": "Select a choice from the current node and initialize the next story node.\n\nThis endpoint accepts either:\n- `choice_index`: Index of an existing choice (0-based)\n- `custom_choice`: Free text custom choice (max 200 characters)\n\nExactly one of these must be provided.\n\nThe endpoint:\n1. Validates the input (choice index bounds or custom choice length)\n2. For custom choices, adds the choice to the parent node's choice list\n3. Creates a new story node with generation_status=INITIALIZED (no text yet)\n4. Returns the initialized node\n\nTo generate the story text, call the /generate-text endpoint.",
+				"operationId": "choose_worlds__world_id__nodes__node_id__choose_post",
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "world_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the world",
+							"title": "World Id"
+						},
+						"description": "Identifier for the world"
+					},
+					{
+						"name": "node_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the current node",
+							"title": "Node Id"
+						},
+						"description": "Identifier for the current node"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ChooseRequestDTO"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/StoryNodeDTO"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/worlds/{world_id}/nodes/{node_id}/generate-text": {
+			"post": {
+				"tags": ["story-nodes"],
+				"summary": "Generate story text for an initialized node (streaming)",
+				"description": "Generate story text for a node with INITIALIZED or FAILED generation status.\n\nThis endpoint streams the generated text using Server-Sent Events (SSE) format.\nThe node must have been previously created via the /choose endpoint.\n\nThe endpoint:\n1. Validates the node exists and has INITIALIZED or FAILED generation_status\n2. Updates generation_status to GENERATING\n3. Streams the generated story text\n4. Updates the node with generated text, title, choices, and sets generation_status to COMPLETED\n5. On error, sets generation_status to FAILED",
+				"operationId": "generate_text_worlds__world_id__nodes__node_id__generate_text_post",
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "world_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the world",
+							"title": "World Id"
+						},
+						"description": "Identifier for the world"
+					},
+					{
+						"name": "node_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Identifier for the node to generate text for",
+							"title": "Node Id"
+						},
+						"description": "Identifier for the node to generate text for"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/session": {
+			"post": {
+				"tags": ["auth"],
+				"summary": "Create Session",
+				"operationId": "create_session_auth_session_post",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				]
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"CharacterDTO": {
+				"properties": {
+					"name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"relationships": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Relationships"
+					}
+				},
+				"type": "object",
+				"title": "CharacterDTO"
+			},
+			"ChoiceDTO": {
+				"properties": {
+					"label": {
+						"type": "string",
+						"title": "Label"
+					},
+					"outcome": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Outcome"
+					},
+					"target": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Target"
+					},
+					"is_created": {
+						"type": "boolean",
+						"title": "Is Created",
+						"default": false
+					},
+					"is_custom": {
+						"type": "boolean",
+						"title": "Is Custom",
+						"default": false
+					},
+					"creator": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Creator"
+					}
+				},
+				"type": "object",
+				"required": ["label"],
+				"title": "ChoiceDTO",
+				"description": "A choice option in a story node."
+			},
+			"ChooseRequestDTO": {
+				"properties": {
+					"choice_index": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Choice Index"
+					},
+					"custom_choice": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 200
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Custom Choice"
+					}
+				},
+				"type": "object",
+				"title": "ChooseRequestDTO",
+				"description": "Request body for the choose endpoint."
+			},
+			"HTTPValidationError": {
+				"properties": {
+					"detail": {
+						"items": {
+							"$ref": "#/components/schemas/ValidationError"
+						},
+						"type": "array",
+						"title": "Detail"
+					}
+				},
+				"type": "object",
+				"title": "HTTPValidationError"
+			},
+			"LocationDTO": {
+				"properties": {
+					"name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"connections": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Connections"
+					}
+				},
+				"type": "object",
+				"title": "LocationDTO"
+			},
+			"StoryNodeContextDTO": {
+				"properties": {
+					"world_facts": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"title": "World Facts"
+					},
+					"branch_facts": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"title": "Branch Facts"
+					},
+					"similar_nodes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"title": "Similar Nodes"
+					}
+				},
+				"type": "object",
+				"required": ["world_facts", "branch_facts", "similar_nodes"],
+				"title": "StoryNodeContextDTO",
+				"description": "Context to be provided to the LLM when generating a new story node."
+			},
+			"StoryNodeDTO": {
+				"properties": {
+					"id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Id"
+					},
+					"world_id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Id"
+					},
+					"text": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Text"
+					},
+					"story_summary": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Story Summary"
+					},
+					"title": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Title"
+					},
+					"choices": {
+						"items": {
+							"$ref": "#/components/schemas/ChoiceDTO"
+						},
+						"type": "array",
+						"title": "Choices"
+					},
+					"parent_id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Parent Id"
+					},
+					"context": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/StoryNodeContextDTO"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"ancestors": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"title": "Ancestors"
+					},
+					"created_at": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Created At"
+					},
+					"updated_at": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Updated At"
+					},
+					"processing_status": {
+						"$ref": "#/components/schemas/StoryNodeProcessingStatus",
+						"default": "pending"
+					},
+					"generation_status": {
+						"$ref": "#/components/schemas/app__models__dtos__story_node__GenerationStatus",
+						"default": "initialized"
+					}
+				},
+				"type": "object",
+				"title": "StoryNodeDTO",
+				"description": "Story node response DTO."
+			},
+			"StoryNodeProcessingStatus": {
+				"type": "string",
+				"enum": ["pending", "processing", "completed", "failed"],
+				"title": "StoryNodeProcessingStatus",
+				"description": "Status of the story node processing (async fact extraction)."
+			},
+			"ValidationError": {
+				"properties": {
+					"loc": {
+						"items": {
+							"anyOf": [
+								{
+									"type": "string"
+								},
+								{
+									"type": "integer"
+								}
+							]
+						},
+						"type": "array",
+						"title": "Location"
+					},
+					"msg": {
+						"type": "string",
+						"title": "Message"
+					},
+					"type": {
+						"type": "string",
+						"title": "Error Type"
+					}
+				},
+				"type": "object",
+				"required": ["loc", "msg", "type"],
+				"title": "ValidationError"
+			},
+			"WorldCreateRequest": {
+				"properties": {
+					"visibility": {
+						"$ref": "#/components/schemas/WorldVisibility",
+						"default": "private"
+					},
+					"world_prompt": {
+						"type": "string",
+						"title": "World Prompt",
+						"description": "The prompt for the world."
+					}
+				},
+				"type": "object",
+				"required": ["world_prompt"],
+				"title": "WorldCreateRequest",
+				"description": "Payload for creating a new world."
+			},
+			"WorldMetaDTO-Input": {
+				"properties": {
+					"id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Id"
+					},
+					"title": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Title"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"genre": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Genre"
+					},
+					"score": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Score"
+					},
+					"generation_status": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/app__models__dtos__world_meta__GenerationStatus"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"author_id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Author Id"
+					},
+					"root_node_id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Root Node Id"
+					},
+					"visibility": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/WorldVisibility"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"shared_with": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Shared With"
+					},
+					"world_prompt": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Prompt"
+					},
+					"setting": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Setting"
+					},
+					"narrative_context": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Narrative Context"
+					},
+					"characters": {
+						"anyOf": [
+							{
+								"items": {
+									"$ref": "#/components/schemas/CharacterDTO"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Characters"
+					},
+					"locations": {
+						"anyOf": [
+							{
+								"items": {
+									"$ref": "#/components/schemas/LocationDTO"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Locations"
+					},
+					"potential_endings": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Potential Endings"
+					},
+					"narrator_profile": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Narrator Profile"
+					},
+					"node_text_length": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Node Text Length"
+					},
+					"story_max_nodes": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Story Max Nodes"
+					},
+					"world_image_url": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Url"
+					},
+					"world_image_alt_text": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Alt Text"
+					},
+					"world_image_width": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Width"
+					},
+					"world_image_height": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Height"
+					},
+					"world_image_size": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Size"
+					},
+					"created_at": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Created At"
+					},
+					"updated_at": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Updated At"
+					}
+				},
+				"type": "object",
+				"title": "WorldMetaDTO",
+				"description": "World metadata response DTO."
+			},
+			"WorldMetaDTO-Output": {
+				"properties": {
+					"id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Id"
+					},
+					"title": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Title"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"genre": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Genre"
+					},
+					"score": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Score"
+					},
+					"generation_status": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/app__models__dtos__world_meta__GenerationStatus"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"author_id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Author Id"
+					},
+					"root_node_id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Root Node Id"
+					},
+					"visibility": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/WorldVisibility"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"shared_with": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Shared With"
+					},
+					"world_prompt": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Prompt"
+					},
+					"setting": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Setting"
+					},
+					"narrative_context": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Narrative Context"
+					},
+					"characters": {
+						"anyOf": [
+							{
+								"items": {
+									"$ref": "#/components/schemas/CharacterDTO"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Characters"
+					},
+					"locations": {
+						"anyOf": [
+							{
+								"items": {
+									"$ref": "#/components/schemas/LocationDTO"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Locations"
+					},
+					"potential_endings": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Potential Endings"
+					},
+					"narrator_profile": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Narrator Profile"
+					},
+					"node_text_length": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Node Text Length"
+					},
+					"story_max_nodes": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Story Max Nodes"
+					},
+					"world_image_url": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Url"
+					},
+					"world_image_alt_text": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Alt Text"
+					},
+					"world_image_width": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Width"
+					},
+					"world_image_height": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Height"
+					},
+					"world_image_size": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "World Image Size"
+					},
+					"created_at": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Created At"
+					},
+					"updated_at": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Updated At"
+					}
+				},
+				"type": "object",
+				"title": "WorldMetaDTO",
+				"description": "World metadata response DTO."
+			},
+			"WorldUpdateSharingRequest": {
+				"properties": {
+					"shared_with": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Shared With"
+					},
+					"visibility": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/WorldVisibility"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"type": "object",
+				"title": "WorldUpdateSharingRequest",
+				"description": "Payload for sharing a world with a user."
+			},
+			"WorldVisibility": {
+				"type": "string",
+				"enum": ["private", "public"],
+				"title": "WorldVisibility",
+				"description": "Visibility of the world."
+			},
+			"app__models__dtos__story_node__GenerationStatus": {
+				"type": "string",
+				"enum": ["initialized", "generating", "completed", "failed"],
+				"title": "GenerationStatus",
+				"description": "Status of story node text generation."
+			},
+			"app__models__dtos__world_meta__GenerationStatus": {
+				"type": "string",
+				"enum": [
+					"initialized",
+					"generating_lore",
+					"generating_start_node",
+					"generating_narrator_profile",
+					"completed",
+					"failed"
+				],
+				"title": "GenerationStatus",
+				"description": "Status of the world generation."
+			}
+		},
+		"securitySchemes": {
+			"HTTPBearer": {
+				"type": "http",
+				"scheme": "bearer"
+			}
+		}
+	}
+}

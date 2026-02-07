@@ -36,7 +36,7 @@ jobs:
             echo "PUBLIC_COGNITO_USER_POOL_ID=us-east-2_wLg6WTvcN" >> $GITHUB_ENV
             echo "PUBLIC_COGNITO_CLIENT_ID=3el862qtsgrdumiee802jhpegu" >> $GITHUB_ENV
             echo "PUBLIC_COGNITO_DOMAIN=cosmonaut-prod.auth.us-east-2.amazoncognito.com" >> $GITHUB_ENV
-            echo "PUBLIC_COGNITO_REDIRECT_URI=https://cosmonaut-prod.auth.us-east-2.amazoncognito.com/oauth2/idpresponse" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_REDIRECT_URI=https://cosmonaut-ai.com/callback" >> $GITHUB_ENV
           else
             echo "S3_BUCKET=cosmonaut-dev-frontend" >> $GITHUB_ENV
             echo "CLOUDFRONT_DISTRIBUTION_ID=E2B2XQRISFFDLK" >> $GITHUB_ENV
@@ -45,7 +45,7 @@ jobs:
             echo "PUBLIC_COGNITO_USER_POOL_ID=us-east-2_yztvRZ3oT" >> $GITHUB_ENV
             echo "PUBLIC_COGNITO_CLIENT_ID=4l5f2tb9vdl01ig9k9ian6b0as" >> $GITHUB_ENV
             echo "PUBLIC_COGNITO_DOMAIN=cosmonaut-dev.auth.us-east-2.amazoncognito.com" >> $GITHUB_ENV
-            echo "PUBLIC_COGNITO_REDIRECT_URI=https://cosmonaut-dev.auth.us-east-2.amazoncognito.com/oauth2/idpresponse" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_REDIRECT_URI=https://dev.cosmonaut-ai.com/callback" >> $GITHUB_ENV
           fi
 
       - name: Build
