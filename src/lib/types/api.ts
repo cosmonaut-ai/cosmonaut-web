@@ -1,29 +1,53 @@
-export type GenerationStatus =
+export type WorldGenerationStatus =
 	| 'initialized'
 	| 'generating_lore'
 	| 'generating_narrator_profile'
-	| 'generating_start_node'
 	| 'completed'
 	| 'failed';
 
+/** @deprecated Use WorldGenerationStatus instead */
+export type GenerationStatus = WorldGenerationStatus;
+
 export type StoryNodeProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export type StoryNodeGenerationStatus = 'initialized' | 'generating' | 'completed' | 'failed';
+
+export type WorldVisibility = 'private' | 'public';
 
 export interface Choice {
 	label: string;
+	outcome?: string | null;
 	target: string | null;
+	is_created?: boolean;
+	is_custom?: boolean;
+	creator?: string | null;
+}
+
+export interface Character {
+	name: string | null;
+	description: string | null;
+	relationships: string[] | null;
+}
+
+export interface Location {
+	name: string | null;
+	description: string | null;
+	connections: string[] | null;
 }
 
 export interface StoryNode {
 	id: string;
 	world_id: string;
 	title: string | null;
-	text: string;
+	text: string | null;
 	story_summary: string | null;
 	choices: Choice[];
 	parent_id: string | null;
 	ancestors: string[];
 	processing_status: StoryNodeProcessingStatus;
+	generation_status: StoryNodeGenerationStatus;
 	created_at: string;
+	updated_at?: string;
 }
 
 export interface World {
@@ -31,32 +55,74 @@ export interface World {
 	title: string | null;
 	description: string | null;
 	genre: string | null;
+	score: string | null;
 	generation_status: GenerationStatus;
 	author_id: string | null;
 	root_node_id: string | null;
-	visibility: string | null;
+	visibility: WorldVisibility | null;
+	shared_with: string[] | null;
 	world_prompt: string | null;
 	setting: string | null;
-	characters: string[] | null;
+	narrative_context: string | null;
+	characters: Character[] | null;
+	locations: Location[] | null;
 	potential_endings: string[] | null;
-	story_background: string | null;
 	narrator_profile: string | null;
 	node_text_length: number | null;
+	story_max_nodes: number | null;
 	world_image_url: string | null;
 	world_image_alt_text: string | null;
+	world_image_width: string | null;
+	world_image_height: string | null;
+	world_image_size: string | null;
 	created_at: string;
 	updated_at: string;
 }
 
 export interface CreateWorldRequest {
 	world_prompt: string;
-	narrator_profile?: string;
-	node_text_length?: number;
-	visibility?: string;
+	visibility?: WorldVisibility;
 }
 
-export interface ApiError {
-	detail: string;
+export interface UpdateWorldSharingRequest {
+	shared_with?: string[] | null;
+	visibility?: WorldVisibility | null;
+}
+
+/**
+ * Typed API error that carries the HTTP status code.
+ * Thrown by `handleResponse` and the SSE parser so callers can branch
+ * on status (e.g. `err.isQuotaExceeded`) instead of string-matching.
+ */
+export class ApiError extends Error {
+	constructor(
+		public readonly status: number,
+		public readonly detail: string
+	) {
+		super(detail);
+		this.name = 'ApiError';
+	}
+
+	get isQuotaExceeded(): boolean {
+		return this.status === 429;
+	}
+
+	get isNotFound(): boolean {
+		return this.status === 404;
+	}
+
+	get isUnauthorized(): boolean {
+		return this.status === 401;
+	}
+}
+
+/**
+ * Request body for the choose endpoint
+ * Exactly one of choice_index or custom_choice must be set
+ */
+export interface ChooseRequest {
+	choice_index: number | null;
+	custom_choice: string | null;
 }
 
 /**
