@@ -23,9 +23,6 @@
 				<a href="/about" class="text-muted-foreground transition-colors hover:text-foreground">
 					About
 				</a>
-				<a href="/docs" class="text-muted-foreground transition-colors hover:text-foreground">
-					Documentation
-				</a>
 				<a href="/privacy" class="text-muted-foreground transition-colors hover:text-foreground">
 					Privacy
 				</a>

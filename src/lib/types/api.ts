@@ -89,8 +89,31 @@ export interface UpdateWorldSharingRequest {
 	visibility?: WorldVisibility | null;
 }
 
-export interface ApiError {
-	detail: string;
+/**
+ * Typed API error that carries the HTTP status code.
+ * Thrown by `handleResponse` and the SSE parser so callers can branch
+ * on status (e.g. `err.isQuotaExceeded`) instead of string-matching.
+ */
+export class ApiError extends Error {
+	constructor(
+		public readonly status: number,
+		public readonly detail: string
+	) {
+		super(detail);
+		this.name = 'ApiError';
+	}
+
+	get isQuotaExceeded(): boolean {
+		return this.status === 429;
+	}
+
+	get isNotFound(): boolean {
+		return this.status === 404;
+	}
+
+	get isUnauthorized(): boolean {
+		return this.status === 401;
+	}
 }
 
 /**

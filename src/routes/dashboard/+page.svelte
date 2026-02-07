@@ -1,16 +1,24 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useWorlds, useDeleteWorld } from '$lib/queries';
+	import { useWorlds, useDeleteWorld, useUsage } from '$lib/queries';
 	import WorldCard from '$lib/components/dashboard/WorldCard.svelte';
 	import WorldCardSkeleton from '$lib/components/dashboard/WorldCardSkeleton.svelte';
+	import UsageLimitTooltip from '$lib/components/subscription/UsageLimitTooltip.svelte';
+	import UpgradePrompt from '$lib/components/subscription/UpgradePrompt.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
+	import { Tooltip, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import { Plus, Rocket, TrendingUp, Users } from '@lucide/svelte';
 
 	const worldsQuery = useWorlds();
 	const deleteMutation = useDeleteWorld();
+	const usageQuery = useUsage();
 
 	let deletingWorldId = $state<string | null>(null);
+	let showUpgradePrompt = $state(false);
+
+	const usage = $derived(usageQuery.data);
+	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
 
 	function handleDeleteWorld(worldId: string) {
 		deletingWorldId = worldId;
@@ -19,6 +27,14 @@
 				deletingWorldId = null;
 			}
 		});
+	}
+
+	function handleCreateWorld() {
+		if (isAtWorldLimit) {
+			showUpgradePrompt = true;
+		} else {
+			goto('/worlds/new');
+		}
 	}
 </script>
 
@@ -36,10 +52,22 @@
 					<h1 class="text-3xl font-bold text-foreground">Your Worlds</h1>
 					<p class="mt-1 text-muted-foreground">Create and explore your story universes</p>
 				</div>
-				<Button onclick={() => goto('/worlds/new')} class="gap-2">
-					<Plus class="h-4 w-4" />
-					Create World
-				</Button>
+			{#if isAtWorldLimit}
+				<Tooltip>
+					<TooltipTrigger>
+						<Button disabled class="gap-2">
+							<Plus class="h-4 w-4" />
+							Create World
+						</Button>
+					</TooltipTrigger>
+					<UsageLimitTooltip resource="worlds" />
+				</Tooltip>
+				{:else}
+					<Button onclick={handleCreateWorld} class="gap-2">
+						<Plus class="h-4 w-4" />
+						Create World
+					</Button>
+				{/if}
 			</div>
 
 			{#if worldsQuery.isLoading}
@@ -142,6 +170,12 @@
 			</Card>
 		</section>
 	</main>
+
+	<UpgradePrompt
+		open={showUpgradePrompt}
+		onOpenChange={(v) => (showUpgradePrompt = v)}
+		resource="worlds"
+	/>
 </div>
 
 <style>

@@ -1,0 +1,142 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { useAuth } from '$lib/auth/auth.svelte';
+	import { useUsage, useCheckout, useBillingPortal, usageKeys } from '$lib/queries';
+	import { useQueryClient } from '@tanstack/svelte-query';
+	import { TIER_CONFIG, tierRank } from '$lib/config/tiers';
+	import type { SubscriptionTier } from '$lib/types/subscription';
+	import PricingCard from '$lib/components/subscription/PricingCard.svelte';
+	import Footer from '$lib/components/landing/Footer.svelte';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import { showSuccess, showInfo } from '$lib/utils/toast';
+	import { AlertTriangle, ArrowLeft } from '@lucide/svelte';
+
+	const auth = useAuth();
+	const usageQuery = useUsage();
+	const checkoutMutation = useCheckout();
+	const billingPortalMutation = useBillingPortal();
+	const queryClient = useQueryClient();
+
+	const currentTier = $derived(usageQuery.data?.tier ?? null);
+	const pendingCancellation = $derived(usageQuery.data?.pending_cancellation ?? false);
+	const cancellationDate = $derived(usageQuery.data?.cancellation_date ?? null);
+
+	// Handle post-checkout redirect
+	onMount(() => {
+		const checkoutStatus = page.url.searchParams.get('checkout');
+		if (checkoutStatus === 'success') {
+			showSuccess('Subscription activated!', 'Welcome to your new plan.');
+			queryClient.invalidateQueries({ queryKey: usageKeys.all });
+			// Clean the URL
+			const url = new URL(window.location.href);
+			url.searchParams.delete('checkout');
+			history.replaceState({}, '', url.toString());
+		} else if (checkoutStatus === 'cancelled') {
+			showInfo('Checkout cancelled', 'No changes were made to your subscription.');
+			const url = new URL(window.location.href);
+			url.searchParams.delete('checkout');
+			history.replaceState({}, '', url.toString());
+		}
+	});
+
+	function handleTierSelect(tier: SubscriptionTier) {
+		if (!auth.isAuthenticated || !currentTier) return;
+
+		const currentRank = tierRank(currentTier);
+		const targetRank = tierRank(tier);
+
+		if (targetRank === currentRank) return;
+
+		if (currentTier === 'FREE') {
+			// Free -> Paid: use Stripe Checkout
+			checkoutMutation.mutate({
+				tier: tier as 'EXPLORER' | 'COSMONAUT',
+				success_url: `${window.location.origin}/pricing?checkout=success`,
+				cancel_url: `${window.location.origin}/pricing?checkout=cancelled`
+			});
+		} else {
+			// Paid -> Different paid tier: use Billing Portal (Stripe handles plan changes)
+			billingPortalMutation.mutate();
+		}
+	}
+
+	function handleGuestAction() {
+		auth.login();
+	}
+
+	function formatDate(dateStr: string | null): string {
+		if (!dateStr) return '';
+		return new Date(dateStr).toLocaleDateString('en-US', {
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric'
+		});
+	}
+
+	const isActionLoading = $derived(checkoutMutation.isPending || billingPortalMutation.isPending);
+</script>
+
+<svelte:head>
+	<title>Plans & Pricing - Cosmonaut</title>
+	<meta name="description" content="Choose the plan that fits your storytelling needs." />
+</svelte:head>
+
+<div class="h-full overflow-y-auto bg-background">
+	<main class="mx-auto max-w-6xl px-6 py-12">
+		<!-- Header -->
+		<div class="mb-4">
+			{#if auth.isAuthenticated}
+				<Button variant="ghost" size="sm" onclick={() => goto('/dashboard')} class="gap-2">
+					<ArrowLeft class="h-4 w-4" />
+					Back to Dashboard
+				</Button>
+			{/if}
+		</div>
+
+		<div class="mb-12 text-center">
+			<h1 class="text-4xl font-bold text-foreground">Plans & Pricing</h1>
+			<p class="mt-3 text-lg text-muted-foreground">
+				Choose the plan that fits your storytelling ambitions.
+			</p>
+		</div>
+
+		<!-- Cancellation warning -->
+		{#if pendingCancellation && cancellationDate}
+			<Alert class="mx-auto mb-8 max-w-2xl border-amber-500/50 bg-amber-500/10">
+				<AlertTriangle class="h-4 w-4 text-amber-400" />
+				<AlertDescription class="text-amber-200">
+					Your {usageQuery.data?.tier} plan will end on
+					<strong>{formatDate(cancellationDate)}</strong>. You'll be downgraded to the Free plan
+					after that. Select a plan below to resubscribe.
+				</AlertDescription>
+			</Alert>
+		{/if}
+
+		<!-- Pricing grid -->
+		<div class="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
+			{#each TIER_CONFIG as tier (tier.key)}
+				<PricingCard
+					{tier}
+					{currentTier}
+					isLoading={isActionLoading}
+					onSelect={handleTierSelect}
+					isGuest={!auth.isAuthenticated}
+					onGuestAction={handleGuestAction}
+				/>
+			{/each}
+		</div>
+
+		<!-- FAQ / Note -->
+		<div class="mx-auto mt-16 max-w-2xl text-center">
+			<p class="text-sm text-muted-foreground">
+				All paid plans are billed monthly through Stripe. You can cancel or change your plan at any
+				time. Usage limits reset at the start of each billing period.
+			</p>
+		</div>
+	</main>
+
+	<Footer />
+</div>

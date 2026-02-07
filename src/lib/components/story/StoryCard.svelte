@@ -77,12 +77,14 @@
 					What do you do?
 				</p>
 				{#each choices as choice, i (choice.label)}
-					<button
-						onclick={() => onChoiceSelect?.(i)}
-						disabled={isLoading}
-						aria-label="Choose: {choice.label}{choice.is_created ? ' (already explored)' : ''}"
-						class="story-choice group flex w-full items-center gap-4 rounded-lg border p-4 text-left disabled:cursor-not-allowed disabled:opacity-50
-						{choice.is_created
+				<button
+					onclick={() => onChoiceSelect?.(i)}
+					disabled={isLoading}
+					aria-label="Choose: {choice.label}{choice.is_created ? ' (already explored)' : ''}"
+					class="story-choice group flex w-full items-center gap-4 rounded-lg border p-4 text-left
+					{isLoading
+						? 'cursor-not-allowed opacity-50'
+						: choice.is_created
 							? 'border-muted bg-muted/30 opacity-60 hover:border-muted-foreground/30 hover:bg-muted/50 hover:opacity-80'
 							: 'border-border bg-background/50 hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/5'}"
 						style="--choice-delay: {i * 70}ms"
@@ -232,7 +234,12 @@
 			transform 0.2s ease;
 	}
 
-	.story-choice:hover {
+	.story-choice:disabled {
+		animation: none;
+		pointer-events: none;
+	}
+
+	.story-choice:hover:not(:disabled) {
 		transform: translateX(2px);
 	}
 

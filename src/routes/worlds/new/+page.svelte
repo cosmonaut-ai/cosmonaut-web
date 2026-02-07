@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useCreateWorld } from '$lib/queries';
+	import { useCreateWorld, useUsage } from '$lib/queries';
 	import type { WorldVisibility } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -11,10 +11,25 @@
 		CardTitle,
 		CardDescription
 	} from '$lib/components/ui/card';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
-	import { Rocket, ArrowLeft, Shuffle } from '@lucide/svelte';
+	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Sparkles } from '@lucide/svelte';
+
+	function formatResetDate(dateStr: string | null): string {
+		if (!dateStr) return '';
+		const date = new Date(dateStr);
+		const now = new Date();
+		const diffMs = date.getTime() - now.getTime();
+		const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+		if (diffDays <= 0) return 'Resets soon.';
+		if (diffDays === 1) return 'Resets tomorrow.';
+		if (diffDays <= 7) return `Resets in ${diffDays} days.`;
+
+		return `Resets ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`;
+	}
 
 	// Form state
 	let worldPrompt = $state('');
@@ -27,6 +42,11 @@
 	// Use mutation for creating world
 	const createMutation = useCreateWorld();
 	const loading = $derived(createMutation.isPending);
+
+	// Quota check
+	const usageQuery = useUsage();
+	const usage = $derived(usageQuery.data);
+	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
 
 	// Inline validation
 	const MAX_PROMPT_LENGTH = 2000;
@@ -131,6 +151,25 @@
 	</header>
 
 	<main class="mx-auto max-w-3xl px-6 py-12">
+		{#if isAtWorldLimit}
+			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
+				<AlertTriangle class="h-4 w-4 text-destructive" />
+				<AlertDescription>
+					You've reached your world limit ({usage?.worlds_created}/{usage?.worlds_limit}).
+					<Button variant="link" class="h-auto p-0 text-primary" onclick={() => goto('/pricing')}>
+						<Sparkles class="mr-1 h-3 w-3" />
+						Upgrade your plan
+					</Button>
+					for more worlds, or wait for your usage period to reset.
+					{#if usage?.period_end}
+						<span class="text-muted-foreground">
+							{formatResetDate(usage.period_end)}
+						</span>
+					{/if}
+				</AlertDescription>
+			</Alert>
+		{/if}
+
 		<!-- Creation Form -->
 		<Card>
 			<CardHeader>
@@ -233,7 +272,11 @@
 						>
 							Cancel
 						</Button>
-						<Button type="submit" disabled={loading || !worldPrompt.trim()} class="flex-1 gap-2">
+						<Button
+							type="submit"
+							disabled={loading || !worldPrompt.trim() || isAtWorldLimit}
+							class="flex-1 gap-2"
+						>
 							{#if loading}
 								<Spinner />
 								Creating...

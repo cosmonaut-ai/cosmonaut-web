@@ -1,12 +1,18 @@
-import type {
-	World,
-	StoryNode,
-	CreateWorldRequest,
-	UpdateWorldSharingRequest,
+import {
 	ApiError,
-	StreamingCallback,
-	ChooseRequest
+	type World,
+	type StoryNode,
+	type CreateWorldRequest,
+	type UpdateWorldSharingRequest,
+	type StreamingCallback,
+	type ChooseRequest
 } from '$lib/types/api';
+import type {
+	UsageInfo,
+	CheckoutRequest,
+	CheckoutResponse,
+	BillingPortalResponse
+} from '$lib/types/subscription';
 import { API_BASE_URL, STREAMING_BASE_URL, isLocalEnvironment } from '$lib/config';
 import { getAuthToken, refreshStreamingSession } from '$lib/auth/auth.svelte';
 
@@ -44,10 +50,10 @@ async function getAuthHeaders(forceRefresh = false): Promise<HeadersInit> {
  */
 async function handleResponse<T>(response: Response): Promise<T> {
 	if (!response.ok) {
-		const error: ApiError = await response.json().catch(() => ({
+		const errorBody: { detail?: string } = await response.json().catch(() => ({
 			detail: `HTTP ${response.status}: ${response.statusText}`
 		}));
-		throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+		throw new ApiError(response.status, errorBody.detail || response.statusText);
 	}
 	// Handle empty responses (204 No Content or zero-length body)
 	if (response.status === 204 || response.headers.get('content-length') === '0') {
@@ -236,10 +242,10 @@ export async function generateNodeText(
 	}
 
 	if (!response.ok) {
-		const error: ApiError = await response.json().catch(() => ({
+		const errorBody: { detail?: string } = await response.json().catch(() => ({
 			detail: `HTTP ${response.status}: ${response.statusText}`
 		}));
-		throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+		throw new ApiError(response.status, errorBody.detail || response.statusText);
 	}
 
 	// Check if this is a streaming response
@@ -256,6 +262,8 @@ export async function generateNodeText(
 		let fullText = '';
 		let buffer = '';
 
+		let currentEventType = '';
+
 		while (true) {
 			const { done, value } = await reader.read();
 			if (done) break;
@@ -269,9 +277,31 @@ export async function generateNodeText(
 			buffer = lines.pop() || '';
 
 			for (const line of lines) {
+				// Track SSE event type (e.g. "event: error")
+				if (line.startsWith('event: ')) {
+					currentEventType = line.slice(7).trim();
+					continue;
+				}
+
+				// Empty line resets event type per SSE spec
+				if (line === '') {
+					currentEventType = '';
+					continue;
+				}
+
 				// SSE format: "data: content"
 				if (line.startsWith('data: ')) {
 					const content = line.slice(6); // Remove "data: " prefix
+
+					// Handle error events before processing as text
+					if (currentEventType === 'error') {
+						reader.cancel();
+						const status = content.startsWith('Quota exceeded') ? 429 : 500;
+						throw new ApiError(status, content);
+					}
+
+					// Reset event type after processing a data line
+					currentEventType = '';
 
 					// Check for completion marker
 					if (content === '[DONE]') {
@@ -321,6 +351,37 @@ export async function retryNodeProcessing(worldId: string, nodeId: string): Prom
 		`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/retry-processing`,
 		{ method: 'POST' }
 	);
+}
+
+// ── Subscription & Billing ──
+
+/**
+ * Get the authenticated user's current tier, usage counters, and limits
+ */
+export async function getUsage(): Promise<UsageInfo> {
+	return apiRequest<UsageInfo>(`${API_BASE_URL}/auth/usage`);
+}
+
+/**
+ * Create a Stripe Checkout Session for subscribing to a paid tier.
+ * Returns a URL to redirect the user to Stripe's hosted checkout page.
+ */
+export async function createCheckoutSession(data: CheckoutRequest): Promise<CheckoutResponse> {
+	return apiRequest<CheckoutResponse>(`${API_BASE_URL}/auth/checkout`, {
+		method: 'POST',
+		body: JSON.stringify(data)
+	});
+}
+
+/**
+ * Create a Stripe Billing Portal Session for managing an existing subscription.
+ * Returns a URL to redirect the user to Stripe's hosted portal.
+ * Only works for users who have subscribed (have a stripe_customer_id).
+ */
+export async function createBillingPortalSession(): Promise<BillingPortalResponse> {
+	return apiRequest<BillingPortalResponse>(`${API_BASE_URL}/auth/billing-portal`, {
+		method: 'POST'
+	});
 }
 
 /**

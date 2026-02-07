@@ -1,7 +1,13 @@
 import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { getWorlds, getWorld, createWorld, deleteWorld, updateWorldSharing } from '$lib/api/client';
-import type { CreateWorldRequest, UpdateWorldSharingRequest, World } from '$lib/types/api';
+import {
+	ApiError,
+	type CreateWorldRequest,
+	type UpdateWorldSharingRequest,
+	type World
+} from '$lib/types/api';
 import { showError, showSuccess } from '$lib/utils/toast';
+import { usageKeys } from './subscription';
 
 /**
  * Query keys for worlds - use these for cache invalidation
@@ -47,10 +53,19 @@ export function useCreateWorld() {
 		mutationFn: (data: CreateWorldRequest) => createWorld(data),
 		onSuccess: () => {
 			client.invalidateQueries({ queryKey: worldKeys.all });
+			client.invalidateQueries({ queryKey: usageKeys.all });
 			showSuccess('World created', 'Your world is being generated');
 		},
 		onError: (error: Error) => {
-			showError('Failed to create world', error.message);
+			if (error instanceof ApiError && error.isQuotaExceeded) {
+				client.invalidateQueries({ queryKey: usageKeys.all });
+				showError(
+					'World limit reached',
+					'Upgrade your plan or wait for your usage period to reset.'
+				);
+			} else {
+				showError('Failed to create world', error.message);
+			}
 		}
 	}));
 }

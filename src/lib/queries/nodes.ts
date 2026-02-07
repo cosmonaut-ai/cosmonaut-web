@@ -75,13 +75,15 @@ export function useChooseOption(worldId: MaybeGetter<string>) {
 		return {
 			mutationFn: ({ nodeId, choice }: { nodeId: string; choice: ChoiceOption }) =>
 				chooseOption(wId, nodeId, choice),
-			onSuccess: (newNode: StoryNode) => {
-				// Add the new node to the cache
-				client.setQueryData(nodeKeys.detail(wId, newNode.id), newNode);
-				// Invalidate the nodes list to include the new node
-				// Use exact: true to prevent invalidating individual node queries (prefix matching)
-				client.invalidateQueries({ queryKey: nodeKeys.all(wId), exact: true });
-			},
+		onSuccess: (newNode: StoryNode, { nodeId: parentNodeId }) => {
+			// Add the new node to the cache
+			client.setQueryData(nodeKeys.detail(wId, newNode.id), newNode);
+			// Invalidate the parent node so its choices reflect the newly explored path
+			client.invalidateQueries({ queryKey: nodeKeys.detail(wId, parentNodeId) });
+			// Invalidate the nodes list to include the new node
+			// Use exact: true to prevent invalidating individual node queries (prefix matching)
+			client.invalidateQueries({ queryKey: nodeKeys.all(wId), exact: true });
+		},
 			onError: (error: Error) => {
 				showError('Failed to process choice', error.message);
 			}
@@ -98,6 +100,10 @@ export function updateNodeInCache(
 	node: StoryNode
 ) {
 	client.setQueryData(nodeKeys.detail(worldId, node.id), node);
+	// Invalidate the parent node so its choices reflect the explored path
+	if (node.parent_id) {
+		client.invalidateQueries({ queryKey: nodeKeys.detail(worldId, node.parent_id) });
+	}
 	// Use exact: true to prevent invalidating individual node detail queries (prefix matching)
 	client.invalidateQueries({ queryKey: nodeKeys.all(worldId), exact: true });
 }

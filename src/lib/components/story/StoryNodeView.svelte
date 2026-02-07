@@ -3,15 +3,30 @@
 	import { untrack } from 'svelte';
 	import { generateNodeText, retryNodeProcessing } from '$lib/api/client';
 	import { useQueryClient } from '@tanstack/svelte-query';
-	import { useNode, useChooseOption, updateNodeInCache, type ChoiceOption } from '$lib/queries';
+	import {
+		useNode,
+		useChooseOption,
+		updateNodeInCache,
+		usageKeys,
+		type ChoiceOption
+	} from '$lib/queries';
 	import { showError } from '$lib/utils/toast';
-	import type { StoryNode } from '$lib/types/api';
+	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
 	import SlideTransition from './SlideTransition.svelte';
+	import UpgradePrompt from '$lib/components/subscription/UpgradePrompt.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket } from '@lucide/svelte';
+	import {
+		ChevronLeft,
+		RotateCcw,
+		AlertTriangle,
+		Map,
+		Rocket,
+		Volume2,
+		Square
+	} from '@lucide/svelte';
 
 	interface Props {
 		worldId: string;
@@ -39,6 +54,9 @@
 
 	// Track which node we've already started retrying processing for to prevent duplicate calls
 	let retryingProcessingNodeId = $state<string | null>(null);
+
+	// Quota exceeded prompt state
+	let showQuotaPrompt = $state(false);
 
 	// Use TanStack Query for node data (pass getters to ensure reactivity)
 	// Enable polling when node is in 'generating' status
@@ -71,8 +89,8 @@
 	// Use mutation for choosing options
 	const chooseMutation = useChooseOption(() => worldId);
 
-	const isProcessingChoice = $derived(isStreaming || isNodeGenerating);
-	const isLoading = $derived(loading || nodeQuery.isLoading || isNodeGenerating);
+	const isProcessingChoice = $derived(isStreaming || isNodeGenerating || chooseMutation.isPending);
+	const isLoading = $derived(loading || nodeQuery.isLoading || isNodeGenerating || chooseMutation.isPending);
 
 	// Store last visited node in localStorage
 	$effect(() => {
@@ -147,14 +165,43 @@
 						pendingNode = completedNode;
 						isStreaming = false;
 					})
-					.catch((err) => {
-						showError('Failed to generate text', err instanceof Error ? err.message : String(err));
-						isStreaming = false;
-						streamingText = '';
-						streamingDone = false;
-						// Clear generating guard so retry is possible
+				.catch((err) => {
+					if (err instanceof ApiError && err.isQuotaExceeded) {
+						// Show upgrade prompt instead of generic error toast
+						showQuotaPrompt = true;
+						queryClient.invalidateQueries({ queryKey: usageKeys.all });
+
+						// Navigate back so background shows meaningful content
+						const parentId =
+							currentNodeOverride?.parent_id ?? nodeQuery.data?.parent_id;
+						slideDirection = 'back';
+						currentNodeOverride = null;
 						generatingNodeId = null;
-					})
+
+						if (parentId) {
+							// Non-root: go back to the parent story node
+							goto(`/worlds/${worldId}/nodes/${parentId}`, {
+								replaceState: true,
+								noScroll: true
+							});
+						} else {
+							// Root node: go back to the world home page
+							goto(`/worlds/${worldId}`, {
+								replaceState: true
+							});
+						}
+					} else {
+						showError(
+							'Failed to generate text',
+							err instanceof Error ? err.message : String(err)
+						);
+						// Clear generating guard so retry is possible for non-quota errors
+						generatingNodeId = null;
+					}
+					isStreaming = false;
+					streamingText = '';
+					streamingDone = false;
+				})
 					.finally(() => {
 						loading = false;
 					});
@@ -264,9 +311,64 @@
 		});
 	}
 
-	const isEnding = $derived(!currentNode?.choices || currentNode.choices.length === 0);
+	const isEnding = $derived(
+		currentNode?.generation_status === 'completed' &&
+			(!currentNode?.choices || currentNode.choices.length === 0)
+	);
 	const canGoBack = $derived(!!currentNode?.parent_id);
 	const pathLength = $derived((currentNode?.ancestors?.length || 0) + 1);
+
+	// ── Text-to-Speech ──
+	let isSpeaking = $state(false);
+
+	function getPlainText(text: string): string {
+		return text.replace(/\*([^*]+)\*/g, '$1');
+	}
+
+	function toggleSpeech() {
+		if (isSpeaking) {
+			stopSpeech();
+		} else {
+			startSpeech();
+		}
+	}
+
+	function startSpeech() {
+		const text = currentNode?.text?.trim();
+		if (!text) return;
+
+		window.speechSynthesis.cancel();
+
+		const utterance = new SpeechSynthesisUtterance(getPlainText(text));
+		utterance.onend = () => {
+			isSpeaking = false;
+		};
+		utterance.onerror = (e) => {
+			// 'canceled' is expected when we call cancel() — don't treat it as a real error
+			if (e.error !== 'canceled') {
+				isSpeaking = false;
+			}
+		};
+
+		window.speechSynthesis.speak(utterance);
+		isSpeaking = true;
+	}
+
+	function stopSpeech() {
+		window.speechSynthesis.cancel();
+		isSpeaking = false;
+	}
+
+	// Stop speech when navigating to a different node
+	$effect(() => {
+		void nodeId;
+		return () => {
+			if (typeof window !== 'undefined' && window.speechSynthesis.speaking) {
+				window.speechSynthesis.cancel();
+				isSpeaking = false;
+			}
+		};
+	});
 </script>
 
 <main class="mx-auto max-w-4xl px-6 py-8">
@@ -311,6 +413,20 @@
 					<Map class="h-4 w-4" />
 					Map
 				</Button>
+				{#if currentNode?.text}
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						onclick={toggleSpeech}
+						aria-label={isSpeaking ? 'Stop reading aloud' : 'Read aloud'}
+					>
+						{#if isSpeaking}
+							<Square class="h-4 w-4" />
+						{:else}
+							<Volume2 class="h-4 w-4" />
+						{/if}
+					</Button>
+				{/if}
 			</div>
 		</div>
 	{/if}
@@ -428,4 +544,10 @@
 			</CardContent>
 		</Card>
 	{/if}
+
+	<UpgradePrompt
+		open={showQuotaPrompt}
+		onOpenChange={(v) => (showQuotaPrompt = v)}
+		resource="nodes"
+	/>
 </main>
