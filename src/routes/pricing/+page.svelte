@@ -8,11 +8,11 @@
 	import { TIER_CONFIG, tierRank } from '$lib/config/tiers';
 	import type { SubscriptionTier } from '$lib/types/subscription';
 	import PricingCard from '$lib/components/subscription/PricingCard.svelte';
+	import SubscriptionStatusBanner from '$lib/components/subscription/SubscriptionStatusBanner.svelte';
 	import Footer from '$lib/components/landing/Footer.svelte';
-	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { showSuccess, showInfo } from '$lib/utils/toast';
-	import { AlertTriangle, ArrowLeft } from '@lucide/svelte';
+	import { ArrowLeft } from '@lucide/svelte';
 
 	const auth = useAuth();
 	const usageQuery = useUsage();
@@ -21,8 +21,6 @@
 	const queryClient = useQueryClient();
 
 	const currentTier = $derived(usageQuery.data?.tier ?? null);
-	const pendingCancellation = $derived(usageQuery.data?.pending_cancellation ?? false);
-	const cancellationDate = $derived(usageQuery.data?.cancellation_date ?? null);
 
 	// Handle post-checkout redirect
 	onMount(() => {
@@ -67,15 +65,6 @@
 		auth.login();
 	}
 
-	function formatDate(dateStr: string | null): string {
-		if (!dateStr) return '';
-		return new Date(dateStr).toLocaleDateString('en-US', {
-			month: 'long',
-			day: 'numeric',
-			year: 'numeric'
-		});
-	}
-
 	const isActionLoading = $derived(checkoutMutation.isPending || billingPortalMutation.isPending);
 </script>
 
@@ -103,16 +92,11 @@
 			</p>
 		</div>
 
-		<!-- Cancellation warning -->
-		{#if pendingCancellation && cancellationDate}
-			<Alert class="mx-auto mb-8 max-w-2xl border-amber-500/50 bg-amber-500/10">
-				<AlertTriangle class="h-4 w-4 text-amber-400" />
-				<AlertDescription class="text-amber-200">
-					Your {usageQuery.data?.tier} plan will end on
-					<strong>{formatDate(cancellationDate)}</strong>. You'll be downgraded to the Free plan
-					after that. Select a plan below to resubscribe.
-				</AlertDescription>
-			</Alert>
+		<!-- Subscription status warnings (cancellation, payment issues, paused) -->
+		{#if usageQuery.data}
+			<div class="mb-8">
+				<SubscriptionStatusBanner usage={usageQuery.data} class="mx-auto max-w-2xl" />
+			</div>
 		{/if}
 
 		<!-- Pricing grid -->

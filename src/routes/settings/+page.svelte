@@ -4,6 +4,7 @@
 	import { useUsage, useBillingPortal } from '$lib/queries';
 	import { getTierConfig } from '$lib/config/tiers';
 	import UsageBar from '$lib/components/subscription/UsageBar.svelte';
+	import SubscriptionStatusBanner from '$lib/components/subscription/SubscriptionStatusBanner.svelte';
 	import {
 		Card,
 		CardContent,
@@ -15,15 +16,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import {
-		ArrowLeft,
-		User,
-		CreditCard,
-		BarChart3,
-		AlertTriangle,
-		ExternalLink
-	} from '@lucide/svelte';
+	import { ArrowLeft, User, CreditCard, BarChart3, ExternalLink } from '@lucide/svelte';
 
 	const auth = useAuth();
 	const usageQuery = useUsage();
@@ -138,17 +131,8 @@
 							</div>
 						</div>
 
-						<!-- Cancellation warning -->
-						{#if usage.pending_cancellation}
-							<Alert class="border-amber-500/50 bg-amber-500/10">
-								<AlertTriangle class="h-4 w-4 text-amber-400" />
-								<AlertDescription class="text-amber-200">
-									Your {tierConfig.name} plan will end on
-									<strong>{formatDate(usage.cancellation_date)}</strong>. You'll be downgraded to
-									the Free plan after that.
-								</AlertDescription>
-							</Alert>
-						{/if}
+						<!-- Subscription status warnings (cancellation, payment issues, paused) -->
+						<SubscriptionStatusBanner {usage} />
 
 						<Separator />
 

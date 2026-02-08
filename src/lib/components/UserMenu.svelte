@@ -50,11 +50,11 @@
 			<p class="text-sm font-medium text-foreground">
 				{auth.user?.name || auth.user?.email || 'User'}
 			</p>
-		{#if usageQuery.data && tierConfig}
-			<Badge class="mt-1 {tierBadgeClass[usageQuery.data.tier] ?? ''}">
-				{tierConfig.name} Plan
-			</Badge>
-		{/if}
+			{#if usageQuery.data && tierConfig}
+				<Badge class="mt-1 {tierBadgeClass[usageQuery.data.tier] ?? ''}">
+					{tierConfig.name} Plan
+				</Badge>
+			{/if}
 		</div>
 
 		<DropdownMenu.Separator />
