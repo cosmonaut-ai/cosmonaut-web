@@ -12,6 +12,8 @@ export interface UsageInfo {
 	pending_cancellation: boolean;
 	cancellation_date: string | null;
 	subscription_status: SubscriptionStatus;
+	pending_tier: SubscriptionTier | null;
+	pending_tier_date: string | null;
 }
 
 export interface CheckoutRequest {

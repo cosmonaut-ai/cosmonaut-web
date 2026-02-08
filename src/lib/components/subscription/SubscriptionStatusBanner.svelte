@@ -5,7 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
-	import { AlertTriangle, Info, ExternalLink, Sparkles } from '@lucide/svelte';
+	import { AlertTriangle, Info, ExternalLink, Sparkles, ArrowDownRight } from '@lucide/svelte';
 
 	interface Props {
 		usage: UsageInfo;
@@ -21,6 +21,8 @@
 	const isPastDue = $derived(usage.subscription_status === 'past_due');
 	const isPaused = $derived(usage.subscription_status === 'paused');
 	const isUnpaid = $derived(usage.subscription_status === 'unpaid');
+	const hasPendingTier = $derived(usage.pending_tier !== null && usage.pending_tier !== undefined);
+	const pendingTierConfig = $derived(usage.pending_tier ? getTierConfig(usage.pending_tier) : null);
 
 	function formatDate(dateStr: string | null): string {
 		if (!dateStr) return '';
@@ -50,6 +52,26 @@
 			>
 				<ExternalLink class="h-3.5 w-3.5" />
 				Reactivate Subscription
+			</Button>
+		</AlertDescription>
+	</Alert>
+{:else if hasPendingTier && pendingTierConfig}
+	<Alert class="border-blue-500/50 bg-blue-500/10 {className}">
+		<ArrowDownRight class="h-4 w-4 text-blue-400" />
+		<AlertDescription>
+			<p class="text-blue-200">
+				Your plan will change to <strong>{pendingTierConfig.name}</strong> on
+				<strong>{formatDate(usage.pending_tier_date)}</strong>.
+			</p>
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={() => billingPortalMutation.mutate()}
+				disabled={billingPortalMutation.isPending}
+				class="mt-2 gap-2 border-blue-500/40 text-blue-200 hover:bg-blue-500/10 hover:text-blue-100"
+			>
+				<ExternalLink class="h-3.5 w-3.5" />
+				Manage Subscription
 			</Button>
 		</AlertDescription>
 	</Alert>
