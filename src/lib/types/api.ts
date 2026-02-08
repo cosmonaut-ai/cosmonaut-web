@@ -107,6 +107,10 @@ export class ApiError extends Error {
 		return this.status === 429;
 	}
 
+	get isStorageQuotaExceeded(): boolean {
+		return this.status === 403;
+	}
+
 	get isNotFound(): boolean {
 		return this.status === 404;
 	}

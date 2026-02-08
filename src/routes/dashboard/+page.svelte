@@ -19,7 +19,11 @@
 	let showUpgradePrompt = $state(false);
 
 	const usage = $derived(usageQuery.data);
-	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
+	const isAtStorageLimit = $derived(
+		usage ? usage.worlds_stored >= usage.worlds_stored_limit : false
+	);
+	const isAtPeriodLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
+	const isAtWorldLimit = $derived(isAtStorageLimit || isAtPeriodLimit);
 
 	function handleDeleteWorld(worldId: string) {
 		deletingWorldId = worldId;
@@ -68,7 +72,7 @@
 								Create World
 							</Button>
 						</TooltipTrigger>
-						<UsageLimitTooltip resource="worlds" />
+						<UsageLimitTooltip resource={isAtStorageLimit ? 'worlds_storage' : 'worlds'} />
 					</Tooltip>
 				{:else}
 					<Button onclick={handleCreateWorld} class="gap-2">
@@ -182,7 +186,7 @@
 	<UpgradePrompt
 		open={showUpgradePrompt}
 		onOpenChange={(v) => (showUpgradePrompt = v)}
-		resource="worlds"
+		resource={isAtStorageLimit ? 'worlds_storage' : 'worlds'}
 	/>
 </div>
 

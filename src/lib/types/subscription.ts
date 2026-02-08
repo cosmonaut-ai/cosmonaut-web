@@ -8,6 +8,8 @@ export interface UsageInfo {
 	nodes_limit: number;
 	worlds_created: number;
 	worlds_limit: number;
+	worlds_stored: number;
+	worlds_stored_limit: number;
 	period_end: string | null;
 	pending_cancellation: boolean;
 	cancellation_date: string | null;

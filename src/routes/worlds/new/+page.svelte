@@ -46,7 +46,11 @@
 	// Quota check
 	const usageQuery = useUsage();
 	const usage = $derived(usageQuery.data);
-	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
+	const isAtStorageLimit = $derived(
+		usage ? usage.worlds_stored >= usage.worlds_stored_limit : false
+	);
+	const isAtPeriodLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
+	const isAtWorldLimit = $derived(isAtStorageLimit || isAtPeriodLimit);
 
 	// Inline validation
 	const MAX_PROMPT_LENGTH = 2000;
@@ -151,11 +155,24 @@
 	</header>
 
 	<main class="mx-auto max-w-3xl px-6 py-12">
-		{#if isAtWorldLimit}
+		{#if isAtStorageLimit}
 			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
 				<AlertTriangle class="h-4 w-4 text-destructive" />
 				<AlertDescription>
-					You've reached your world limit ({usage?.worlds_created}/{usage?.worlds_limit}).
+					You've reached your saved worlds limit ({usage?.worlds_stored}/{usage?.worlds_stored_limit}).
+					Delete an existing world or
+					<Button variant="link" class="h-auto p-0 text-primary" onclick={() => goto('/pricing')}>
+						<Sparkles class="mr-1 h-3 w-3" />
+						upgrade your plan
+					</Button>
+					to create more.
+				</AlertDescription>
+			</Alert>
+		{:else if isAtPeriodLimit}
+			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
+				<AlertTriangle class="h-4 w-4 text-destructive" />
+				<AlertDescription>
+					You've reached your world creation limit ({usage?.worlds_created}/{usage?.worlds_limit}).
 					<Button variant="link" class="h-auto p-0 text-primary" onclick={() => goto('/pricing')}>
 						<Sparkles class="mr-1 h-3 w-3" />
 						Upgrade your plan

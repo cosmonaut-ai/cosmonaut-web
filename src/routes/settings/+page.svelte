@@ -196,6 +196,20 @@
 								</p>
 							</div>
 						{/if}
+
+						<Separator />
+
+						<UsageBar
+							label="Saved Worlds"
+							used={usage.worlds_stored}
+							limit={usage.worlds_stored_limit}
+						/>
+						<div class="rounded-lg border border-border bg-muted/50 px-4 py-3">
+							<p class="text-sm text-muted-foreground">
+								Saved worlds do not reset with your billing period. Delete existing worlds to free
+								up space.
+							</p>
+						</div>
 					{/if}
 				</CardContent>
 			</Card>
