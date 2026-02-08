@@ -16,6 +16,11 @@ export const AWS_REGION = import.meta.env.PUBLIC_AWS_REGION || 'us-east-2';
 
 // Environment detection
 export const isLocalEnvironment = API_BASE_URL === 'http://localhost:8000';
+export const isDevEnvironment = API_BASE_URL.includes('dev.cosmonaut-ai.com');
+export const PRODUCTION_URL = 'https://cosmonaut-ai.com';
+
+// Emails allowed to access the dev environment — all others are redirected to production
+export const DEV_ALLOWED_EMAILS: string[] = ['imatson9119@gmail.com'];
 
 // Check if auth is configured (non-local environments require Cognito)
 export const isAuthConfigured =
