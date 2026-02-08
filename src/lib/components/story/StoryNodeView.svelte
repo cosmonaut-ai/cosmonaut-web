@@ -96,7 +96,9 @@
 	const isAtNodeLimit = $derived(usage ? usage.nodes_used >= usage.nodes_limit : false);
 
 	const isProcessingChoice = $derived(isStreaming || isNodeGenerating || chooseMutation.isPending);
-	const isLoading = $derived(loading || nodeQuery.isLoading || isNodeGenerating || chooseMutation.isPending);
+	const isLoading = $derived(
+		loading || nodeQuery.isLoading || isNodeGenerating || chooseMutation.isPending
+	);
 
 	// Store last visited node in localStorage
 	$effect(() => {
@@ -171,26 +173,26 @@
 						pendingNode = completedNode;
 						isStreaming = false;
 					})
-				.catch((err) => {
-					if (err instanceof ApiError && err.isQuotaExceeded) {
-						// Show upgrade prompt instead of generic error toast
-						showQuotaPrompt = true;
-						queryClient.invalidateQueries({ queryKey: usageKeys.all });
-						// Keep generatingNodeId set so the effect doesn't re-trigger
-						// (the node stays 'initialized' on the server, and retrying
-						// would just hit the quota limit again in an infinite loop)
-					} else {
-						showError(
-							'Failed to generate text',
-							err instanceof Error ? err.message : String(err)
-						);
-						// Clear generating guard so retry is possible for non-quota errors
-						generatingNodeId = null;
-					}
-					isStreaming = false;
-					streamingText = '';
-					streamingDone = false;
-				})
+					.catch((err) => {
+						if (err instanceof ApiError && err.isQuotaExceeded) {
+							// Show upgrade prompt instead of generic error toast
+							showQuotaPrompt = true;
+							queryClient.invalidateQueries({ queryKey: usageKeys.all });
+							// Keep generatingNodeId set so the effect doesn't re-trigger
+							// (the node stays 'initialized' on the server, and retrying
+							// would just hit the quota limit again in an infinite loop)
+						} else {
+							showError(
+								'Failed to generate text',
+								err instanceof Error ? err.message : String(err)
+							);
+							// Clear generating guard so retry is possible for non-quota errors
+							generatingNodeId = null;
+						}
+						isStreaming = false;
+						streamingText = '';
+						streamingDone = false;
+					})
 					.finally(() => {
 						loading = false;
 					});

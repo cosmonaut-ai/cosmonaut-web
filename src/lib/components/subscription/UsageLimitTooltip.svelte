@@ -20,7 +20,9 @@
 	const used = $derived(resource === 'worlds' ? usage?.worlds_created : usage?.nodes_used);
 	const limit = $derived(resource === 'worlds' ? usage?.worlds_limit : usage?.nodes_limit);
 	const resourceLabel = $derived(resource === 'worlds' ? 'worlds' : 'generations');
-	const title = $derived(resource === 'worlds' ? 'World limit reached' : 'Generation limit reached');
+	const title = $derived(
+		resource === 'worlds' ? 'World limit reached' : 'Generation limit reached'
+	);
 
 	function formatResetDate(dateStr: string | null): string {
 		if (!dateStr) return '';
@@ -48,12 +50,7 @@
 			{formatResetDate(usage.period_end)}
 		</p>
 	{/if}
-	<Button
-		variant="default"
-		size="sm"
-		class="mt-1 w-full gap-1.5"
-		onclick={() => goto('/pricing')}
-	>
+	<Button variant="default" size="sm" class="mt-1 w-full gap-1.5" onclick={() => goto('/pricing')}>
 		<Sparkles class="h-3.5 w-3.5" />
 		View Plans
 	</Button>
