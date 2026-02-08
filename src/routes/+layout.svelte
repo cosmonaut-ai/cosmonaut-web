@@ -68,52 +68,52 @@
 <ModeWatcher defaultMode="dark" track={false} />
 <Toaster richColors />
 <QueryClientProvider client={queryClient}>
-<TooltipProvider>
-	<div class="flex h-full flex-col">
-		<!-- Global Header for authenticated pages -->
-		{#if showGlobalHeader}
-			<header class="shrink-0 border-b border-border bg-card">
-				<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-					<a href="/" class="flex items-center gap-2">
-						<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-							<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
-						</div>
-						<span class="font-semibold text-foreground">Cosmonaut</span>
-					</a>
-
-					<div class="flex items-center gap-3">
-						{#if auth.isLoading}
-							<div class="flex items-center gap-3">
-								<Skeleton class="h-8 w-8 rounded-full" />
-								<Skeleton class="hidden h-4 w-20 sm:block" />
+	<TooltipProvider>
+		<div class="flex h-full flex-col">
+			<!-- Global Header for authenticated pages -->
+			{#if showGlobalHeader}
+				<header class="shrink-0 border-b border-border bg-card">
+					<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+						<a href="/" class="flex items-center gap-2">
+							<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+								<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
 							</div>
-						{:else if auth.isAuthenticated && auth.user}
-							<UserMenu />
-						{:else}
-							<Button
-								variant="ghost"
-								size="sm"
-								class="text-muted-foreground hover:text-foreground"
-								onclick={handleSignIn}
-								disabled={isSigningIn}
-							>
-								{#if isSigningIn}
-									<Spinner />
-									Signing in...
-								{:else}
-									<LogIn class="h-4 w-4" />
-									Sign In
-								{/if}
-							</Button>
-						{/if}
-					</div>
-				</div>
-			</header>
-		{/if}
+							<span class="font-semibold text-foreground">Cosmonaut</span>
+						</a>
 
-		<div class="min-h-0 flex-1">
-			{@render children()}
+						<div class="flex items-center gap-3">
+							{#if auth.isLoading}
+								<div class="flex items-center gap-3">
+									<Skeleton class="h-8 w-8 rounded-full" />
+									<Skeleton class="hidden h-4 w-20 sm:block" />
+								</div>
+							{:else if auth.isAuthenticated && auth.user}
+								<UserMenu />
+							{:else}
+								<Button
+									variant="ghost"
+									size="sm"
+									class="text-muted-foreground hover:text-foreground"
+									onclick={handleSignIn}
+									disabled={isSigningIn}
+								>
+									{#if isSigningIn}
+										<Spinner />
+										Signing in...
+									{:else}
+										<LogIn class="h-4 w-4" />
+										Sign In
+									{/if}
+								</Button>
+							{/if}
+						</div>
+					</div>
+				</header>
+			{/if}
+
+			<div class="min-h-0 flex-1">
+				{@render children()}
+			</div>
 		</div>
-	</div>
-</TooltipProvider>
+	</TooltipProvider>
 </QueryClientProvider>

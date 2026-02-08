@@ -5,6 +5,7 @@
 	import WorldCardSkeleton from '$lib/components/dashboard/WorldCardSkeleton.svelte';
 	import UsageLimitTooltip from '$lib/components/subscription/UsageLimitTooltip.svelte';
 	import UpgradePrompt from '$lib/components/subscription/UpgradePrompt.svelte';
+	import SubscriptionStatusBanner from '$lib/components/subscription/SubscriptionStatusBanner.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Tooltip, TooltipTrigger } from '$lib/components/ui/tooltip';
@@ -45,6 +46,13 @@
 
 <div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-7xl px-6 py-12">
+		<!-- Subscription status warnings (payment issues, cancellation, paused) -->
+		{#if usage}
+			<div class="mb-8">
+				<SubscriptionStatusBanner {usage} />
+			</div>
+		{/if}
+
 		<!-- Your Worlds Section -->
 		<section class="mb-16">
 			<div class="mb-8 flex items-center justify-between">
@@ -52,16 +60,16 @@
 					<h1 class="text-3xl font-bold text-foreground">Your Worlds</h1>
 					<p class="mt-1 text-muted-foreground">Create and explore your story universes</p>
 				</div>
-			{#if isAtWorldLimit}
-				<Tooltip>
-					<TooltipTrigger>
-						<Button disabled class="gap-2">
-							<Plus class="h-4 w-4" />
-							Create World
-						</Button>
-					</TooltipTrigger>
-					<UsageLimitTooltip resource="worlds" />
-				</Tooltip>
+				{#if isAtWorldLimit}
+					<Tooltip>
+						<TooltipTrigger>
+							<Button disabled class="gap-2">
+								<Plus class="h-4 w-4" />
+								Create World
+							</Button>
+						</TooltipTrigger>
+						<UsageLimitTooltip resource="worlds" />
+					</Tooltip>
 				{:else}
 					<Button onclick={handleCreateWorld} class="gap-2">
 						<Plus class="h-4 w-4" />

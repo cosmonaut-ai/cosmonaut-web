@@ -1,5 +1,7 @@
 export type SubscriptionTier = 'FREE' | 'EXPLORER' | 'COSMONAUT';
 
+export type SubscriptionStatus = 'active' | 'past_due' | 'unpaid' | 'paused' | null;
+
 export interface UsageInfo {
 	tier: SubscriptionTier;
 	nodes_used: number;
@@ -9,6 +11,7 @@ export interface UsageInfo {
 	period_end: string | null;
 	pending_cancellation: boolean;
 	cancellation_date: string | null;
+	subscription_status: SubscriptionStatus;
 }
 
 export interface CheckoutRequest {
