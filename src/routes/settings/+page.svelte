@@ -123,6 +123,10 @@
 									<p class="mt-1 text-sm text-muted-foreground">
 										{#if usage.pending_cancellation}
 											Ends on {formatDate(usage.cancellation_date)}
+										{:else if usage.pending_tier}
+											Changes to {getTierConfig(usage.pending_tier).name} on {formatDate(
+												usage.pending_tier_date
+											)}
 										{:else}
 											Renews on {formatDate(usage.period_end)}
 										{/if}
