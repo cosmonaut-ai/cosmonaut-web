@@ -19,7 +19,21 @@
 		DialogTitle
 	} from '$lib/components/ui/dialog';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { Trash2 } from '@lucide/svelte';
+	import { Trash2, ShieldCheck } from '@lucide/svelte';
+	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
+
+	function getWorldLengthLabel(length: string | null): string | null {
+		switch (length) {
+			case 'short':
+				return 'Short';
+			case 'medium':
+				return 'Medium';
+			case 'long':
+				return 'Long';
+			default:
+				return null;
+		}
+	}
 
 	interface Props {
 		world: World;
@@ -147,9 +161,21 @@
 
 		<!-- Footer -->
 		<div class="flex items-center justify-between border-t border-border pt-3">
-			<span class="text-xs text-muted-foreground">
-				{new Date(world.created_at).toLocaleDateString()}
-			</span>
+			<div class="flex items-center gap-2 text-xs text-muted-foreground">
+				<span>{new Date(world.created_at).toLocaleDateString()}</span>
+				{#if getWorldLengthLabel(world.world_length)}
+					<span class="text-border">|</span>
+					<span>{getWorldLengthLabel(world.world_length)}</span>
+				{/if}
+				{#if world.family_friendly}
+					<Tooltip>
+						<TooltipTrigger class="inline-flex text-primary/70">
+							<ShieldCheck class="h-3.5 w-3.5" />
+						</TooltipTrigger>
+						<TooltipContent>Family Friendly</TooltipContent>
+					</Tooltip>
+				{/if}
+			</div>
 
 			<Button
 				variant="ghost"
