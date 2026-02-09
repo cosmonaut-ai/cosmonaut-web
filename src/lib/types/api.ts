@@ -46,6 +46,8 @@ export interface StoryNode {
 	ancestors: string[];
 	processing_status: StoryNodeProcessingStatus;
 	generation_status: StoryNodeGenerationStatus;
+	audio_url: string | null;
+	audio_voice_id: string | null;
 	created_at: string;
 	updated_at?: string;
 }
@@ -107,12 +109,28 @@ export class ApiError extends Error {
 		return this.status === 429;
 	}
 
+	get isStorageQuotaExceeded(): boolean {
+		return this.status === 403;
+	}
+
 	get isNotFound(): boolean {
 		return this.status === 404;
 	}
 
 	get isUnauthorized(): boolean {
 		return this.status === 401;
+	}
+
+	/**
+	 * Whether the error indicates the node has already been processed (completed/generating).
+	 * This happens when a network error occurs mid-stream: the server finishes generation
+	 * but the client doesn't receive the response, so retrying returns 400.
+	 */
+	get isNodeAlreadyProcessed(): boolean {
+		return (
+			this.status === 400 &&
+			/Cannot generate text for node .+ with status (completed|generating)/i.test(this.detail)
+		);
 	}
 }
 

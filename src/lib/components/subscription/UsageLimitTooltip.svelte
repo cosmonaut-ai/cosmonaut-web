@@ -8,7 +8,7 @@
 
 	interface Props {
 		/** Which resource hit the limit */
-		resource: 'worlds' | 'nodes';
+		resource: 'worlds' | 'worlds_storage' | 'nodes';
 	}
 
 	let { resource }: Props = $props();
@@ -17,12 +17,27 @@
 	const usage = $derived(usageQuery.data);
 	const tierConfig = $derived(usage ? getTierConfig(usage.tier) : null);
 
-	const used = $derived(resource === 'worlds' ? usage?.worlds_created : usage?.nodes_used);
-	const limit = $derived(resource === 'worlds' ? usage?.worlds_limit : usage?.nodes_limit);
-	const resourceLabel = $derived(resource === 'worlds' ? 'worlds' : 'generations');
-	const title = $derived(
-		resource === 'worlds' ? 'World limit reached' : 'Generation limit reached'
-	);
+	const isStorageResource = $derived(resource === 'worlds_storage');
+	const used = $derived.by(() => {
+		if (isStorageResource) return usage?.worlds_stored;
+		if (resource === 'worlds') return usage?.worlds_created;
+		return usage?.nodes_used;
+	});
+	const limit = $derived.by(() => {
+		if (isStorageResource) return usage?.worlds_stored_limit;
+		if (resource === 'worlds') return usage?.worlds_limit;
+		return usage?.nodes_limit;
+	});
+	const resourceLabel = $derived.by(() => {
+		if (isStorageResource) return 'saved worlds';
+		if (resource === 'worlds') return 'worlds';
+		return 'generations';
+	});
+	const title = $derived.by(() => {
+		if (isStorageResource) return 'Saved worlds limit reached';
+		if (resource === 'worlds') return 'World limit reached';
+		return 'Generation limit reached';
+	});
 
 	function formatResetDate(dateStr: string | null): string {
 		if (!dateStr) return '';
@@ -42,10 +57,15 @@
 <TooltipContent class="flex max-w-xs flex-col gap-2 px-4 py-3">
 	<p class="font-medium text-popover-foreground">{title}</p>
 	<p class="text-xs text-muted-foreground">
-		You've used {used ?? 0} of {limit ?? 0}
-		{resourceLabel} on the {tierConfig?.name ?? 'Free'} plan.
+		{#if isStorageResource}
+			You have {used ?? 0} of {limit ?? 0} saved worlds on the {tierConfig?.name ?? 'Free'} plan. Delete
+			an existing world or upgrade to create more.
+		{:else}
+			You've used {used ?? 0} of {limit ?? 0}
+			{resourceLabel} on the {tierConfig?.name ?? 'Free'} plan.
+		{/if}
 	</p>
-	{#if usage?.period_end}
+	{#if !isStorageResource && usage?.period_end}
 		<p class="text-xs text-muted-foreground/70">
 			{formatResetDate(usage.period_end)}
 		</p>
