@@ -15,7 +15,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
-	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Sparkles } from '@lucide/svelte';
+	import { Rocket, ArrowLeft, Shuffle, AlertTriangle } from '@lucide/svelte';
 
 	function formatResetDate(dateStr: string | null): string {
 		if (!dateStr) return '';
@@ -162,14 +162,9 @@
 					<p>
 						You've reached your saved worlds limit ({usage?.worlds_stored}/{usage?.worlds_stored_limit}).
 						Delete an existing world or
-						<Button
-							variant="link"
-							class="inline-flex h-auto p-0 text-primary"
-							onclick={() => goto('/pricing')}
-						>
-							<Sparkles class="mr-1 h-3 w-3" />
+						<a href="/pricing" class="text-yellow-400 underline hover:text-yellow-300">
 							upgrade your plan
-						</Button>
+						</a>
 						to create more.
 					</p>
 				</AlertDescription>
@@ -180,14 +175,9 @@
 				<AlertDescription>
 					<p>
 						You've reached your world creation limit ({usage?.worlds_created}/{usage?.worlds_limit}).
-						<Button
-							variant="link"
-							class="inline-flex h-auto p-0 text-primary"
-							onclick={() => goto('/pricing')}
-						>
-							<Sparkles class="mr-1 h-3 w-3" />
+						<a href="/pricing" class="text-yellow-400 underline hover:text-yellow-300">
 							Upgrade your plan
-						</Button>
+						</a>
 						for more worlds, or wait for your usage period to reset.
 						{#if usage?.period_end}
 							<span class="text-muted-foreground">
