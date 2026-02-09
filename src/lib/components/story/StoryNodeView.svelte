@@ -356,16 +356,14 @@
 					<Map class="h-4 w-4" />
 					Map
 				</Button>
-				{#if currentNode?.generation_status === 'completed'}
-					<AudioNarration
-						{worldId}
-						nodeId={currentNode.id}
-						{audioUrl}
-						isNodeCompleted={true}
-						onQuotaExceeded={() => (showAudioQuotaPrompt = true)}
-						bind:playerVisible={audioPlayerVisible}
-					/>
-				{/if}
+				<AudioNarration
+					{worldId}
+					nodeId={currentNode.id}
+					{audioUrl}
+					isNodeCompleted={currentNode?.generation_status === 'completed'}
+					onQuotaExceeded={() => (showAudioQuotaPrompt = true)}
+					bind:playerVisible={audioPlayerVisible}
+				/>
 			</div>
 		</div>
 	{/if}

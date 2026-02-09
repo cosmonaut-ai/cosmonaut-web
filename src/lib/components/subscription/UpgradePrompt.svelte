@@ -18,7 +18,7 @@
 	const billingPortalMutation = useBillingPortal();
 
 	const usage = $derived(usageQuery.data);
-	const isFree = $derived(usage?.tier === 'FREE');
+	const isFree = $derived(usage?.tier === 'SCOUT');
 
 	const isStorageResource = $derived(resource === 'worlds_storage');
 	const isAudioResource = $derived(resource === 'audio');
@@ -91,7 +91,9 @@
 							<strong class="text-foreground">{usage.audio_narrations_limit}</strong> audio narrations
 							used
 						</p>
-						{#if !isFree && usage.period_end}
+						{#if isFree}
+							<p class="mt-1 text-muted-foreground">One-time allowance — does not reset</p>
+						{:else if usage.period_end}
 							<p class="mt-1 text-muted-foreground">
 								Resets on <strong class="text-foreground">{formatDate(usage.period_end)}</strong>
 							</p>

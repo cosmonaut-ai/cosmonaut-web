@@ -3,7 +3,7 @@
 	import { ApiError } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { Play, Pause, Volume2 } from '@lucide/svelte';
+	import { Play, Pause, Volume2, X } from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
@@ -90,7 +90,20 @@
 		// Wait for Svelte to render the <audio> element
 		await new Promise((r) => requestAnimationFrame(r));
 		await new Promise((r) => requestAnimationFrame(r));
-		audioElement?.play();
+
+		if (!audioElement) return;
+
+		// Ensure enough audio data is buffered so playback starts instantly
+		// rather than having an audible gap at the beginning
+		if (audioElement.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+			const ready = await new Promise<boolean>((resolve) => {
+				audioElement!.addEventListener('canplaythrough', () => resolve(true), { once: true });
+				audioElement!.addEventListener('error', () => resolve(false), { once: true });
+			});
+			if (!ready) return;
+		}
+
+		audioElement.play();
 	}
 
 	function togglePlayPause() {
@@ -153,22 +166,21 @@
 		bind:paused
 		bind:ended
 		src={effectiveAudioUrl}
-		preload="metadata"
+		preload="auto"
 	></audio>
 {/if}
 
-<!-- Speaker icon toggle (always visible when node is completed) -->
-{#if isNodeCompleted}
-	<Button
-		variant="ghost"
-		size="icon-sm"
-		onclick={handleToggle}
-		aria-label={playerVisible ? 'Close narration' : 'Play narration'}
-		class="shrink-0"
-	>
-		<Volume2 class="h-4 w-4" />
-	</Button>
-{/if}
+<!-- Speaker icon toggle (always visible, disabled until node text is ready) -->
+<Button
+	variant="ghost"
+	size="icon-sm"
+	onclick={handleToggle}
+	disabled={!isNodeCompleted}
+	aria-label={playerVisible ? 'Close narration' : 'Play narration'}
+	class="shrink-0"
+>
+	<Volume2 class="h-4 w-4" />
+</Button>
 
 <!-- Fixed bottom media bar -->
 {#if playerVisible}
@@ -222,6 +234,17 @@
 					{formatTime(duration)}
 				</span>
 			{/if}
+
+			<!-- Close button -->
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				onclick={handleClose}
+				aria-label="Close player"
+				class="shrink-0"
+			>
+				<X class="h-4 w-4" />
+			</Button>
 		</div>
 	</div>
 {/if}

@@ -1,4 +1,4 @@
-export type SubscriptionTier = 'FREE' | 'EXPLORER' | 'COSMONAUT';
+export type SubscriptionTier = 'SCOUT' | 'EXPLORER' | 'COSMONAUT';
 
 export type SubscriptionStatus = 'active' | 'past_due' | 'unpaid' | 'paused' | null;
 

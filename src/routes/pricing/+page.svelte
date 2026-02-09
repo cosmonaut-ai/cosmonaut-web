@@ -48,7 +48,7 @@
 
 		if (targetRank === currentRank) return;
 
-		if (currentTier === 'FREE') {
+		if (currentTier === 'SCOUT') {
 			// Free -> Paid: use Stripe Checkout
 			checkoutMutation.mutate({
 				tier: tier as 'EXPLORER' | 'COSMONAUT',
