@@ -46,6 +46,8 @@ export interface StoryNode {
 	ancestors: string[];
 	processing_status: StoryNodeProcessingStatus;
 	generation_status: StoryNodeGenerationStatus;
+	audio_url: string | null;
+	audio_voice_id: string | null;
 	created_at: string;
 	updated_at?: string;
 }

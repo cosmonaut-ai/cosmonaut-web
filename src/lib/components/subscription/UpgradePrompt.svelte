@@ -8,8 +8,8 @@
 	interface Props {
 		open: boolean;
 		onOpenChange: (open: boolean) => void;
-		/** Which resource hit the quota: "worlds", "worlds_storage", or "nodes" */
-		resource?: 'worlds' | 'worlds_storage' | 'nodes';
+		/** Which resource hit the quota: "worlds", "worlds_storage", "nodes", or "audio" */
+		resource?: 'worlds' | 'worlds_storage' | 'nodes' | 'audio';
 	}
 
 	let { open, onOpenChange, resource = 'nodes' }: Props = $props();
@@ -21,9 +21,11 @@
 	const isFree = $derived(usage?.tier === 'FREE');
 
 	const isStorageResource = $derived(resource === 'worlds_storage');
+	const isAudioResource = $derived(resource === 'audio');
 	const resourceLabel = $derived.by(() => {
 		if (isStorageResource) return 'saved worlds';
 		if (resource === 'worlds') return 'world creation';
+		if (isAudioResource) return 'audio narration';
 		return 'story generation';
 	});
 
@@ -46,6 +48,8 @@
 					Saved Worlds Limit Reached
 				{:else if resource === 'worlds'}
 					World Creation Limit Reached
+				{:else if isAudioResource}
+					Audio Narration Limit Reached
 				{:else}
 					Generation Limit Reached
 				{/if}
@@ -53,6 +57,10 @@
 			<Dialog.Description>
 				{#if isStorageResource}
 					You've reached the maximum number of saved worlds for your plan.
+				{:else if isAudioResource && isFree}
+					You've used all your free audio narrations. Upgrade to generate more.
+				{:else if isAudioResource}
+					You've reached your audio narration limit for this period.
 				{:else}
 					You've reached your {resourceLabel} limit for this period.
 				{/if}
@@ -77,6 +85,17 @@
 								Resets on <strong class="text-foreground">{formatDate(usage.period_end)}</strong>
 							</p>
 						{/if}
+					{:else if isAudioResource}
+						<p class="text-muted-foreground">
+							<strong class="text-foreground">{usage.audio_narrations_used}</strong> of
+							<strong class="text-foreground">{usage.audio_narrations_limit}</strong> audio narrations
+							used
+						</p>
+						{#if !isFree && usage.period_end}
+							<p class="mt-1 text-muted-foreground">
+								Resets on <strong class="text-foreground">{formatDate(usage.period_end)}</strong>
+							</p>
+						{/if}
 					{:else}
 						<p class="text-muted-foreground">
 							<strong class="text-foreground">{usage.nodes_used}</strong> of
@@ -94,6 +113,8 @@
 			<p class="text-sm text-muted-foreground">
 				{#if isStorageResource}
 					Delete an existing world or upgrade your plan to create more.
+				{:else if isAudioResource && isFree}
+					Upgrade your plan to unlock more audio narrations.
 				{:else}
 					Upgrade your plan for higher limits, or wait for your usage period to reset.
 				{/if}

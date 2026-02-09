@@ -186,6 +186,11 @@
 							limit={usage.worlds_limit}
 						/>
 						<UsageBar label="Story Generations" used={usage.nodes_used} limit={usage.nodes_limit} />
+						<UsageBar
+							label="Audio Narrations"
+							used={usage.audio_narrations_used}
+							limit={usage.audio_narrations_limit}
+						/>
 
 						{#if usage.period_end}
 							<div class="rounded-lg border border-border bg-muted/50 px-4 py-3">
@@ -210,6 +215,13 @@
 								up space.
 							</p>
 						</div>
+						{#if usage.tier === 'FREE'}
+							<div class="rounded-lg border border-border bg-muted/50 px-4 py-3">
+								<p class="text-sm text-muted-foreground">
+									Free audio narrations do not reset. Upgrade for more.
+								</p>
+							</div>
+						{/if}
 					{/if}
 				</CardContent>
 			</Card>
