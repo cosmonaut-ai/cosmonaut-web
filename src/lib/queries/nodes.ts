@@ -1,7 +1,8 @@
 import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
-import { getNode, getWorldNodes, chooseOption } from '$lib/api/client';
+import { getNode, getWorldNodes, chooseOption, generateNodeAudio } from '$lib/api/client';
 import type { StoryNode } from '$lib/types/api';
 import { showError } from '$lib/utils/toast';
+import { usageKeys } from './subscription';
 
 /**
  * Query keys for nodes - use these for cache invalidation
@@ -106,4 +107,38 @@ export function updateNodeInCache(
 	}
 	// Use exact: true to prevent invalidating individual node detail queries (prefix matching)
 	client.invalidateQueries({ queryKey: nodeKeys.all(worldId), exact: true });
+}
+
+/**
+ * Mutation hook to generate audio narration for a story node.
+ * On success, patches the node in the TanStack cache with the returned audio_url
+ * and invalidates the usage query so the audio narrations counter stays current.
+ */
+export function useGenerateAudio(worldId: MaybeGetter<string>) {
+	const client = useQueryClient();
+	return createMutation(() => {
+		const wId = resolve(worldId);
+		return {
+			mutationFn: (nodeId: string) => generateNodeAudio(wId, nodeId),
+			onSuccess: (data: { audio_url: string }, nodeId: string) => {
+				// Patch the cached node with the new audio_url
+				const cached = client.getQueryData<StoryNode>(nodeKeys.detail(wId, nodeId));
+				if (cached) {
+					client.setQueryData(nodeKeys.detail(wId, nodeId), {
+						...cached,
+						audio_url: data.audio_url
+					});
+				}
+				// Invalidate usage so the audio narrations counter updates
+				client.invalidateQueries({ queryKey: usageKeys.all });
+			},
+			onError: (error: Error) => {
+				// Caller handles 429 (quota exceeded) to show UpgradePrompt.
+				// Only show a toast for unexpected errors.
+				if (!('status' in error && (error as { status: number }).status === 429)) {
+					showError('Audio generation failed', error.message);
+				}
+			}
+		};
+	});
 }

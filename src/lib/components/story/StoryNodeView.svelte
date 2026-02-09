@@ -15,19 +15,12 @@
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
 	import SlideTransition from './SlideTransition.svelte';
+	import AudioNarration from './AudioNarration.svelte';
 	import UpgradePrompt from '$lib/components/subscription/UpgradePrompt.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import {
-		ChevronLeft,
-		RotateCcw,
-		AlertTriangle,
-		Map,
-		Rocket,
-		Volume2,
-		Square
-	} from '@lucide/svelte';
+	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket } from '@lucide/svelte';
 
 	interface Props {
 		worldId: string;
@@ -58,6 +51,7 @@
 
 	// Quota exceeded prompt state
 	let showQuotaPrompt = $state(false);
+	let showAudioQuotaPrompt = $state(false);
 
 	// Use TanStack Query for node data (pass getters to ensure reactivity)
 	// Enable polling when node is in 'generating' status
@@ -181,6 +175,12 @@
 							// Keep generatingNodeId set so the effect doesn't re-trigger
 							// (the node stays 'initialized' on the server, and retrying
 							// would just hit the quota limit again in an infinite loop)
+						} else if (err instanceof ApiError && err.isNodeAlreadyProcessed) {
+							// The node was already completed/generating on the server (e.g. after
+							// a network error mid-stream). Refetch the node so the cache reflects
+							// the real status and the generation effect stops re-triggering.
+							// Keep generatingNodeId set to prevent a retry loop while refetching.
+							nodeQuery.refetch();
 						} else {
 							showError(
 								'Failed to generate text',
@@ -309,60 +309,12 @@
 	const canGoBack = $derived(!!currentNode?.parent_id);
 	const pathLength = $derived((currentNode?.ancestors?.length || 0) + 1);
 
-	// ── Text-to-Speech ──
-	let isSpeaking = $state(false);
-
-	function getPlainText(text: string): string {
-		return text.replace(/\*([^*]+)\*/g, '$1');
-	}
-
-	function toggleSpeech() {
-		if (isSpeaking) {
-			stopSpeech();
-		} else {
-			startSpeech();
-		}
-	}
-
-	function startSpeech() {
-		const text = currentNode?.text?.trim();
-		if (!text) return;
-
-		window.speechSynthesis.cancel();
-
-		const utterance = new SpeechSynthesisUtterance(getPlainText(text));
-		utterance.onend = () => {
-			isSpeaking = false;
-		};
-		utterance.onerror = (e) => {
-			// 'canceled' is expected when we call cancel() — don't treat it as a real error
-			if (e.error !== 'canceled') {
-				isSpeaking = false;
-			}
-		};
-
-		window.speechSynthesis.speak(utterance);
-		isSpeaking = true;
-	}
-
-	function stopSpeech() {
-		window.speechSynthesis.cancel();
-		isSpeaking = false;
-	}
-
-	// Stop speech when navigating to a different node
-	$effect(() => {
-		void nodeId;
-		return () => {
-			if (typeof window !== 'undefined' && window.speechSynthesis.speaking) {
-				window.speechSynthesis.cancel();
-				isSpeaking = false;
-			}
-		};
-	});
+	// ── Audio Narration ──
+	const audioUrl = $derived(currentNode?.audio_url ?? null);
+	let audioPlayerVisible = $state(false);
 </script>
 
-<main class="mx-auto max-w-4xl px-6 py-8">
+<main class="mx-auto max-w-4xl px-6 py-8 {audioPlayerVisible ? 'pb-24' : ''}">
 	<!-- Path indicator -->
 	{#if currentNode}
 		<div class="mb-6 flex items-center justify-between">
@@ -404,20 +356,14 @@
 					<Map class="h-4 w-4" />
 					Map
 				</Button>
-				{#if currentNode?.text}
-					<Button
-						variant="ghost"
-						size="icon-sm"
-						onclick={toggleSpeech}
-						aria-label={isSpeaking ? 'Stop reading aloud' : 'Read aloud'}
-					>
-						{#if isSpeaking}
-							<Square class="h-4 w-4" />
-						{:else}
-							<Volume2 class="h-4 w-4" />
-						{/if}
-					</Button>
-				{/if}
+				<AudioNarration
+					{worldId}
+					nodeId={currentNode.id}
+					{audioUrl}
+					isNodeCompleted={currentNode?.generation_status === 'completed'}
+					onQuotaExceeded={() => (showAudioQuotaPrompt = true)}
+					bind:playerVisible={audioPlayerVisible}
+				/>
 			</div>
 		</div>
 	{/if}
@@ -541,5 +487,11 @@
 		open={showQuotaPrompt}
 		onOpenChange={(v) => (showQuotaPrompt = v)}
 		resource="nodes"
+	/>
+
+	<UpgradePrompt
+		open={showAudioQuotaPrompt}
+		onOpenChange={(v) => (showAudioQuotaPrompt = v)}
+		resource="audio"
 	/>
 </main>

@@ -353,6 +353,24 @@ export async function retryNodeProcessing(worldId: string, nodeId: string): Prom
 	);
 }
 
+// ── Audio Narration ──
+
+/**
+ * Generate audio narration for a completed story node.
+ * Returns the permanent CDN URL of the generated MP3.
+ * Idempotent: calling again for the same node returns the cached URL without consuming quota.
+ * @throws ApiError with status 429 when the user's audio quota is exceeded
+ */
+export async function generateNodeAudio(
+	worldId: string,
+	nodeId: string
+): Promise<{ audio_url: string }> {
+	return apiRequest<{ audio_url: string }>(
+		`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/audio`,
+		{ method: 'POST' }
+	);
+}
+
 // ── Subscription & Billing ──
 
 /**

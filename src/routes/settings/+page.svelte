@@ -24,10 +24,10 @@
 
 	const usage = $derived(usageQuery.data);
 	const tierConfig = $derived(usage ? getTierConfig(usage.tier) : null);
-	const isFree = $derived(usage?.tier === 'FREE');
+	const isFree = $derived(usage?.tier === 'SCOUT');
 
 	const tierBadgeClass: Record<string, string> = {
-		FREE: 'bg-muted text-muted-foreground border-border',
+		SCOUT: 'bg-muted text-muted-foreground border-border',
 		EXPLORER: 'bg-primary/15 text-primary border-primary/30',
 		COSMONAUT: 'bg-amber-500/15 text-amber-400 border-amber-500/30'
 	};
@@ -196,6 +196,34 @@
 								</p>
 							</div>
 						{/if}
+
+						<UsageBar
+							label="Audio Narrations"
+							used={usage.audio_narrations_used}
+							limit={usage.audio_narrations_limit}
+						/>
+						{#if isFree}
+							<div class="rounded-lg border border-border bg-muted/50 px-4 py-3">
+								<p class="text-sm text-muted-foreground">
+									Free audio narrations are a one-time allowance and do not reset. Upgrade for
+									monthly narrations.
+								</p>
+							</div>
+						{/if}
+
+						<Separator />
+
+						<UsageBar
+							label="Saved Worlds"
+							used={usage.worlds_stored}
+							limit={usage.worlds_stored_limit}
+						/>
+						<div class="rounded-lg border border-border bg-muted/50 px-4 py-3">
+							<p class="text-sm text-muted-foreground">
+								Saved worlds do not reset with your billing period. Delete existing worlds to free
+								up space.
+							</p>
+						</div>
 					{/if}
 				</CardContent>
 			</Card>

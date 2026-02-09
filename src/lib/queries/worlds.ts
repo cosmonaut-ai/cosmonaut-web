@@ -57,10 +57,16 @@ export function useCreateWorld() {
 			showSuccess('World created', 'Your world is being generated');
 		},
 		onError: (error: Error) => {
-			if (error instanceof ApiError && error.isQuotaExceeded) {
+			if (error instanceof ApiError && error.isStorageQuotaExceeded) {
 				client.invalidateQueries({ queryKey: usageKeys.all });
 				showError(
-					'World limit reached',
+					'Saved worlds limit reached',
+					'Delete an existing world or upgrade your plan to create more.'
+				);
+			} else if (error instanceof ApiError && error.isQuotaExceeded) {
+				client.invalidateQueries({ queryKey: usageKeys.all });
+				showError(
+					'World creation limit reached',
 					'Upgrade your plan or wait for your usage period to reset.'
 				);
 			} else {
@@ -79,6 +85,7 @@ export function useDeleteWorld() {
 		mutationFn: (worldId: string) => deleteWorld(worldId),
 		onSuccess: () => {
 			client.invalidateQueries({ queryKey: worldKeys.all });
+			client.invalidateQueries({ queryKey: usageKeys.all });
 			showSuccess('World deleted');
 		},
 		onError: (error: Error) => {

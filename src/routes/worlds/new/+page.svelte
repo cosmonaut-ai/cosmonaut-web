@@ -15,7 +15,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
-	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Sparkles } from '@lucide/svelte';
+	import { Rocket, ArrowLeft, Shuffle, AlertTriangle } from '@lucide/svelte';
 
 	function formatResetDate(dateStr: string | null): string {
 		if (!dateStr) return '';
@@ -46,7 +46,11 @@
 	// Quota check
 	const usageQuery = useUsage();
 	const usage = $derived(usageQuery.data);
-	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
+	const isAtStorageLimit = $derived(
+		usage ? usage.worlds_stored >= usage.worlds_stored_limit : false
+	);
+	const isAtPeriodLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
+	const isAtWorldLimit = $derived(isAtStorageLimit || isAtPeriodLimit);
 
 	// Inline validation
 	const MAX_PROMPT_LENGTH = 2000;
@@ -151,21 +155,36 @@
 	</header>
 
 	<main class="mx-auto max-w-3xl px-6 py-12">
-		{#if isAtWorldLimit}
+		{#if isAtStorageLimit}
 			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
 				<AlertTriangle class="h-4 w-4 text-destructive" />
 				<AlertDescription>
-					You've reached your world limit ({usage?.worlds_created}/{usage?.worlds_limit}).
-					<Button variant="link" class="h-auto p-0 text-primary" onclick={() => goto('/pricing')}>
-						<Sparkles class="mr-1 h-3 w-3" />
-						Upgrade your plan
-					</Button>
-					for more worlds, or wait for your usage period to reset.
-					{#if usage?.period_end}
-						<span class="text-muted-foreground">
-							{formatResetDate(usage.period_end)}
-						</span>
-					{/if}
+					<p>
+						You've reached your saved worlds limit ({usage?.worlds_stored}/{usage?.worlds_stored_limit}).
+						Delete an existing world or
+						<a href="/pricing" class="text-yellow-400 underline hover:text-yellow-300">
+							upgrade your plan
+						</a>
+						to create more.
+					</p>
+				</AlertDescription>
+			</Alert>
+		{:else if isAtPeriodLimit}
+			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
+				<AlertTriangle class="h-4 w-4 text-destructive" />
+				<AlertDescription>
+					<p>
+						You've reached your world creation limit ({usage?.worlds_created}/{usage?.worlds_limit}).
+						<a href="/pricing" class="text-yellow-400 underline hover:text-yellow-300">
+							Upgrade your plan
+						</a>
+						for more worlds, or wait for your usage period to reset.
+						{#if usage?.period_end}
+							<span class="text-muted-foreground">
+								{formatResetDate(usage.period_end)}
+							</span>
+						{/if}
+					</p>
 				</AlertDescription>
 			</Alert>
 		{/if}

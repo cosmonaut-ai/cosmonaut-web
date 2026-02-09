@@ -7,6 +7,8 @@ export interface TierConfig {
 	priceDetail: string;
 	worldsLimit: number;
 	nodesLimit: number;
+	savedWorldsLimit: number;
+	audioNarrationsLimit: number;
 	resetPeriod: string;
 	features: string[];
 	highlighted?: boolean;
@@ -18,17 +20,20 @@ export interface TierConfig {
  */
 export const TIER_CONFIG: TierConfig[] = [
 	{
-		key: 'FREE',
+		key: 'SCOUT',
 		name: 'Scout',
 		price: '$0',
 		priceDetail: 'forever',
 		worldsLimit: 3,
 		nodesLimit: 30,
+		savedWorldsLimit: 5,
+		audioNarrationsLimit: 20,
 		resetPeriod: '7 days',
 		features: [
 			'3 worlds per week',
 			'30 story nodes per week',
 			'5 saved stories',
+			'20 audio narrations (one-time)',
 			'Full story graph visualization',
 			'Community sharing'
 		]
@@ -40,13 +45,15 @@ export const TIER_CONFIG: TierConfig[] = [
 		priceDetail: 'per month',
 		worldsLimit: 20,
 		nodesLimit: 500,
+		savedWorldsLimit: 50,
+		audioNarrationsLimit: 60,
 		resetPeriod: '30 days',
 		highlighted: true,
 		features: [
 			'20 worlds per month',
 			'500 story nodes per month',
 			'50 saved stories',
-			'Standard audio (unlimited)',
+			'60 audio narrations / month',
 			'Full story graph visualization',
 			'Community sharing',
 			'Priority generation'
@@ -59,12 +66,14 @@ export const TIER_CONFIG: TierConfig[] = [
 		priceDetail: 'per month',
 		worldsLimit: 100,
 		nodesLimit: 2000,
+		savedWorldsLimit: 100,
+		audioNarrationsLimit: 200,
 		resetPeriod: '30 days',
 		features: [
 			'Unlimited worlds (soft cap 100)',
 			'Unlimited story nodes (fair use 2,000+)',
 			'100 saved stories',
-			'Neural audio (high quality)',
+			'200 audio narrations / month',
 			'Full story graph visualization',
 			'Community sharing',
 			'Priority generation',
@@ -79,7 +88,7 @@ export function getTierConfig(tier: SubscriptionTier): TierConfig {
 }
 
 /** Tier ordering for comparison (higher index = higher tier) */
-const TIER_ORDER: SubscriptionTier[] = ['FREE', 'EXPLORER', 'COSMONAUT'];
+const TIER_ORDER: SubscriptionTier[] = ['SCOUT', 'EXPLORER', 'COSMONAUT'];
 
 export function tierRank(tier: SubscriptionTier): number {
 	return TIER_ORDER.indexOf(tier);
