@@ -118,6 +118,18 @@ export class ApiError extends Error {
 	get isUnauthorized(): boolean {
 		return this.status === 401;
 	}
+
+	/**
+	 * Whether the error indicates the node has already been processed (completed/generating).
+	 * This happens when a network error occurs mid-stream: the server finishes generation
+	 * but the client doesn't receive the response, so retrying returns 400.
+	 */
+	get isNodeAlreadyProcessed(): boolean {
+		return (
+			this.status === 400 &&
+			/Cannot generate text for node .+ with status (completed|generating)/i.test(this.detail)
+		);
+	}
 }
 
 /**

@@ -4,7 +4,12 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import { isLocalEnvironment, isDevEnvironment, PRODUCTION_URL, DEV_ALLOWED_EMAILS } from '$lib/config';
+	import {
+		isLocalEnvironment,
+		isDevEnvironment,
+		PRODUCTION_URL,
+		DEV_ALLOWED_EMAILS
+	} from '$lib/config';
 	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Spinner } from '$lib/components/ui/spinner';

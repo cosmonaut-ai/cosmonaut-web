@@ -181,6 +181,12 @@
 							// Keep generatingNodeId set so the effect doesn't re-trigger
 							// (the node stays 'initialized' on the server, and retrying
 							// would just hit the quota limit again in an infinite loop)
+						} else if (err instanceof ApiError && err.isNodeAlreadyProcessed) {
+							// The node was already completed/generating on the server (e.g. after
+							// a network error mid-stream). Refetch the node so the cache reflects
+							// the real status and the generation effect stops re-triggering.
+							// Keep generatingNodeId set to prevent a retry loop while refetching.
+							nodeQuery.refetch();
 						} else {
 							showError(
 								'Failed to generate text',
