@@ -159,30 +159,42 @@
 			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
 				<AlertTriangle class="h-4 w-4 text-destructive" />
 				<AlertDescription>
-					You've reached your saved worlds limit ({usage?.worlds_stored}/{usage?.worlds_stored_limit}).
-					Delete an existing world or
-					<Button variant="link" class="h-auto p-0 text-primary" onclick={() => goto('/pricing')}>
-						<Sparkles class="mr-1 h-3 w-3" />
-						upgrade your plan
-					</Button>
-					to create more.
+					<p>
+						You've reached your saved worlds limit ({usage?.worlds_stored}/{usage?.worlds_stored_limit}).
+						Delete an existing world or
+						<Button
+							variant="link"
+							class="inline-flex h-auto p-0 text-primary"
+							onclick={() => goto('/pricing')}
+						>
+							<Sparkles class="mr-1 h-3 w-3" />
+							upgrade your plan
+						</Button>
+						to create more.
+					</p>
 				</AlertDescription>
 			</Alert>
 		{:else if isAtPeriodLimit}
 			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
 				<AlertTriangle class="h-4 w-4 text-destructive" />
 				<AlertDescription>
-					You've reached your world creation limit ({usage?.worlds_created}/{usage?.worlds_limit}).
-					<Button variant="link" class="h-auto p-0 text-primary" onclick={() => goto('/pricing')}>
-						<Sparkles class="mr-1 h-3 w-3" />
-						Upgrade your plan
-					</Button>
-					for more worlds, or wait for your usage period to reset.
-					{#if usage?.period_end}
-						<span class="text-muted-foreground">
-							{formatResetDate(usage.period_end)}
-						</span>
-					{/if}
+					<p>
+						You've reached your world creation limit ({usage?.worlds_created}/{usage?.worlds_limit}).
+						<Button
+							variant="link"
+							class="inline-flex h-auto p-0 text-primary"
+							onclick={() => goto('/pricing')}
+						>
+							<Sparkles class="mr-1 h-3 w-3" />
+							Upgrade your plan
+						</Button>
+						for more worlds, or wait for your usage period to reset.
+						{#if usage?.period_end}
+							<span class="text-muted-foreground">
+								{formatResetDate(usage.period_end)}
+							</span>
+						{/if}
+					</p>
 				</AlertDescription>
 			</Alert>
 		{/if}
