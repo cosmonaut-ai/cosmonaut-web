@@ -358,17 +358,10 @@ export async function retryNodeProcessing(worldId: string, nodeId: string): Prom
 
 /**
  * Fetch the list of available TTS voices.
- * Public endpoint — no auth required. The list is static and can be cached indefinitely.
+ * The list is static and can be cached indefinitely.
  */
 export async function listVoices(): Promise<Voice[]> {
-	const response = await fetch(`${API_BASE_URL}/voices/`);
-	if (!response.ok) {
-		const errorBody: { detail?: string } = await response.json().catch(() => ({
-			detail: `HTTP ${response.status}: ${response.statusText}`
-		}));
-		throw new ApiError(response.status, errorBody.detail || response.statusText);
-	}
-	return response.json();
+	return apiRequest<Voice[]>(`${API_BASE_URL}/voices/`);
 }
 
 /**
