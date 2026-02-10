@@ -5,7 +5,16 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { Play, Pause, Volume2, Volume1, VolumeX, X, Check } from '@lucide/svelte';
+	import {
+		Play,
+		Pause,
+		Volume2,
+		Volume1,
+		VolumeX,
+		X,
+		Check,
+		EllipsisVertical
+	} from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
@@ -134,10 +143,6 @@
 
 	const volumeProgress = $derived(volume * 100);
 
-	// Mobile vertical volume popup
-	let volumePopupOpen = $state(false);
-	let volumePopupEl = $state<HTMLDivElement | null>(null);
-
 	function toggleMute() {
 		if (volume > 0) {
 			previousVolume = volume;
@@ -147,25 +152,9 @@
 		}
 	}
 
-	/** Mobile: toggle popup; Desktop: toggle mute */
-	function handleVolumeClick() {
-		if (browser && window.innerWidth < 640) {
-			volumePopupOpen = !volumePopupOpen;
-		} else {
-			toggleMute();
-		}
-	}
-
 	function handleVolumeChange(e: Event) {
 		const target = e.target as HTMLInputElement;
 		volume = parseFloat(target.value) / 100;
-	}
-
-	// Close popup on outside click
-	function handleWindowClick(e: MouseEvent) {
-		if (volumePopupOpen && volumePopupEl && !volumePopupEl.contains(e.target as Node)) {
-			volumePopupOpen = false;
-		}
 	}
 
 	// Generation mutation
@@ -265,7 +254,6 @@
 		if (audioElement && !audioElement.paused) {
 			audioElement.pause();
 		}
-		volumePopupOpen = false;
 		playerVisible = false;
 	}
 
@@ -322,7 +310,6 @@
 		untrack(() => {
 			if (currentId !== lastNodeId) {
 				audioElement?.pause();
-				volumePopupOpen = false;
 				playerVisible = false;
 				localAudio = {};
 				currentTime = 0;
@@ -343,8 +330,6 @@
 		};
 	});
 </script>
-
-<svelte:window onclick={handleWindowClick} />
 
 <!-- Hidden audio element -->
 {#if effectiveAudioUrl}
@@ -423,17 +408,16 @@
 					{formatTime(duration)}
 				</span>
 
-				<!-- Volume control -->
+				<!-- Volume control (desktop only) -->
 				<div
-					bind:this={volumePopupEl}
-					class="relative flex shrink-0 items-center gap-1"
+					class="relative hidden shrink-0 items-center gap-1 sm:flex"
 					role="group"
 					aria-label="Volume controls"
 				>
 					<Button
 						variant="ghost"
 						size="icon-sm"
-						onclick={handleVolumeClick}
+						onclick={toggleMute}
 						aria-label={volume === 0 ? 'Unmute' : 'Mute'}
 						class="shrink-0"
 					>
@@ -455,19 +439,88 @@
 						value={volumeProgress}
 						oninput={handleVolumeChange}
 						aria-label="Volume"
-						class="volume-range hidden h-1 w-16 cursor-pointer appearance-none rounded-full bg-muted sm:block"
+						class="volume-range h-1 w-16 cursor-pointer appearance-none rounded-full bg-muted"
 						style="--vol-progress: {volumeProgress}%"
 					/>
+				</div>
 
-					<!-- Mobile: vertical popup slider -->
-					{#if volumePopupOpen}
-						<div
-							class="volume-popup absolute bottom-full left-1/2 z-10 mb-3 -translate-x-1/2 sm:hidden"
-							transition:fly={{ y: 8, duration: 200, easing: cubicOut }}
+				<!-- Speed control (desktop only) -->
+				<div class="hidden sm:block">
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger
+							class="shrink-0 rounded-md px-1.5 py-1 text-xs font-medium text-muted-foreground tabular-nums transition-colors hover:bg-accent hover:text-accent-foreground"
+							aria-label="Playback speed: {formatSpeed(playbackRate)}"
 						>
+							{formatSpeed(playbackRate)}
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content side="top" align="end" class="min-w-24">
+							{#each SPEED_OPTIONS as speed (speed)}
+								<DropdownMenu.Item
+									class="cursor-pointer gap-2"
+									onclick={() => (playbackRate = speed)}
+								>
+									{#if playbackRate === speed}
+										<Check class="h-3 w-3 text-primary" />
+									{:else}
+										<span class="h-3 w-3"></span>
+									{/if}
+									{formatSpeed(speed)}
+								</DropdownMenu.Item>
+							{/each}
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+				</div>
+
+				<!-- Voice picker (desktop only) -->
+				<div class="hidden sm:block">
+					{#if voices.length > 0 && effectiveVoiceId}
+						<VoicePicker
+							{voices}
+							selectedVoiceId={effectiveVoiceId}
+							onSelect={handleVoiceSelect}
+							onOpenChange={handleVoicePickerOpenChange}
+						/>
+					{/if}
+				</div>
+			{/if}
+
+			<!-- Mobile: ellipsis menu with all controls -->
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger
+					class="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:hidden"
+					aria-label="Audio controls"
+				>
+					<EllipsisVertical class="h-4 w-4" />
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content side="top" align="end" class="w-56">
+					{#if !isGenerating}
+						<!-- Volume -->
+						<DropdownMenu.Group>
+							<DropdownMenu.Label>Volume</DropdownMenu.Label>
+							<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
 							<div
-								class="flex flex-col items-center gap-2 rounded-lg border border-border bg-card/95 px-3 py-3 shadow-lg backdrop-blur-md"
+								class="flex items-center gap-2 px-2 py-1.5"
+								onclick={(e) => e.stopPropagation()}
+								onpointerdown={(e) => e.stopPropagation()}
 							>
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									onclick={(e) => {
+										e.stopPropagation();
+										toggleMute();
+									}}
+									aria-label={volume === 0 ? 'Unmute' : 'Mute'}
+									class="shrink-0"
+								>
+									{#if volume === 0}
+										<VolumeX class="h-3.5 w-3.5" />
+									{:else if volume < 0.5}
+										<Volume1 class="h-3.5 w-3.5" />
+									{:else}
+										<Volume2 class="h-3.5 w-3.5" />
+									{/if}
+								</Button>
 								<input
 									type="range"
 									min="0"
@@ -476,70 +529,70 @@
 									value={volumeProgress}
 									oninput={handleVolumeChange}
 									aria-label="Volume"
-									class="volume-range-vertical"
+									class="volume-range h-1 flex-1 cursor-pointer appearance-none rounded-full bg-muted"
 									style="--vol-progress: {volumeProgress}%"
 								/>
-								<Button
-									variant="ghost"
-									size="icon-sm"
-									onclick={toggleMute}
-									aria-label={volume === 0 ? 'Unmute' : 'Mute'}
-									class="shrink-0"
-								>
-									{#if volume === 0}
-										<VolumeX class="h-3.5 w-3.5" />
-									{:else}
-										<Volume2 class="h-3.5 w-3.5" />
-									{/if}
-								</Button>
 							</div>
-						</div>
+						</DropdownMenu.Group>
+
+						<DropdownMenu.Separator />
+
+						<!-- Speed (sub-menu) -->
+						<DropdownMenu.Sub>
+							<DropdownMenu.SubTrigger class="[&>svg:last-child]:rotate-180">
+								Speed: {formatSpeed(playbackRate)}
+							</DropdownMenu.SubTrigger>
+							<DropdownMenu.SubContent class="min-w-28">
+								{#each SPEED_OPTIONS as speed (speed)}
+									<DropdownMenu.Item
+										class="cursor-pointer gap-2"
+										onclick={() => (playbackRate = speed)}
+									>
+										{#if playbackRate === speed}
+											<Check class="h-3 w-3 text-primary" />
+										{:else}
+											<span class="h-3 w-3"></span>
+										{/if}
+										{formatSpeed(speed)}
+									</DropdownMenu.Item>
+								{/each}
+							</DropdownMenu.SubContent>
+						</DropdownMenu.Sub>
+
+						<!-- Voice (sub-menu) -->
+						{#if voices.length > 0 && effectiveVoiceId}
+							<DropdownMenu.Sub>
+								<DropdownMenu.SubTrigger class="[&>svg:last-child]:rotate-180">
+									Voice: {voices.find((v) => v.id === effectiveVoiceId)?.display_name ?? 'Select'}
+								</DropdownMenu.SubTrigger>
+								<DropdownMenu.SubContent class="min-w-36">
+									{#each voices as voice (voice.id)}
+										<DropdownMenu.Item
+											class="cursor-pointer gap-2"
+											onclick={() => handleVoiceSelect(voice.id)}
+										>
+											{#if voice.id === effectiveVoiceId}
+												<Check class="h-3 w-3 text-primary" />
+											{:else}
+												<span class="h-3 w-3"></span>
+											{/if}
+											{voice.display_name}
+										</DropdownMenu.Item>
+									{/each}
+								</DropdownMenu.SubContent>
+							</DropdownMenu.Sub>
+						{/if}
 					{/if}
-				</div>
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
 
-				<!-- Speed control -->
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger
-						class="shrink-0 rounded-md px-1.5 py-1 text-xs font-medium text-muted-foreground tabular-nums transition-colors hover:bg-accent hover:text-accent-foreground"
-						aria-label="Playback speed: {formatSpeed(playbackRate)}"
-					>
-						{formatSpeed(playbackRate)}
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content side="top" align="end" class="min-w-24">
-						{#each SPEED_OPTIONS as speed (speed)}
-							<DropdownMenu.Item
-								class="cursor-pointer gap-2"
-								onclick={() => (playbackRate = speed)}
-							>
-								{#if playbackRate === speed}
-									<Check class="h-3 w-3 text-primary" />
-								{:else}
-									<span class="h-3 w-3"></span>
-								{/if}
-								{formatSpeed(speed)}
-							</DropdownMenu.Item>
-						{/each}
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
-
-				<!-- Voice picker -->
-				{#if voices.length > 0 && effectiveVoiceId}
-					<VoicePicker
-						{voices}
-						selectedVoiceId={effectiveVoiceId}
-						onSelect={handleVoiceSelect}
-						onOpenChange={handleVoicePickerOpenChange}
-					/>
-				{/if}
-			{/if}
-
-			<!-- Close button -->
+			<!-- Close button (desktop only) -->
 			<Button
 				variant="ghost"
 				size="icon-sm"
 				onclick={handleClose}
 				aria-label="Close player"
-				class="shrink-0"
+				class="hidden shrink-0 sm:flex"
 			>
 				<X class="h-4 w-4" />
 			</Button>
@@ -656,73 +709,6 @@
 		height: 4px;
 		border-radius: 9999px;
 		background: var(--muted-foreground);
-	}
-
-	/* ── Vertical volume slider (mobile popup) ── */
-	.volume-popup {
-		filter: drop-shadow(0 -2px 8px oklch(0 0 0 / 0.15));
-	}
-
-	.volume-range-vertical {
-		-webkit-appearance: none;
-		appearance: none;
-		writing-mode: vertical-lr;
-		direction: rtl;
-		width: 4px;
-		height: 100px;
-		background: transparent;
-		cursor: pointer;
-		margin: 0;
-		padding: 0;
-	}
-
-	.volume-range-vertical::-webkit-slider-runnable-track {
-		width: 4px;
-		height: 100%;
-		border-radius: 9999px;
-		background: linear-gradient(
-			to top,
-			var(--muted-foreground) 0%,
-			var(--muted-foreground) var(--vol-progress),
-			var(--muted) var(--vol-progress),
-			var(--muted) 100%
-		);
-	}
-
-	.volume-range-vertical::-webkit-slider-thumb {
-		-webkit-appearance: none;
-		appearance: none;
-		width: 14px;
-		height: 14px;
-		border-radius: 50%;
-		background: var(--primary);
-		border: none;
-		cursor: pointer;
-		margin-left: -5px;
-		box-shadow: 0 0 4px oklch(from var(--primary) l c h / 0.3);
-	}
-
-	.volume-range-vertical::-moz-range-track {
-		width: 4px;
-		height: 100%;
-		border-radius: 9999px;
-		background: var(--muted);
-	}
-
-	.volume-range-vertical::-moz-range-progress {
-		width: 4px;
-		border-radius: 9999px;
-		background: var(--muted-foreground);
-	}
-
-	.volume-range-vertical::-moz-range-thumb {
-		width: 14px;
-		height: 14px;
-		border-radius: 50%;
-		background: var(--primary);
-		border: none;
-		cursor: pointer;
-		box-shadow: 0 0 4px oklch(from var(--primary) l c h / 0.3);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
