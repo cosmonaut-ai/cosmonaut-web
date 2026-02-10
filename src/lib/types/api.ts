@@ -37,6 +37,13 @@ export interface Location {
 	connections: string[] | null;
 }
 
+export interface Voice {
+	id: string;
+	display_name: string;
+	description: string;
+	sample_url: string;
+}
+
 export interface StoryNode {
 	id: string;
 	world_id: string;
@@ -48,8 +55,8 @@ export interface StoryNode {
 	ancestors: string[];
 	processing_status: StoryNodeProcessingStatus;
 	generation_status: StoryNodeGenerationStatus;
-	audio_url: string | null;
-	audio_voice_id: string | null;
+	/** Map of voice_id → CDN audio URL for generated narrations */
+	audio: Record<string, string>;
 	created_at: string;
 	updated_at?: string;
 }
