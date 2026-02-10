@@ -14,6 +14,8 @@ export type StoryNodeGenerationStatus = 'initialized' | 'generating' | 'complete
 
 export type WorldVisibility = 'private' | 'public';
 
+export type WorldLength = 'short' | 'medium' | 'long';
+
 export interface Choice {
 	label: string;
 	outcome?: string | null;
@@ -72,6 +74,8 @@ export interface World {
 	narrator_profile: string | null;
 	node_text_length: number | null;
 	story_max_nodes: number | null;
+	world_length: WorldLength | null;
+	family_friendly: boolean;
 	world_image_url: string | null;
 	world_image_alt_text: string | null;
 	world_image_width: string | null;
@@ -84,6 +88,8 @@ export interface World {
 export interface CreateWorldRequest {
 	world_prompt: string;
 	visibility?: WorldVisibility;
+	world_length?: WorldLength;
+	family_friendly?: boolean;
 }
 
 export interface UpdateWorldSharingRequest {

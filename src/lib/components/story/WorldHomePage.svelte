@@ -17,8 +17,23 @@
 		Globe,
 		Lock,
 		Sparkles,
-		Eye
+		Eye,
+		Clock,
+		ShieldCheck
 	} from '@lucide/svelte';
+
+	function getWorldLengthLabel(length: string | null): string | null {
+		switch (length) {
+			case 'short':
+				return 'Short Story';
+			case 'medium':
+				return 'Medium Story';
+			case 'long':
+				return 'Long Story';
+			default:
+				return null;
+		}
+	}
 
 	interface Props {
 		world: World;
@@ -175,6 +190,21 @@
 						Private
 					{/if}
 				</Badge>
+				{#if getWorldLengthLabel(world.world_length)}
+					<Badge
+						variant="outline"
+						class="gap-1.5 border-border/50 bg-background/30 backdrop-blur-sm"
+					>
+						<Clock class="h-3 w-3" />
+						{getWorldLengthLabel(world.world_length)}
+					</Badge>
+				{/if}
+				{#if world.family_friendly}
+					<Badge variant="secondary" class="gap-1.5 border-primary/20 bg-primary/10 text-primary">
+						<ShieldCheck class="h-3 w-3" />
+						Family Friendly
+					</Badge>
+				{/if}
 			</div>
 		</div>
 	</section>
@@ -417,8 +447,16 @@
 				{#if world.genre}
 					<span>{world.genre}</span>
 				{/if}
-				{#if world.story_max_nodes}
+				{#if getWorldLengthLabel(world.world_length)}
+					<span>{getWorldLengthLabel(world.world_length)}</span>
+				{:else if world.story_max_nodes}
 					<span>Max {world.story_max_nodes} nodes</span>
+				{/if}
+				{#if world.family_friendly}
+					<span class="flex items-center gap-1.5">
+						<ShieldCheck class="h-3.5 w-3.5" />
+						Family Friendly
+					</span>
 				{/if}
 				{#if world.node_text_length}
 					<span>~{world.node_text_length} words per node</span>

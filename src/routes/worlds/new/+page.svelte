@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import { useCreateWorld, useUsage } from '$lib/queries';
-	import type { WorldVisibility } from '$lib/types/api';
+	import type { WorldVisibility, WorldLength } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import {
@@ -14,8 +15,42 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
+	import { Switch } from '$lib/components/ui/switch';
+	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import * as Select from '$lib/components/ui/select';
-	import { Rocket, ArrowLeft, Shuffle, AlertTriangle } from '@lucide/svelte';
+	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Info } from '@lucide/svelte';
+
+	// ── localStorage helpers ────────────────────────────────────────────
+	const STORAGE_KEY_LENGTH = 'cosmonaut-world-length';
+	const STORAGE_KEY_FAMILY = 'cosmonaut-family-friendly';
+
+	function getStoredWorldLength(): WorldLength {
+		if (!browser) return 'medium';
+		try {
+			const stored = localStorage.getItem(STORAGE_KEY_LENGTH);
+			if (stored === 'short' || stored === 'medium' || stored === 'long') return stored;
+		} catch {
+			// localStorage might not be available
+		}
+		return 'medium';
+	}
+
+	function getStoredFamilyFriendly(): boolean {
+		if (!browser) return false;
+		try {
+			return localStorage.getItem(STORAGE_KEY_FAMILY) === 'true';
+		} catch {
+			// localStorage might not be available
+		}
+		return false;
+	}
+
+	// ── World length metadata ───────────────────────────────────────────
+	const WORLD_LENGTH_OPTIONS: { value: WorldLength; label: string; description: string }[] = [
+		{ value: 'short', label: 'Short', description: '~5 min read' },
+		{ value: 'medium', label: 'Medium', description: '~10 min read' },
+		{ value: 'long', label: 'Long', description: '~20 min read' }
+	];
 
 	function formatResetDate(dateStr: string | null): string {
 		if (!dateStr) return '';
@@ -34,10 +69,35 @@
 	// Form state
 	let worldPrompt = $state('');
 	let visibility = $state<WorldVisibility>('private');
+	let worldLength = $state<WorldLength>(getStoredWorldLength());
+	let familyFriendly = $state<boolean>(getStoredFamilyFriendly());
 	let prompts = $state<string[]>([]);
 	let promptsLoaded = $state(false);
 	let promptsLoading = $state(false);
 	let hasAttemptedSubmit = $state(false);
+
+	// Persist preferences to localStorage
+	$effect(() => {
+		if (!browser) return;
+		try {
+			localStorage.setItem(STORAGE_KEY_LENGTH, worldLength);
+		} catch {
+			// localStorage might not be available
+		}
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		try {
+			localStorage.setItem(STORAGE_KEY_FAMILY, String(familyFriendly));
+		} catch {
+			// localStorage might not be available
+		}
+	});
+
+	const selectedLengthOption = $derived(
+		WORLD_LENGTH_OPTIONS.find((o) => o.value === worldLength) ?? WORLD_LENGTH_OPTIONS[1]
+	);
 
 	// Use mutation for creating world
 	const createMutation = useCreateWorld();
@@ -121,7 +181,9 @@
 		createMutation.mutate(
 			{
 				world_prompt: worldPrompt.trim(),
-				visibility
+				visibility,
+				world_length: worldLength,
+				family_friendly: familyFriendly
 			},
 			{
 				onSuccess: (world) => {
@@ -279,6 +341,63 @@
 								<Select.Item value="public">Public - Anyone with the link can view</Select.Item>
 							</Select.Content>
 						</Select.Root>
+					</div>
+
+					<!-- Story Length -->
+					<div class="space-y-2">
+						<Label>Story Length</Label>
+						<div
+							class="inline-flex w-full rounded-lg border border-border bg-muted/50 p-1"
+							role="radiogroup"
+							aria-label="Story length"
+						>
+							{#each WORLD_LENGTH_OPTIONS as option (option.value)}
+								<button
+									type="button"
+									role="radio"
+									aria-checked={worldLength === option.value}
+									disabled={loading}
+									onclick={() => (worldLength = option.value)}
+									class="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-all
+										{worldLength === option.value
+										? 'bg-background text-foreground shadow-sm'
+										: 'text-muted-foreground hover:text-foreground'}"
+								>
+									{option.label}
+								</button>
+							{/each}
+						</div>
+						<p class="text-xs text-muted-foreground">
+							{selectedLengthOption.label} stories are approximately a {selectedLengthOption.description}.
+						</p>
+					</div>
+
+					<!-- Family Friendly -->
+					<div class="flex items-center justify-between rounded-lg border border-border p-4">
+						<div class="flex items-center gap-2">
+							<Label for="family_friendly" class="cursor-pointer text-sm font-medium">
+								Family Friendly
+							</Label>
+							<Tooltip>
+								<TooltipTrigger
+									type="button"
+									class="inline-flex text-muted-foreground transition-colors hover:text-foreground"
+									aria-label="What does family friendly mean?"
+								>
+									<Info class="h-4 w-4" />
+								</TooltipTrigger>
+								<TooltipContent class="max-w-xs">
+									When enabled, all content will be child-safe: no graphic violence, profanity, or
+									horror. Uses approachable vocabulary and an encouraging tone.
+								</TooltipContent>
+							</Tooltip>
+						</div>
+						<Switch
+							id="family_friendly"
+							checked={familyFriendly}
+							onCheckedChange={(v) => (familyFriendly = v)}
+							disabled={loading}
+						/>
 					</div>
 
 					<!-- Actions -->
