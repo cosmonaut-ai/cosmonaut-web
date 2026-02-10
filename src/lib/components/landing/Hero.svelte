@@ -45,7 +45,7 @@
 <svelte:window onmousemove={handleMouseMove} />
 
 <section
-	class="pt:0 relative flex min-h-screen flex-col items-end justify-center overflow-hidden px-6 pb-32 md:pt-40"
+	class="pt:0 relative flex min-h-screen flex-col items-end justify-center overflow-hidden px-6 pb-12 md:pb-32 md:pt-40"
 >
 	<!-- Gradient overlay for depth -->
 	<div
@@ -65,33 +65,27 @@
 
 	<!-- Two-column layout -->
 	<div
-		class="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-12 md:grid-cols-2 md:gap-16"
+		class="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-4 md:gap-12 md:grid-cols-2 lg:gap-16"
 	>
 		<!-- Left column: Text content -->
 		<div class="text-center md:text-left">
 			<!-- Decorative stars -->
-			<div
-				class="hero-enter hero-enter-1 mb-8 flex items-center justify-center gap-3 text-primary/60 md:justify-start"
-			>
-				<span class="hero-twinkle hero-twinkle-1 text-2xl">✦</span>
-				<span class="text-sm tracking-[0.3em] text-muted-foreground uppercase">
-					Explore Infinite Worlds
-				</span>
-				<span class="hero-twinkle hero-twinkle-2 text-2xl">✦</span>
-			</div>
 
 			<!-- Main title with glow effect -->
-			<h1
-				class="hero-title hero-enter hero-enter-2 mb-6 text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl"
-			>
-				<span class="text-foreground">Welcome to</span>
+			<h1 class="hero-title hero-enter hero-enter-2 mb-3 font-bold tracking-tight md:mb-6">
+				<span class="font-orbitron text-xl tracking-widest text-foreground md:text-2xl lg:text-3xl"
+					>WELCOME TO</span
+				>
 				<br />
-				<span class="text-primary">Cosmonaut</span>
+				<span
+					class="font-orbitron text-4xl font-bold tracking-widest text-primary md:text-5xl lg:text-6xl"
+					>COSMONAUT</span
+				>
 			</h1>
 
 			<!-- Subtitle -->
 			<p
-				class="hero-enter hero-enter-3 mx-auto mb-12 max-w-2xl text-lg text-muted-foreground sm:text-xl md:mx-0"
+				class="hero-enter hero-enter-3 mx-auto mb-6 max-w-2xl text-sm text-muted-foreground md:mx-0 md:mb-12 md:text-base lg:text-lg"
 			>
 				Create, explore, and share interactive story worlds. Every choice shapes the narrative.
 				Every world is an adventure waiting to unfold.
@@ -99,7 +93,7 @@
 
 			<!-- CTA Buttons -->
 			<div
-				class="hero-enter hero-enter-4 flex flex-col items-center justify-center gap-4 sm:flex-row md:justify-start"
+				class="hero-enter hero-enter-4 flex flex-col items-center justify-center gap-3 sm:flex-row md:gap-4 md:justify-start"
 			>
 				<Button
 					size="lg"
@@ -136,7 +130,7 @@
 
 		<!-- Right column: Art composition (appears first on mobile) -->
 		<div
-			class="relative order-first mx-auto aspect-square w-full max-w-xs md:order-0 md:max-w-none"
+			class="relative order-first mx-auto aspect-square w-full max-w-[220px] md:order-0 md:max-w-none"
 		>
 			<!-- Parallax layer: Planet 1 (farthest, least movement) -->
 			<div
@@ -171,7 +165,7 @@
 			<!-- Parallax layer: Astronaut (foreground) -->
 			<div class="parallax-layer absolute inset-0" style="translate: {mx * -18}px {my * -18}px">
 				<div
-					class="astronaut absolute top-[10%] left-1/2 z-10 w-[60%] -translate-x-1/2 md:top-[-20%] md:left-[5%] md:w-[75%] md:translate-x-0"
+					class="astronaut absolute top-[10%] left-1/2 z-10 w-[55%] -translate-x-1/2 md:top-[-20%] md:left-[5%] md:w-[75%] md:translate-x-0"
 				>
 					<img
 						src="/art/astronaut.png"
@@ -185,7 +179,7 @@
 
 	<!-- Scroll indicator -->
 	<div
-		class="hero-enter hero-enter-5 absolute bottom-8 left-1/2 -translate-x-1/2 text-center motion-safe:animate-bounce"
+		class="hero-enter hero-enter-5 absolute bottom-8 left-1/2 hidden -translate-x-1/2 text-center motion-safe:animate-bounce md:block"
 	>
 		<div class="mx-auto h-14 w-8 rounded-full border-2 border-muted-foreground/30 p-1">
 			<div class="mx-auto h-3 w-1.5 rounded-full bg-primary/60"></div>
@@ -299,39 +293,11 @@
 		}
 	}
 
-	/* ── Star twinkle ── */
-	.hero-twinkle {
-		display: inline-block;
-		animation: twinkle 3s ease-in-out infinite;
-	}
-	.hero-twinkle-1 {
-		animation-delay: 0s;
-	}
-	.hero-twinkle-2 {
-		animation-delay: 1.5s;
-	}
-
-	@keyframes twinkle {
-		0%,
-		100% {
-			opacity: 0.4;
-			transform: scale(1) rotate(0deg);
-		}
-		50% {
-			opacity: 1;
-			transform: scale(1.25) rotate(15deg);
-		}
-	}
-
 	/* ── Reduced motion ── */
 	@media (prefers-reduced-motion: reduce) {
 		.hero-enter {
 			animation: none;
 			opacity: 1;
-		}
-		.hero-twinkle {
-			animation: none;
-			opacity: 0.6;
 		}
 		.planet {
 			animation: none;
