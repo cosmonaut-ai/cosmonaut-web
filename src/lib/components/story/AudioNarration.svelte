@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { useGenerateAudio } from '$lib/queries';
+	import { useGenerateAudio, useVoices } from '$lib/queries';
 	import { ApiError } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -9,11 +9,13 @@
 	import { untrack } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
+	import VoicePicker from './VoicePicker.svelte';
 
 	interface Props {
 		worldId: string;
 		nodeId: string;
-		audioUrl: string | null;
+		/** Map of voice_id → CDN audio URL for already-generated narrations on this node */
+		audio: Record<string, string>;
 		isNodeCompleted: boolean;
 		onQuotaExceeded: () => void;
 		playerVisible?: boolean;
@@ -22,15 +24,46 @@
 	let {
 		worldId,
 		nodeId,
-		audioUrl,
+		audio,
 		isNodeCompleted,
 		onQuotaExceeded,
 		playerVisible = $bindable(false)
 	}: Props = $props();
 
-	// Local URL for the brief gap between generation and cache propagation
-	let generatedUrl = $state<string | null>(null);
-	const effectiveAudioUrl = $derived(audioUrl ?? generatedUrl);
+	// ── Voice selection (persisted) ──
+	const VOICE_KEY = 'cosmonaut-audio-voice';
+
+	function loadVoiceId(): string | null {
+		if (!browser) return null;
+		return localStorage.getItem(VOICE_KEY);
+	}
+
+	let selectedVoiceId = $state<string | null>(loadVoiceId());
+
+	const voicesQuery = useVoices();
+	const voices = $derived(voicesQuery.data ?? []);
+
+	// Resolved voice ID: saved preference (if still valid) → first available voice
+	const effectiveVoiceId = $derived.by(() => {
+		if (selectedVoiceId && voices.some((v) => v.id === selectedVoiceId)) {
+			return selectedVoiceId;
+		}
+		return voices[0]?.id ?? null;
+	});
+
+	// Persist voice selection
+	function saveVoice(voiceId: string) {
+		selectedVoiceId = voiceId;
+		if (browser) localStorage.setItem(VOICE_KEY, voiceId);
+	}
+
+	// ── Audio URL resolution ──
+	// Local cache for the brief gap between generation success and TanStack cache propagation
+	let localAudio = $state<Record<string, string>>({});
+	const mergedAudio = $derived({ ...audio, ...localAudio });
+	const effectiveAudioUrl = $derived(
+		effectiveVoiceId ? (mergedAudio[effectiveVoiceId] ?? null) : null
+	);
 
 	// Audio element reference and bindings
 	let audioElement = $state<HTMLAudioElement | null>(null);
@@ -158,6 +191,9 @@
 	async function handleActivate() {
 		if (isGenerating || playerVisible) return;
 
+		const voiceId = effectiveVoiceId;
+		if (!voiceId) return; // Voices haven't loaded yet
+
 		playerVisible = true;
 
 		if (hasAudio) {
@@ -165,17 +201,22 @@
 			await nextTickPlay();
 		} else if (isNodeCompleted) {
 			// Generate audio first, then auto-play
-			try {
-				const result = await audioMutation.mutateAsync(nodeId);
-				generatedUrl = result.audio_url;
-				await nextTickPlay();
-			} catch (err) {
-				if (err instanceof ApiError && err.isQuotaExceeded) {
-					playerVisible = false;
-					onQuotaExceeded();
-				} else {
-					playerVisible = false;
-				}
+			await generateForVoice(voiceId);
+		}
+	}
+
+	/** Generate audio for a specific voice, update local cache, and auto-play */
+	async function generateForVoice(voiceId: string) {
+		try {
+			const result = await audioMutation.mutateAsync({ nodeId, voiceId });
+			localAudio = { ...localAudio, [voiceId]: result.audio_url };
+			await nextTickPlay();
+		} catch (err) {
+			if (err instanceof ApiError && err.isQuotaExceeded) {
+				playerVisible = false;
+				onQuotaExceeded();
+			} else {
+				playerVisible = false;
 			}
 		}
 	}
@@ -224,6 +265,49 @@
 		playerVisible = false;
 	}
 
+	// ── Voice picker integration ──
+
+	/** Track whether the main audio was playing before the voice picker opened */
+	let wasPlayingBeforePickerOpen = $state(false);
+
+	function handleVoicePickerOpenChange(isOpen: boolean) {
+		if (isOpen) {
+			// Pause main audio while previewing samples
+			if (audioElement && !audioElement.paused) {
+				wasPlayingBeforePickerOpen = true;
+				audioElement.pause();
+			} else {
+				wasPlayingBeforePickerOpen = false;
+			}
+		} else {
+			// Resume main audio if it was playing before picker opened
+			if (wasPlayingBeforePickerOpen && audioElement) {
+				audioElement.play();
+				wasPlayingBeforePickerOpen = false;
+			}
+		}
+	}
+
+	function handleVoiceSelect(voiceId: string) {
+		saveVoice(voiceId);
+
+		// Check if audio already exists for the new voice
+		const url = mergedAudio[voiceId];
+		if (url) {
+			// Audio exists — reset playback position (src changes reactively)
+			currentTime = 0;
+			ended = false;
+			// The wasPlayingBeforePickerOpen flag won't apply since the picker
+			// closes on selection, but we want to auto-play the new voice
+			wasPlayingBeforePickerOpen = false;
+			nextTickPlay();
+		} else if (isNodeCompleted) {
+			// No audio for this voice yet — generate it
+			wasPlayingBeforePickerOpen = false;
+			generateForVoice(voiceId);
+		}
+	}
+
 	// Reset state when user navigates to a *different* node (actual value change).
 	// Using explicit string comparison avoids spurious cleanup from reactive
 	// re-evaluation when the cache is patched (same nodeId, new object ref).
@@ -236,7 +320,7 @@
 				audioElement?.pause();
 				volumePopupOpen = false;
 				playerVisible = false;
-				generatedUrl = null;
+				localAudio = {};
 				currentTime = 0;
 				duration = 0;
 				ended = false;
@@ -251,7 +335,7 @@
 		return () => {
 			audioElement?.pause();
 			playerVisible = false;
-			generatedUrl = null;
+			localAudio = {};
 		};
 	});
 </script>
@@ -276,7 +360,7 @@
 	variant="ghost"
 	size="icon-sm"
 	onclick={handleToggle}
-	disabled={!isNodeCompleted}
+	disabled={!isNodeCompleted || !effectiveVoiceId}
 	aria-label={playerVisible ? 'Close narration' : 'Play narration'}
 	class="shrink-0"
 >
@@ -433,6 +517,16 @@
 						{/each}
 					</DropdownMenu.Content>
 				</DropdownMenu.Root>
+
+				<!-- Voice picker -->
+				{#if voices.length > 0 && effectiveVoiceId}
+					<VoicePicker
+						{voices}
+						selectedVoiceId={effectiveVoiceId}
+						onSelect={handleVoiceSelect}
+						onOpenChange={handleVoicePickerOpenChange}
+					/>
+				{/if}
 			{/if}
 
 			<!-- Close button -->

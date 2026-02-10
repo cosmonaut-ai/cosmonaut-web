@@ -45,7 +45,7 @@
 <svelte:window onmousemove={handleMouseMove} />
 
 <section
-	class="pt:0 relative flex min-h-screen flex-col items-end justify-center overflow-hidden px-6 pb-12 md:pb-32 md:pt-40"
+	class="pt:0 relative flex min-h-screen flex-col items-end justify-center overflow-hidden px-6 pb-12 md:pt-40 md:pb-32"
 >
 	<!-- Gradient overlay for depth -->
 	<div
@@ -65,7 +65,7 @@
 
 	<!-- Two-column layout -->
 	<div
-		class="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-4 md:gap-12 md:grid-cols-2 lg:gap-16"
+		class="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-4 md:grid-cols-2 md:gap-12 lg:gap-16"
 	>
 		<!-- Left column: Text content -->
 		<div class="text-center md:text-left">
@@ -93,7 +93,7 @@
 
 			<!-- CTA Buttons -->
 			<div
-				class="hero-enter hero-enter-4 flex flex-col items-center justify-center gap-3 sm:flex-row md:gap-4 md:justify-start"
+				class="hero-enter hero-enter-4 flex flex-col items-center justify-center gap-3 sm:flex-row md:justify-start md:gap-4"
 			>
 				<Button
 					size="lg"
