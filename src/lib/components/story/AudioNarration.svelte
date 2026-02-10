@@ -141,6 +141,9 @@
 				audioElement?.pause();
 				playerVisible = false;
 				generatedUrl = null;
+				currentTime = 0;
+				duration = 0;
+				ended = false;
 				lastNodeId = currentId;
 			}
 		});
