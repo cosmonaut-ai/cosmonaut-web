@@ -1,5 +1,6 @@
 import {
 	ApiError,
+	type Voice,
 	type World,
 	type StoryNode,
 	type CreateWorldRequest,
@@ -353,21 +354,41 @@ export async function retryNodeProcessing(worldId: string, nodeId: string): Prom
 	);
 }
 
-// ── Audio Narration ──
+// ── Voices & Audio Narration ──
 
 /**
- * Generate audio narration for a completed story node.
+ * Fetch the list of available TTS voices.
+ * Public endpoint — no auth required. The list is static and can be cached indefinitely.
+ */
+export async function listVoices(): Promise<Voice[]> {
+	const response = await fetch(`${API_BASE_URL}/voices/`);
+	if (!response.ok) {
+		const errorBody: { detail?: string } = await response.json().catch(() => ({
+			detail: `HTTP ${response.status}: ${response.statusText}`
+		}));
+		throw new ApiError(response.status, errorBody.detail || response.statusText);
+	}
+	return response.json();
+}
+
+/**
+ * Generate audio narration for a completed story node with a specific voice.
  * Returns the permanent CDN URL of the generated MP3.
- * Idempotent: calling again for the same node returns the cached URL without consuming quota.
+ * Idempotent: calling again for the same node + voice returns the cached URL without consuming quota.
+ * @param voiceId - Internal voice ID from the /voices/ endpoint
  * @throws ApiError with status 429 when the user's audio quota is exceeded
  */
 export async function generateNodeAudio(
 	worldId: string,
-	nodeId: string
+	nodeId: string,
+	voiceId: string
 ): Promise<{ audio_url: string }> {
 	return apiRequest<{ audio_url: string }>(
 		`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/audio`,
-		{ method: 'POST' }
+		{
+			method: 'POST',
+			body: JSON.stringify({ voice_id: voiceId })
+		}
 	);
 }
 

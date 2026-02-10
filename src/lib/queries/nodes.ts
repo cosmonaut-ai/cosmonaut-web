@@ -110,23 +110,27 @@ export function updateNodeInCache(
 }
 
 /**
- * Mutation hook to generate audio narration for a story node.
- * On success, patches the node in the TanStack cache with the returned audio_url
- * and invalidates the usage query so the audio narrations counter stays current.
+ * Mutation hook to generate audio narration for a story node with a specific voice.
+ * On success, patches the node's `audio` dict in the TanStack cache and
+ * invalidates the usage query so the audio narrations counter stays current.
  */
 export function useGenerateAudio(worldId: MaybeGetter<string>) {
 	const client = useQueryClient();
 	return createMutation(() => {
 		const wId = resolve(worldId);
 		return {
-			mutationFn: (nodeId: string) => generateNodeAudio(wId, nodeId),
-			onSuccess: (data: { audio_url: string }, nodeId: string) => {
-				// Patch the cached node with the new audio_url
+			mutationFn: ({ nodeId, voiceId }: { nodeId: string; voiceId: string }) =>
+				generateNodeAudio(wId, nodeId, voiceId),
+			onSuccess: (
+				data: { audio_url: string },
+				{ nodeId, voiceId }: { nodeId: string; voiceId: string }
+			) => {
+				// Patch the cached node's audio dict with the new voice entry
 				const cached = client.getQueryData<StoryNode>(nodeKeys.detail(wId, nodeId));
 				if (cached) {
 					client.setQueryData(nodeKeys.detail(wId, nodeId), {
 						...cached,
-						audio_url: data.audio_url
+						audio: { ...cached.audio, [voiceId]: data.audio_url }
 					});
 				}
 				// Invalidate usage so the audio narrations counter updates

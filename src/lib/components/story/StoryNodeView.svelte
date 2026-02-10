@@ -310,7 +310,7 @@
 	const pathLength = $derived((currentNode?.ancestors?.length || 0) + 1);
 
 	// ── Audio Narration ──
-	const audioUrl = $derived(currentNode?.audio_url ?? null);
+	const audio = $derived(currentNode?.audio ?? {});
 	let audioPlayerVisible = $state(false);
 </script>
 
@@ -359,7 +359,7 @@
 				<AudioNarration
 					{worldId}
 					nodeId={currentNode.id}
-					{audioUrl}
+					{audio}
 					isNodeCompleted={currentNode?.generation_status === 'completed'}
 					onQuotaExceeded={() => (showAudioQuotaPrompt = true)}
 					bind:playerVisible={audioPlayerVisible}

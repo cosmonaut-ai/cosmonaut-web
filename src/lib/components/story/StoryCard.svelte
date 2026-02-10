@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 	import type { Choice } from '$lib/types/api';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -48,27 +50,129 @@
 		onCustomChoice?.(customChoiceText.trim());
 		customChoiceText = '';
 	}
+
+	// ── Typewriter flavor text ──
+	const flavorPhrases = [
+		'Weaving the threads of fate...',
+		'The narrator takes a breath...',
+		'Ink flows across parchment...',
+		'Stars align above the page...',
+		'A story stirs in the silence...',
+		'Turning the cosmic gears...',
+		'Conjuring words from the void...'
+	];
+
+	const prefersReducedMotion = browser
+		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		: false;
+
+	// Whether the typewriter should be active
+	const showFlavor = $derived(isTyping && !text.trim());
+
+	// Visible slice of the current phrase
+	let flavorVisible = $state('');
+	let flavorActive = false;
+	let flavorTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function startTypewriter() {
+		if (flavorActive || prefersReducedMotion) return;
+		flavorActive = true;
+		flavorVisible = '';
+		let phraseIdx = Math.floor(Math.random() * flavorPhrases.length);
+		let charIdx = 0;
+		let phase: 'typing' | 'pause' | 'deleting' = 'typing';
+
+		function tick() {
+			if (!flavorActive) return;
+
+			const phrase = flavorPhrases[phraseIdx];
+
+			if (phase === 'typing') {
+				charIdx++;
+				flavorVisible = phrase.slice(0, charIdx);
+				if (charIdx >= phrase.length) {
+					phase = 'pause';
+					flavorTimer = setTimeout(tick, 1500);
+				} else {
+					flavorTimer = setTimeout(tick, 45);
+				}
+			} else if (phase === 'pause') {
+				phase = 'deleting';
+				flavorTimer = setTimeout(tick, 25);
+			} else {
+				// deleting
+				charIdx--;
+				flavorVisible = phrase.slice(0, charIdx);
+				if (charIdx <= 0) {
+					phase = 'typing';
+					phraseIdx = (phraseIdx + 1) % flavorPhrases.length;
+					flavorTimer = setTimeout(tick, 300);
+				} else {
+					flavorTimer = setTimeout(tick, 25);
+				}
+			}
+		}
+
+		// Small initial delay before typing starts
+		flavorTimer = setTimeout(tick, 400);
+	}
+
+	function stopTypewriter() {
+		flavorActive = false;
+		if (flavorTimer) {
+			clearTimeout(flavorTimer);
+			flavorTimer = null;
+		}
+		flavorVisible = '';
+	}
+
+	// Start/stop typewriter based on showFlavor
+	$effect(() => {
+		if (showFlavor) {
+			startTypewriter();
+		} else {
+			stopTypewriter();
+		}
+	});
+
+	// Cleanup on destroy
+	onMount(() => {
+		return () => stopTypewriter();
+	});
 </script>
 
 <Card
 	class="story-card rounded-none border-l-0 border-l-primary bg-card sm:rounded-lg sm:border-l-4"
 >
-	<CardContent class="p-6 sm:p-8">
+	<CardContent class="p-3 sm:p-6 lg:p-8">
 		<!-- Story text -->
 		<div
-			class="prose prose-sm max-w-none leading-relaxed text-card-foreground prose-invert sm:prose-lg"
+			class="prose prose-base max-w-none leading-relaxed text-card-foreground prose-invert sm:prose-lg"
 			aria-live="polite"
 			aria-busy={isTyping}
 		>
-			{#each text.split('\n\n') as paragraph, i (i)}
+			{#if showFlavor}
+				<!-- Typewriter flavor text while waiting for first token -->
 				<p class="mb-4 last:mb-0">
-					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-					{@html formatText(paragraph)}
+					{#if prefersReducedMotion}
+						<span class="flavor-text">Crafting your story...</span>
+					{:else}
+						<span class="flavor-text">{flavorVisible}</span>
+					{/if}
+					<span class="story-cursor" aria-hidden="true"></span>
+					<span class="sr-only">Generating story text...</span>
 				</p>
-			{/each}
-			{#if isTyping}
-				<span class="story-cursor" aria-hidden="true"></span>
-				<span class="sr-only">Generating story text...</span>
+			{:else}
+				{#each text.split('\n\n') as paragraph, i (i)}
+					<p class="mb-4 last:mb-0">
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+						{@html formatText(paragraph)}
+					</p>
+				{/each}
+				{#if isTyping}
+					<span class="story-cursor" aria-hidden="true"></span>
+					<span class="sr-only">Generating story text...</span>
+				{/if}
 			{/if}
 		</div>
 
@@ -225,6 +329,12 @@
 </Card>
 
 <style>
+	/* ── Typewriter flavor text ── */
+	.flavor-text {
+		font-style: italic;
+		color: var(--muted-foreground);
+	}
+
 	/* ── Typing cursor — gold glow caret ── */
 	.story-cursor {
 		display: inline-block;
