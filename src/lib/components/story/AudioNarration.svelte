@@ -32,6 +32,7 @@
 
 	// ── Voice selection (persisted) ──
 	const VOICE_KEY = 'cosmonaut-audio-voice';
+	const DEFAULT_VOICE_ID = 'theo';
 
 	function loadVoiceId(): string | null {
 		if (!browser) return null;
@@ -43,10 +44,13 @@
 	const voicesQuery = useVoices();
 	const voices = $derived(voicesQuery.data ?? []);
 
-	// Resolved voice ID: saved preference (if still valid) → first available voice
+	// Resolved voice ID: saved preference (if still valid) → default voice → first available
 	const effectiveVoiceId = $derived.by(() => {
 		if (selectedVoiceId && voices.some((v) => v.id === selectedVoiceId)) {
 			return selectedVoiceId;
+		}
+		if (voices.some((v) => v.id === DEFAULT_VOICE_ID)) {
+			return DEFAULT_VOICE_ID;
 		}
 		return voices[0]?.id ?? null;
 	});
