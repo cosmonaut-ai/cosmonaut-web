@@ -84,10 +84,9 @@ export function useChooseOption(worldId: MaybeGetter<string>) {
 				// Invalidate the nodes list to include the new node
 				// Use exact: true to prevent invalidating individual node queries (prefix matching)
 				client.invalidateQueries({ queryKey: nodeKeys.all(wId), exact: true });
-			},
-			onError: (error: Error) => {
-				showError('Failed to process choice', error.message);
 			}
+			// Note: no onError here — the caller uses mutateAsync and handles all
+			// errors directly (409 retry logic + user-facing toasts) to avoid duplicates.
 		};
 	});
 }

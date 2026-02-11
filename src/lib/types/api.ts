@@ -145,6 +145,15 @@ export class ApiError extends Error {
 			/Cannot generate text for node .+ with status (completed|generating)/i.test(this.detail)
 		);
 	}
+
+	/**
+	 * Whether the error indicates a node processing conflict (409 Conflict).
+	 * Returned by the /choose endpoint when the target node has a processing error
+	 * (e.g. failed fact extraction). The node can be recovered via /retry-processing.
+	 */
+	get isNodeProcessingConflict(): boolean {
+		return this.status === 409;
+	}
 }
 
 /**
