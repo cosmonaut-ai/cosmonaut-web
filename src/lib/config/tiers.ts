@@ -55,8 +55,7 @@ export const TIER_CONFIG: TierConfig[] = [
 			'50 saved stories',
 			'60 audio narrations / month',
 			'Full story graph visualization',
-			'Community sharing',
-			'Priority generation'
+			'Community sharing'
 		]
 	},
 	{
@@ -70,13 +69,12 @@ export const TIER_CONFIG: TierConfig[] = [
 		audioNarrationsLimit: 200,
 		resetPeriod: '30 days',
 		features: [
-			'Unlimited worlds (soft cap 100)',
-			'Unlimited story nodes (fair use 2,000+)',
+			'100 worlds per month',
+			'2,000 story nodes per month',
 			'100 saved stories',
 			'200 audio narrations / month',
 			'Full story graph visualization',
 			'Community sharing',
-			'Priority generation',
 			'Early access to new features'
 		]
 	}
