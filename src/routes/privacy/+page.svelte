@@ -1,14 +1,13 @@
 <script lang="ts">
 	import Footer from '$lib/components/landing/Footer.svelte';
+	import SEO from '$lib/components/SEO.svelte';
 </script>
 
-<svelte:head>
-	<title>Privacy Policy - Cosmonaut</title>
-	<meta
-		name="description"
-		content="Privacy Policy for Cosmonaut AI. Learn how we collect, use, and protect your information."
-	/>
-</svelte:head>
+<SEO
+	title="Privacy Policy - Cosmonaut"
+	description="Privacy Policy for Cosmonaut AI. Learn how we collect, use, and protect your information."
+	path="/privacy"
+/>
 
 <div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-3xl px-6 py-12">

@@ -13,6 +13,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { showSuccess, showInfo } from '$lib/utils/toast';
 	import { ArrowLeft } from '@lucide/svelte';
+	import SEO from '$lib/components/SEO.svelte';
 
 	const auth = useAuth();
 	const usageQuery = useUsage();
@@ -68,10 +69,11 @@
 	const isActionLoading = $derived(checkoutMutation.isPending || billingPortalMutation.isPending);
 </script>
 
-<svelte:head>
-	<title>Plans & Pricing - Cosmonaut</title>
-	<meta name="description" content="Choose the plan that fits your storytelling needs." />
-</svelte:head>
+<SEO
+	title="Plans & Pricing - Cosmonaut"
+	description="Choose the plan that fits your storytelling needs. Start free and upgrade as your adventures grow."
+	path="/pricing"
+/>
 
 <div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-6xl px-6 py-12">
