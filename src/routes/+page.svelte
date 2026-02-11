@@ -11,6 +11,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Rocket, LogIn } from '@lucide/svelte';
 	import { browser } from '$app/environment';
+	import SEO from '$lib/components/SEO.svelte';
 
 	const auth = useAuth();
 
@@ -109,13 +110,31 @@
 
 <svelte:window onscroll={handleScroll} />
 
-<svelte:head>
-	<title>Cosmonaut - Explore Infinite Story Worlds</title>
-	<meta
-		name="description"
-		content="Create, explore, and share interactive story worlds. Every choice shapes the narrative. Every world is an adventure waiting to unfold."
-	/>
-</svelte:head>
+<SEO
+	title="Cosmonaut - Explore Infinite Story Worlds"
+	description="Create, explore, and share interactive story worlds. Every choice shapes the narrative. Every world is an adventure waiting to unfold."
+	path="/"
+	jsonLd={{
+		'@context': 'https://schema.org',
+		'@type': 'WebApplication',
+		name: 'Cosmonaut',
+		url: 'https://cosmonaut-ai.com',
+		description:
+			'Create, explore, and share interactive story worlds. Every choice shapes the narrative. Every world is an adventure waiting to unfold.',
+		applicationCategory: 'Entertainment',
+		operatingSystem: 'Web',
+		offers: {
+			'@type': 'Offer',
+			price: '0',
+			priceCurrency: 'USD'
+		},
+		creator: {
+			'@type': 'Organization',
+			name: 'Matson Software LLC',
+			url: 'https://cosmonaut-ai.com'
+		}
+	}}
+/>
 
 <!-- Animated starfield background -->
 <Starfield />

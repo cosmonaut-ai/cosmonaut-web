@@ -19,6 +19,7 @@
 	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import * as Select from '$lib/components/ui/select';
 	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Info } from '@lucide/svelte';
+	import SEO from '$lib/components/SEO.svelte';
 
 	// ── localStorage helpers ────────────────────────────────────────────
 	const STORAGE_KEY_LENGTH = 'cosmonaut-world-length';
@@ -195,10 +196,12 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Create World - Cosmonaut</title>
-	<meta name="description" content="Create a new interactive story world." />
-</svelte:head>
+<SEO
+	title="Create World - Cosmonaut"
+	description="Create a new interactive story world."
+	path="/worlds/new"
+	noindex
+/>
 
 <div class="h-full overflow-y-auto bg-background">
 	<!-- Header -->
