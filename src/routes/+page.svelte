@@ -111,7 +111,7 @@
 <svelte:window onscroll={handleScroll} />
 
 <SEO
-	title="Cosmonaut - Explore Infinite Story Worlds"
+	title="Cosmonaut - Custom interactive stories for you & your family"
 	description="Create, explore, and share interactive story worlds. Every choice shapes the narrative. Every world is an adventure waiting to unfold."
 	path="/"
 	jsonLd={{

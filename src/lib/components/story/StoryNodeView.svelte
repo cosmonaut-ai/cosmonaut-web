@@ -276,7 +276,25 @@
 			currentNodeOverride = node;
 			goto(`/worlds/${worldId}/nodes/${node.id}`, { replaceState: false, noScroll: true });
 		} catch (err) {
-			showError('Failed to make choice', err instanceof Error ? err.message : String(err));
+			if (err instanceof ApiError && err.isNodeProcessingConflict) {
+				// 409 Conflict — the node has a processing error (e.g. failed fact extraction).
+				// Automatically retry background processing and prompt the user to try again.
+				try {
+					await retryNodeProcessing(worldId, currentNode.id);
+					nodeQuery.refetch();
+					showError(
+						'Story node busy',
+						'A background task was still running. It has been re-queued — please try your choice again in a moment.'
+					);
+				} catch {
+					showError(
+						'Story node busy',
+						'This node encountered a processing issue. Please wait a moment and try again.'
+					);
+				}
+			} else {
+				showError('Failed to make choice', err instanceof Error ? err.message : String(err));
+			}
 		} finally {
 			loading = false;
 		}
