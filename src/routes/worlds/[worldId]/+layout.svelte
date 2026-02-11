@@ -11,6 +11,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import SEO from '$lib/components/SEO.svelte';
 
 	interface Props {
 		children: Snippet;
@@ -46,10 +47,16 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{world?.title || 'World'} - Cosmonaut</title>
-	<meta name="description" content={world?.description || 'Explore an interactive story world.'} />
-</svelte:head>
+<SEO
+	title="{world?.title || 'World'} - Cosmonaut"
+	description={world?.description || 'Explore an interactive story world.'}
+	path="/worlds/{worldId}"
+	ogImage={world?.world_image_url || undefined}
+	ogImageWidth={world?.world_image_width ? Number(world.world_image_width) : undefined}
+	ogImageHeight={world?.world_image_height ? Number(world.world_image_height) : undefined}
+	ogImageAlt={world?.world_image_alt_text || world?.title || 'Story world image'}
+	noindex
+/>
 
 {#if isWorldLoading}
 	<!-- Loading world data -->

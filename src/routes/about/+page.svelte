@@ -1,15 +1,14 @@
 <script lang="ts">
 	import Footer from '$lib/components/landing/Footer.svelte';
+	import SEO from '$lib/components/SEO.svelte';
 	import { Rocket, BookOpen, Sparkles, Users } from '@lucide/svelte';
 </script>
 
-<svelte:head>
-	<title>About - Cosmonaut</title>
-	<meta
-		name="description"
-		content="Cosmonaut AI is an interactive storytelling platform where every choice shapes the narrative. Built for families, powered by AI."
-	/>
-</svelte:head>
+<SEO
+	title="About Cosmonaut - Interactive Storytelling Platform"
+	description="Cosmonaut AI is an interactive storytelling platform where every choice shapes the narrative. Built for families, powered by AI."
+	path="/about"
+/>
 
 <div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-3xl px-6 py-12">

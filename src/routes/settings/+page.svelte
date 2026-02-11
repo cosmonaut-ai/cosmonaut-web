@@ -17,6 +17,7 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { ArrowLeft, User, CreditCard, BarChart3, ExternalLink } from '@lucide/svelte';
+	import SEO from '$lib/components/SEO.svelte';
 
 	const auth = useAuth();
 	const usageQuery = useUsage();
@@ -42,10 +43,12 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Settings - Cosmonaut</title>
-	<meta name="description" content="Manage your account, subscription, and view usage." />
-</svelte:head>
+<SEO
+	title="Settings - Cosmonaut"
+	description="Manage your account, subscription, and view usage."
+	path="/settings"
+	noindex
+/>
 
 <div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-3xl px-6 py-12">

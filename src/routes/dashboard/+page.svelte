@@ -10,6 +10,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Tooltip, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import { Plus, Rocket, TrendingUp, Users } from '@lucide/svelte';
+	import SEO from '$lib/components/SEO.svelte';
 
 	const worldsQuery = useWorlds();
 	const deleteMutation = useDeleteWorld();
@@ -43,10 +44,12 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Dashboard - Cosmonaut</title>
-	<meta name="description" content="Manage your story worlds and explore new adventures." />
-</svelte:head>
+<SEO
+	title="Dashboard - Cosmonaut"
+	description="Manage your story worlds and explore new adventures."
+	path="/dashboard"
+	noindex
+/>
 
 <div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-7xl px-6 py-12">

@@ -1,3 +1,12 @@
-# allow crawling everything by default
+# Cosmonaut AI - https://cosmonaut-ai.com
 User-agent: *
-Disallow:
+Allow: /
+
+# Private/authenticated routes
+Disallow: /dashboard/
+Disallow: /settings/
+Disallow: /callback/
+Disallow: /worlds/
+
+# Sitemap
+Sitemap: https://cosmonaut-ai.com/sitemap.xml

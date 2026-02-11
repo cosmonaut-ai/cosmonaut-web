@@ -1,14 +1,13 @@
 <script lang="ts">
 	import Footer from '$lib/components/landing/Footer.svelte';
+	import SEO from '$lib/components/SEO.svelte';
 </script>
 
-<svelte:head>
-	<title>Terms of Service - Cosmonaut</title>
-	<meta
-		name="description"
-		content="Terms of Service for Cosmonaut AI. Read the terms governing your use of the platform."
-	/>
-</svelte:head>
+<SEO
+	title="Terms of Service - Cosmonaut"
+	description="Terms of Service for Cosmonaut AI. Read the terms governing your use of the platform."
+	path="/terms"
+/>
 
 <div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-3xl px-6 py-12">
