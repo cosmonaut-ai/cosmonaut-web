@@ -12,7 +12,7 @@
 		type ChoiceOption
 	} from '$lib/queries';
 	import { showError } from '$lib/utils/toast';
-	import { ApiError, type Choice, type StoryNode } from '$lib/types/api';
+	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
 	import SlideTransition from './SlideTransition.svelte';
 	import AudioNarration from './AudioNarration.svelte';
@@ -250,17 +250,15 @@
 
 	async function handleChoiceSelect(choiceIndex: number) {
 		if (!currentNode || loading || isProcessingChoice) return;
-		const parentChoice = currentNode.choices[choiceIndex];
-		await executeChoice({ choiceIndex }, parentChoice);
+		await executeChoice({ choiceIndex });
 	}
 
 	async function handleCustomChoice(text: string) {
 		if (!currentNode || loading || isProcessingChoice) return;
-		const parentChoice: Choice = { label: text, target: null, is_custom: true };
-		await executeChoice({ customChoice: text }, parentChoice);
+		await executeChoice({ customChoice: text });
 	}
 
-	async function executeChoice(choice: ChoiceOption, parentChoice?: Choice) {
+	async function executeChoice(choice: ChoiceOption) {
 		if (!currentNode) return;
 
 		try {
@@ -270,8 +268,7 @@
 			// Step 1: Call /choose - returns either a new initialized node or an existing one
 			const node = await chooseMutation.mutateAsync({
 				nodeId: currentNode.id,
-				choice,
-				parentChoice
+				choice
 			});
 
 			// Step 2: Navigate to the node and set override
