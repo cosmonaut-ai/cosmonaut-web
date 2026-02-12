@@ -52,6 +52,8 @@ export interface StoryNode {
 	story_summary: string | null;
 	choices: Choice[];
 	parent_id: string | null;
+	/** The choice on the parent node that led to this node. Undefined for the root node. */
+	parent_choice?: Choice;
 	ancestors: string[];
 	processing_status: StoryNodeProcessingStatus;
 	generation_status: StoryNodeGenerationStatus;
@@ -163,6 +165,8 @@ export class ApiError extends Error {
 export interface ChooseRequest {
 	choice_index: number | null;
 	custom_choice: string | null;
+	/** The choice from the parent node that is being selected */
+	parent_choice?: Choice;
 }
 
 /**
