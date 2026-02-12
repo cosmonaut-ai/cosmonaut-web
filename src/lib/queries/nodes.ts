@@ -1,6 +1,6 @@
 import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { getNode, getWorldNodes, chooseOption, generateNodeAudio } from '$lib/api/client';
-import type { StoryNode } from '$lib/types/api';
+import type { Choice, StoryNode } from '$lib/types/api';
 import { showError } from '$lib/utils/toast';
 import { usageKeys } from './subscription';
 
@@ -74,8 +74,15 @@ export function useChooseOption(worldId: MaybeGetter<string>) {
 	return createMutation(() => {
 		const wId = resolve(worldId);
 		return {
-			mutationFn: ({ nodeId, choice }: { nodeId: string; choice: ChoiceOption }) =>
-				chooseOption(wId, nodeId, choice),
+			mutationFn: ({
+				nodeId,
+				choice,
+				parentChoice
+			}: {
+				nodeId: string;
+				choice: ChoiceOption;
+				parentChoice?: Choice;
+			}) => chooseOption(wId, nodeId, choice, parentChoice),
 			onSuccess: (newNode: StoryNode, { nodeId: parentNodeId }) => {
 				// Add the new node to the cache
 				client.setQueryData(nodeKeys.detail(wId, newNode.id), newNode);
