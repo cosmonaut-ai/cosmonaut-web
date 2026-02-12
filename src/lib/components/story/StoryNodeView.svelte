@@ -446,6 +446,7 @@
 					<StoryCard
 						text={currentNode.text?.trim() ?? ''}
 						choices={currentNode.choices}
+						parentChoice={currentNode.parent_choice}
 						isTyping={false}
 						{isEnding}
 						{isLoading}

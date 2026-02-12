@@ -7,12 +7,13 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { ChevronRight, RotateCcw, Check, Sparkles } from '@lucide/svelte';
+	import { ChevronRight, RotateCcw, Check, Sparkles, ArrowRight } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 
 	interface Props {
 		text: string;
 		choices?: Choice[];
+		parentChoice?: Choice | null;
 		isTyping?: boolean;
 		isEnding?: boolean;
 		isLoading?: boolean;
@@ -26,6 +27,7 @@
 	let {
 		text,
 		choices = [],
+		parentChoice = null,
 		isTyping = false,
 		isEnding = false,
 		isLoading = false,
@@ -145,6 +147,19 @@
 	class="story-card rounded-none border-l-0 border-l-primary bg-card sm:rounded-lg sm:border-l-4"
 >
 	<CardContent class="p-3 sm:p-6 lg:p-8">
+		<!-- Parent choice context -->
+		{#if parentChoice}
+			<div
+				class="mb-6 flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3"
+			>
+				<ArrowRight class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+				<div class="min-w-0 text-sm">
+					<span class="text-muted-foreground">You chose:</span>
+					<span class="ml-1 font-medium text-foreground">{parentChoice.label}</span>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Story text -->
 		<div
 			class="prose prose-base max-w-none leading-relaxed text-card-foreground prose-invert sm:prose-lg"
