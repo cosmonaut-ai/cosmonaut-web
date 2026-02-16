@@ -42,8 +42,8 @@ jobs:
             echo "CLOUDFRONT_DISTRIBUTION_ID=E2B2XQRISFFDLK" >> $GITHUB_ENV
             echo "PUBLIC_API_BASE_URL=https://api.dev.cosmonaut-ai.com" >> $GITHUB_ENV
             echo "PUBLIC_STREAMING_BASE_URL=https://streaming.dev.cosmonaut-ai.com" >> $GITHUB_ENV
-            echo "PUBLIC_COGNITO_USER_POOL_ID=us-east-2_yztvRZ3oT" >> $GITHUB_ENV
-            echo "PUBLIC_COGNITO_CLIENT_ID=4l5f2tb9vdl01ig9k9ian6b0as" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_USER_POOL_ID=us-east-2_GWLKBPNKF" >> $GITHUB_ENV
+            echo "PUBLIC_COGNITO_CLIENT_ID=7bsqjkt7g0notvqm4m5rvdl56g" >> $GITHUB_ENV
             echo "PUBLIC_COGNITO_DOMAIN=cosmonaut-dev.auth.us-east-2.amazoncognito.com" >> $GITHUB_ENV
             echo "PUBLIC_COGNITO_REDIRECT_URI=https://dev.cosmonaut-ai.com/callback" >> $GITHUB_ENV
           fi

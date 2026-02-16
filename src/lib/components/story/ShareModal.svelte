@@ -9,7 +9,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Share2, X, Plus, Globe, Lock, Link } from '@lucide/svelte';
+	import { Share2, X, Plus, Globe, Lock, Link, Copy } from '@lucide/svelte';
 
 	interface Props {
 		world: World;
@@ -127,17 +127,14 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<Share2 class="h-5 w-5 text-primary" />
-				Share World
+				Share "{world.title || 'Untitled World'}"
 			</Dialog.Title>
-			<Dialog.Description>
-				Control who can access "{world.title || 'Untitled World'}"
-			</Dialog.Description>
 		</Dialog.Header>
 
 		<div class="space-y-6 py-4">
-			<!-- Visibility -->
-			<div class="space-y-2">
-				<Label>Visibility</Label>
+			<!-- General access -->
+			<div class="space-y-3">
+				<Label class="text-sm font-medium">General access</Label>
 				<Select.Root
 					type="single"
 					value={visibility}
@@ -145,35 +142,25 @@
 						if (v) visibility = v as WorldVisibility;
 					}}
 				>
-					<div class="flex items-center gap-2">
-						<Select.Trigger class="flex-1">
-							<div class="flex items-center gap-2">
-								{#if visibility === 'public'}
-									<Globe class="h-4 w-4 text-primary" />
-									<span>Public</span>
-								{:else}
-									<Lock class="h-4 w-4 text-muted-foreground" />
-									<span>Private</span>
-								{/if}
-							</div>
-						</Select.Trigger>
-						<Button
-							variant="outline"
-							size="icon"
-							onclick={copyWorldLink}
-							aria-label="Copy world link"
-						>
-							<Link class="h-4 w-4" />
-						</Button>
-					</div>
+					<Select.Trigger class="w-full">
+						<div class="flex items-center gap-2">
+							{#if visibility === 'public'}
+								<Globe class="h-4 w-4 text-primary" />
+								<span>Anyone with the link</span>
+							{:else}
+								<Lock class="h-4 w-4 text-muted-foreground" />
+								<span>Restricted</span>
+							{/if}
+						</div>
+					</Select.Trigger>
 					<Select.Content>
 						<Select.Item value="private">
 							<div class="flex items-center gap-2">
 								<Lock class="h-4 w-4" />
 								<div>
-									<div class="font-medium">Private</div>
+									<div class="font-medium">Restricted</div>
 									<div class="text-xs text-muted-foreground">
-										Only you and added users can access
+										Only you and people you add can access
 									</div>
 								</div>
 							</div>
@@ -182,23 +169,54 @@
 							<div class="flex items-center gap-2">
 								<Globe class="h-4 w-4" />
 								<div>
-									<div class="font-medium">Public</div>
-									<div class="text-xs text-muted-foreground">Anyone with the link can view</div>
+									<div class="font-medium">Anyone with the link</div>
+									<div class="text-xs text-muted-foreground">
+										Anyone on the internet with this link can view
+									</div>
 								</div>
 							</div>
 						</Select.Item>
 					</Select.Content>
 				</Select.Root>
 				<p class="text-xs text-muted-foreground">
-					{visibility === 'public'
-						? 'Anyone with the link can view'
-						: 'Only invited users can view'}
+					{#if visibility === 'public'}
+						Anyone on the internet with the link can view this world. People you add can also view
+						it.
+					{:else}
+						Only you and people you add below can access this world.
+					{/if}
 				</p>
 			</div>
 
-			<!-- Add users -->
+			<!-- Copy link -->
+			<button
+				onclick={copyWorldLink}
+				class="flex w-full items-center gap-3 rounded-lg border border-border bg-muted/50 px-3 py-2.5 text-left transition-colors hover:bg-muted"
+			>
+				<div
+					class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full {visibility ===
+					'public'
+						? 'bg-primary/15 text-primary'
+						: 'bg-muted-foreground/15 text-muted-foreground'}"
+				>
+					<Link class="h-4 w-4" />
+				</div>
+				<div class="min-w-0 flex-1">
+					<p class="truncate text-sm font-medium text-foreground">Copy link</p>
+					<p class="truncate text-xs text-muted-foreground">
+						{#if visibility === 'public'}
+							Anyone with this link can view
+						{:else}
+							Only people with access can open
+						{/if}
+					</p>
+				</div>
+				<Copy class="h-4 w-4 shrink-0 text-muted-foreground" />
+			</button>
+
+			<!-- Add people -->
 			<div class="space-y-2">
-				<Label>Share with specific people</Label>
+				<Label>Add people</Label>
 				<div class="flex gap-2">
 					<Input
 						type="email"
@@ -231,7 +249,7 @@
 			<!-- Shared users list -->
 			{#if sharedWith.length > 0}
 				<div class="space-y-2">
-					<Label class="text-muted-foreground">Shared with ({sharedWith.length})</Label>
+					<Label class="text-muted-foreground">People with access ({sharedWith.length})</Label>
 					<div class="max-h-40 space-y-2 overflow-y-auto rounded-lg border border-border p-2">
 						{#each sharedWith as email (email)}
 							<div
