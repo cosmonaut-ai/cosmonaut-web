@@ -20,7 +20,7 @@ export const isDevEnvironment = API_BASE_URL.includes('dev.cosmonaut-ai.com');
 export const PRODUCTION_URL = 'https://cosmonaut-ai.com';
 
 // Emails allowed to access the dev environment — all others are redirected to production
-export const DEV_ALLOWED_EMAILS: string[] = ['imatson9119@gmail.com'];
+export const DEV_ALLOWED_EMAILS: string[] = ['imatson9119@gmail.com', 'imatson9119+new@gmail.com'];
 
 // Check if auth is configured (non-local environments require Cognito)
 export const isAuthConfigured =

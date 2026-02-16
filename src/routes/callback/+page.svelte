@@ -7,8 +7,25 @@
 	import { Button } from '$lib/components/ui/button';
 	import { AlertTriangle } from '@lucide/svelte';
 
+	const REDIRECT_STORAGE_KEY = 'cosmonaut-auth-redirect';
+
 	let error = $state<string | null>(null);
 	let checking = $state(true);
+
+	/**
+	 * Read and clear the stored post-auth redirect URL.
+	 * Falls back to /dashboard when no redirect was stored.
+	 */
+	function consumeRedirectUrl(): string {
+		let destination: string | null = null;
+		try {
+			destination = localStorage.getItem(REDIRECT_STORAGE_KEY);
+			localStorage.removeItem(REDIRECT_STORAGE_KEY);
+		} catch {
+			// localStorage might not be available
+		}
+		return destination || '/dashboard';
+	}
 
 	onMount(async () => {
 		try {
@@ -20,15 +37,14 @@
 			await new Promise((resolve) => setTimeout(resolve, 500));
 
 			if (getIsAuthenticated()) {
-				// Successfully authenticated, redirect to dashboard
-				goto('/dashboard');
+				goto(consumeRedirectUrl());
 			} else {
 				// Check again after a delay
 				await new Promise((resolve) => setTimeout(resolve, 1000));
 				await checkAuthState();
 
 				if (getIsAuthenticated()) {
-					goto('/dashboard');
+					goto(consumeRedirectUrl());
 				} else {
 					error = 'Authentication failed. Please try again.';
 				}

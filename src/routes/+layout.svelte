@@ -4,11 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import {
-		isDevEnvironment,
-		PRODUCTION_URL,
-		DEV_ALLOWED_EMAILS
-	} from '$lib/config';
+	import { isDevEnvironment, PRODUCTION_URL, DEV_ALLOWED_EMAILS } from '$lib/config';
 	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Toaster } from '$lib/components/ui/sonner';
@@ -23,11 +19,28 @@
 
 	const auth = useAuth();
 
+	// Routes that do not require authentication
+	const PUBLIC_ROUTES = ['/', '/login', '/callback', '/terms', '/privacy', '/pricing', '/about'];
+
+	function isPublicRoute(pathname: string): boolean {
+		const normalized =
+			pathname.endsWith('/') && pathname !== '/' ? pathname.slice(0, -1) : pathname;
+		return PUBLIC_ROUTES.includes(normalized);
+	}
+
 	// Check if we're on the landing page - it has its own header
 	const isLandingPage = $derived(page.url.pathname === '/');
 
 	// Show header on non-landing pages (works in both local and production)
 	const showGlobalHeader = $derived(!isLandingPage);
+
+	// Redirect unauthenticated users on protected routes to the login page
+	$effect(() => {
+		if (!auth.isLoading && !auth.isAuthenticated && !isPublicRoute(page.url.pathname)) {
+			const redirectPath = page.url.pathname + page.url.search;
+			goto(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+		}
+	});
 
 	// Redirect non-allowlisted users away from the dev environment to production
 	$effect(() => {
