@@ -74,6 +74,12 @@
 <Toaster richColors />
 <QueryClientProvider client={queryClient}>
 	<TooltipProvider>
+		<a
+			href="#main-content"
+			class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+		>
+			Skip to main content
+		</a>
 		<div class="flex h-full flex-col">
 			<!-- Global Header for authenticated pages -->
 			{#if showGlobalHeader}
@@ -110,7 +116,7 @@
 				</header>
 			{/if}
 
-			<div class="min-h-0 flex-1">
+			<div id="main-content" class="min-h-0 flex-1">
 				{@render children()}
 			</div>
 		</div>

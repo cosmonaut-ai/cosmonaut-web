@@ -20,6 +20,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Info } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import { formatResetDate } from '$lib/utils/date';
 
 	// ── localStorage helpers ────────────────────────────────────────────
 	const STORAGE_KEY_LENGTH = 'cosmonaut-world-length';
@@ -52,20 +53,6 @@
 		{ value: 'medium', label: 'Medium', description: '~10 min read' },
 		{ value: 'long', label: 'Long', description: '~20 min read' }
 	];
-
-	function formatResetDate(dateStr: string | null): string {
-		if (!dateStr) return '';
-		const date = new Date(dateStr);
-		const now = new Date();
-		const diffMs = date.getTime() - now.getTime();
-		const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-		if (diffDays <= 0) return 'Resets soon.';
-		if (diffDays === 1) return 'Resets tomorrow.';
-		if (diffDays <= 7) return `Resets in ${diffDays} days.`;
-
-		return `Resets ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`;
-	}
 
 	// Form state
 	let worldPrompt = $state('');

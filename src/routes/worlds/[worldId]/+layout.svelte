@@ -2,8 +2,10 @@
 	import type { Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import { useWorld } from '$lib/queries';
 	import type { World } from '$lib/types/api';
+	import { warmWorldCache } from '$lib/api/client';
 	import WorldHeader from '$lib/components/story/WorldHeader.svelte';
 	import WorldGenerationProgress from '$lib/components/story/WorldGenerationProgress.svelte';
 	import WorldGenerationFailed from '$lib/components/story/WorldGenerationFailed.svelte';
@@ -40,6 +42,20 @@
 	const isWorldComplete = $derived(world?.generation_status === 'completed');
 	const isWorldFailed = $derived(world?.generation_status === 'failed');
 	const generationStatus = $derived(world?.generation_status ?? 'initialized');
+
+	// Pre-warm Gemini cache when the world is loaded and complete.
+	// This avoids ~500-2000ms of cache-creation latency on the first node generation.
+	let warmedWorldId = $state<string | null>(null);
+	$effect(() => {
+		const wId = worldId;
+		const complete = isWorldComplete;
+		if (complete && wId && warmedWorldId !== wId) {
+			untrack(() => {
+				warmedWorldId = wId;
+				warmWorldCache(wId);
+			});
+		}
+	});
 
 	function handleWorldUpdate(_: World) {
 		// Invalidate the world query to refresh data
