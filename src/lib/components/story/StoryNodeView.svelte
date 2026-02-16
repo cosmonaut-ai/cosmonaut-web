@@ -400,6 +400,7 @@
 					<StoryCard
 						text={streamingText.trim()}
 						choices={[]}
+						parentChoice={currentNode?.parent_choice}
 						isTyping={true}
 						isLoading={true}
 						showCustomChoice={false}
