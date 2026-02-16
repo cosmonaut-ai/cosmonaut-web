@@ -52,6 +52,7 @@ export interface StoryNode {
 	story_summary: string | null;
 	choices: Choice[];
 	parent_id: string | null;
+	parent_choice: Choice | null;
 	ancestors: string[];
 	processing_status: StoryNodeProcessingStatus;
 	generation_status: StoryNodeGenerationStatus;
