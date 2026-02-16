@@ -1,14 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { untrack } from 'svelte';
-	import { generateNodeText, retryNodeProcessing } from '$lib/api/client';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { retryNodeProcessing } from '$lib/api/client';
 	import {
 		useNode,
 		useChooseOption,
-		updateNodeInCache,
 		useUsage,
-		usageKeys,
 		type ChoiceOption
 	} from '$lib/queries';
 	import { showError } from '$lib/utils/toast';
@@ -17,6 +13,7 @@
 	import SlideTransition from './SlideTransition.svelte';
 	import AudioNarration from './AudioNarration.svelte';
 	import UpgradePrompt from '$lib/components/subscription/UpgradePrompt.svelte';
+	import { useStreamingNode } from './useStreamingNode.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -37,22 +34,6 @@
 	// Navigation direction for slide animation
 	let slideDirection = $state<'forward' | 'back'>('forward');
 
-	// Streaming state
-	let isStreaming = $state(false);
-	let streamingText = $state('');
-	let streamingDone = $state(false);
-	let pendingNode = $state<StoryNode | null>(null);
-
-	// Track which node we've already started generating to prevent duplicate calls
-	let generatingNodeId = $state<string | null>(null);
-
-	// Track which node we've already started retrying processing for to prevent duplicate calls
-	let retryingProcessingNodeId = $state<string | null>(null);
-
-	// Quota exceeded prompt state
-	let showQuotaPrompt = $state(false);
-	let showAudioQuotaPrompt = $state(false);
-
 	// Use TanStack Query for node data (pass getters to ensure reactivity)
 	// Enable polling when node is in 'generating' status
 	const nodeQuery = useNode(
@@ -70,16 +51,41 @@
 		currentNodeOverride?.processing_status ?? nodeQuery.data?.processing_status
 	);
 
+	const stream = useStreamingNode({
+		worldId: () => worldId,
+		nodeId: () => nodeId,
+		effectiveNodeId: () => effectiveNodeId,
+		effectiveNodeStatus: () => effectiveNodeStatus,
+		effectiveProcessingStatus: () => effectiveProcessingStatus,
+		loading: () => loading,
+		setLoading: (v) => {
+			loading = v;
+		},
+		currentNodeOverride: () => currentNodeOverride,
+		setCurrentNodeOverride: (node) => {
+			currentNodeOverride = node;
+		},
+		nodeQuery,
+		onStreamingComplete: (node) => {
+			if (node.id) {
+				goto(`/worlds/${worldId}/nodes/${node.id}`, {
+					replaceState: true,
+					noScroll: true
+				});
+			}
+		}
+	});
+
 	// Check if node is being generated elsewhere (poll until complete)
-	const isNodeGenerating = $derived(effectiveNodeStatus === 'generating' && !isStreaming);
+	const isNodeGenerating = $derived(
+		effectiveNodeStatus === 'generating' && !stream.isStreaming
+	);
 
 	// Check if node generation failed
 	const isNodeFailed = $derived(effectiveNodeStatus === 'failed');
 
 	// The current node is either the override (during streaming/navigation) or from the query
 	const currentNode = $derived(currentNodeOverride ?? nodeQuery.data ?? null);
-
-	const queryClient = useQueryClient();
 
 	// Use mutation for choosing options
 	const chooseMutation = useChooseOption(() => worldId);
@@ -89,7 +95,9 @@
 	const usage = $derived(usageQuery.data);
 	const isAtNodeLimit = $derived(usage ? usage.nodes_used >= usage.nodes_limit : false);
 
-	const isProcessingChoice = $derived(isStreaming || isNodeGenerating || chooseMutation.isPending);
+	const isProcessingChoice = $derived(
+		stream.isStreaming || isNodeGenerating || chooseMutation.isPending
+	);
 	const isLoading = $derived(
 		loading || nodeQuery.isLoading || isNodeGenerating || chooseMutation.isPending
 	);
@@ -106,145 +114,10 @@
 		}
 	});
 
-	// Handle streaming completion
-	$effect(() => {
-		if (streamingDone && pendingNode) {
-			const nodeToProcess = pendingNode;
-			untrack(() => {
-				currentNodeOverride = nodeToProcess;
-
-				if (nodeToProcess.id) {
-					goto(`/worlds/${worldId}/nodes/${nodeToProcess.id}`, {
-						replaceState: true,
-						noScroll: true
-					});
-				}
-
-				isStreaming = false;
-				streamingText = '';
-				streamingDone = false;
-				pendingNode = null;
-				// Clear generation guard on successful completion
-				generatingNodeId = null;
-			});
-		}
-	});
-
-	// Handle nodes that need text generation when loaded
-	// Uses effectiveNodeId/Status which prefers override over query data
-	$effect(() => {
-		const currentId = effectiveNodeId;
-		const currentStatus = effectiveNodeStatus;
-
-		// Skip if no node, already streaming, loading, or already generating this node
-		if (!currentId || isStreaming || loading) return;
-		if (generatingNodeId === currentId) return;
-
-		// If node is being generated elsewhere, let polling handle it
-		if (currentStatus === 'generating') return;
-
-		// If node is already completed or failed, nothing to do
-		if (currentStatus === 'completed' || currentStatus === 'failed') return;
-
-		// If node needs text generation (initialized only - failed nodes show error page)
-		if (currentStatus === 'initialized') {
-			const nodeIdToGenerate = currentId;
-			const currentWorldId = worldId;
-
-			untrack(() => {
-				generatingNodeId = nodeIdToGenerate;
-				isStreaming = true;
-				streamingText = '';
-				streamingDone = false;
-				loading = true;
-
-				generateNodeText(currentWorldId, nodeIdToGenerate, (text, done) => {
-					streamingText = text;
-					if (done) streamingDone = true;
-				})
-					.then((completedNode) => {
-						updateNodeInCache(queryClient, currentWorldId, completedNode);
-						pendingNode = completedNode;
-						isStreaming = false;
-					})
-					.catch((err) => {
-						if (err instanceof ApiError && err.isQuotaExceeded) {
-							// Show upgrade prompt instead of generic error toast
-							showQuotaPrompt = true;
-							queryClient.invalidateQueries({ queryKey: usageKeys.all });
-							// Keep generatingNodeId set so the effect doesn't re-trigger
-							// (the node stays 'initialized' on the server, and retrying
-							// would just hit the quota limit again in an infinite loop)
-						} else if (err instanceof ApiError && err.isNodeAlreadyProcessed) {
-							// The node was already completed/generating on the server (e.g. after
-							// a network error mid-stream). Refetch the node so the cache reflects
-							// the real status and the generation effect stops re-triggering.
-							// Keep generatingNodeId set to prevent a retry loop while refetching.
-							nodeQuery.refetch();
-						} else {
-							showError(
-								'Failed to generate text',
-								err instanceof Error ? err.message : String(err)
-							);
-							// Clear generating guard so retry is possible for non-quota errors
-							generatingNodeId = null;
-						}
-						isStreaming = false;
-						streamingText = '';
-						streamingDone = false;
-					})
-					.finally(() => {
-						loading = false;
-					});
-			});
-		}
-	});
-
-	// Automatically retry processing for nodes with failed processing_status
-	// This is invisible to the user - background processing (fact extraction + Pinecone upsert)
-	// is re-enqueued when visiting a node that previously failed
-	$effect(() => {
-		const currentId = effectiveNodeId;
-		const processingStatus = effectiveProcessingStatus;
-
-		// Only retry if node has failed processing status
-		if (!currentId || processingStatus !== 'failed') return;
-		// Skip if already retrying this node
-		if (retryingProcessingNodeId === currentId) return;
-
-		const nodeIdToRetry = currentId;
-		const currentWorldId = worldId;
-
-		untrack(() => {
-			retryingProcessingNodeId = nodeIdToRetry;
-
-			retryNodeProcessing(currentWorldId, nodeIdToRetry)
-				.then((updatedNode) => {
-					// Update cache with the node's new processing_status (pending)
-					updateNodeInCache(queryClient, currentWorldId, updatedNode);
-				})
-				.catch((err) => {
-					// Silently log error - this is invisible to the user
-					// The retry can be attempted again on the next visit
-					console.warn('Failed to retry node processing:', err);
-					// Clear retry guard so it can be attempted again
-					retryingProcessingNodeId = null;
-				});
-		});
-	});
-
-	// Clear override and generation guard when nodeId changes (e.g., back/forward navigation)
+	// Clear override when nodeId changes (e.g., back/forward navigation)
 	$effect(() => {
 		if (nodeId && currentNodeOverride?.id !== nodeId) {
 			currentNodeOverride = null;
-			// Clear generation guard for the new node
-			if (generatingNodeId !== nodeId) {
-				generatingNodeId = null;
-			}
-			// Clear processing retry guard for the new node
-			if (retryingProcessingNodeId !== nodeId) {
-				retryingProcessingNodeId = null;
-			}
 		}
 	});
 
@@ -272,9 +145,16 @@
 			});
 
 			// Step 2: Navigate to the node and set override
-			// The generation effect will handle text generation if needed
 			currentNodeOverride = node;
 			goto(`/worlds/${worldId}/nodes/${node.id}`, { replaceState: false, noScroll: true });
+
+			// Step 3: If the node needs generation, start immediately instead of
+			// waiting for the $effect cycle (saves ~50-150ms of re-render delay).
+			if (node.generation_status === 'initialized') {
+				stream.setGeneratingNodeId(node.id);
+				await stream.startGeneration(worldId, node.id, { setLoading: true });
+				return; // loading will be cleared by the finally above
+			}
 		} catch (err) {
 			if (err instanceof ApiError && err.isNodeProcessingConflict) {
 				// 409 Conflict — the node has a processing error (e.g. failed fact extraction).
@@ -379,7 +259,7 @@
 					nodeId={currentNode.id}
 					{audio}
 					isNodeCompleted={currentNode?.generation_status === 'completed'}
-					onQuotaExceeded={() => (showAudioQuotaPrompt = true)}
+					onQuotaExceeded={() => (stream.showAudioQuotaPrompt = true)}
 					bind:playerVisible={audioPlayerVisible}
 				/>
 			</div>
@@ -387,15 +267,15 @@
 	{/if}
 
 	<!-- Story Content with Slide Transition -->
-	{#if isStreaming || isNodeGenerating || isNodeFailed || currentNode}
+	{#if stream.isStreaming || isNodeGenerating || isNodeFailed || currentNode}
 		<div class="-mx-6 sm:mx-0">
 			<!-- Key on the current node ID (or a streaming key when streaming a new node) -->
 			<!-- This ensures transition plays when switching between nodes OR entering streaming -->
 			<SlideTransition key={currentNode?.id ?? 'streaming'} direction={slideDirection}>
-				{#if isStreaming}
+				{#if stream.isStreaming}
 					<!-- Streaming state - show text as it arrives -->
 					<StoryCard
-						text={streamingText.trim()}
+						text={stream.streamingText.trim()}
 						choices={[]}
 						parentChoice={currentNode?.parent_choice}
 						isTyping={true}
@@ -504,14 +384,14 @@
 	{/if}
 
 	<UpgradePrompt
-		open={showQuotaPrompt}
-		onOpenChange={(v) => (showQuotaPrompt = v)}
+		open={stream.showQuotaPrompt}
+		onOpenChange={(v) => (stream.showQuotaPrompt = v)}
 		resource="nodes"
 	/>
 
 	<UpgradePrompt
-		open={showAudioQuotaPrompt}
-		onOpenChange={(v) => (showAudioQuotaPrompt = v)}
+		open={stream.showAudioQuotaPrompt}
+		onOpenChange={(v) => (stream.showAudioQuotaPrompt = v)}
 		resource="audio"
 	/>
 </main>

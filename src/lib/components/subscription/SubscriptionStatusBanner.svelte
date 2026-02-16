@@ -6,6 +6,7 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { AlertTriangle, Info, ExternalLink, Sparkles, ArrowDownRight } from '@lucide/svelte';
+	import { formatDate } from '$lib/utils/date';
 
 	interface Props {
 		usage: UsageInfo;
@@ -23,15 +24,6 @@
 	const isUnpaid = $derived(usage.subscription_status === 'unpaid');
 	const hasPendingTier = $derived(usage.pending_tier !== null && usage.pending_tier !== undefined);
 	const pendingTierConfig = $derived(usage.pending_tier ? getTierConfig(usage.pending_tier) : null);
-
-	function formatDate(dateStr: string | null): string {
-		if (!dateStr) return '';
-		return new Date(dateStr).toLocaleDateString('en-US', {
-			month: 'long',
-			day: 'numeric',
-			year: 'numeric'
-		});
-	}
 </script>
 
 {#if usage.pending_cancellation && usage.cancellation_date}

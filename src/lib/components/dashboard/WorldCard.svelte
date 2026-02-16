@@ -10,17 +10,11 @@
 	} from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import {
-		Dialog,
-		DialogContent,
-		DialogDescription,
-		DialogFooter,
-		DialogHeader,
-		DialogTitle
-	} from '$lib/components/ui/dialog';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Trash2, ShieldCheck } from '@lucide/svelte';
 	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
+	import { getStatusBadgeVariant, getStatusText } from '$lib/utils/worldStatus';
 
 	function getWorldLengthLabel(length: string | null): string | null {
 		switch (length) {
@@ -71,38 +65,6 @@
 	function handleCancelDelete() {
 		if (isDeleting) return;
 		showDeleteDialog = false;
-	}
-
-	function getStatusBadgeVariant(
-		status: string
-	): 'default' | 'secondary' | 'destructive' | 'outline' {
-		switch (status) {
-			case 'completed':
-				return 'default';
-			case 'failed':
-				return 'destructive';
-			default:
-				return 'secondary';
-		}
-	}
-
-	function getStatusText(status: string): string {
-		switch (status) {
-			case 'completed':
-				return 'Ready';
-			case 'generating_lore':
-				return 'Generating Lore';
-			case 'generating_narrator_profile':
-				return 'Creating Narrator';
-			case 'generating_start_node':
-				return 'Generating Story';
-			case 'initialized':
-				return 'Initializing';
-			case 'failed':
-				return 'Failed';
-			default:
-				return status;
-		}
 	}
 </script>
 
@@ -195,19 +157,19 @@
 	</CardContent>
 </Card>
 
-<Dialog
+<Dialog.Root
 	bind:open={showDeleteDialog}
 	onOpenChange={(open) => !isDeleting && (showDeleteDialog = open)}
 >
-	<DialogContent showCloseButton={!isDeleting} onclick={(e: Event) => e.stopPropagation()}>
-		<DialogHeader>
-			<DialogTitle>Delete World</DialogTitle>
-			<DialogDescription>
+	<Dialog.Content showCloseButton={!isDeleting} onclick={(e: Event) => e.stopPropagation()}>
+		<Dialog.Header>
+			<Dialog.Title>Delete World</Dialog.Title>
+			<Dialog.Description>
 				Are you sure you want to delete "{world.title || 'Untitled World'}"? This action cannot be
 				undone and all story progress will be permanently lost.
-			</DialogDescription>
-		</DialogHeader>
-		<DialogFooter>
+			</Dialog.Description>
+		</Dialog.Header>
+		<Dialog.Footer>
 			<Button variant="outline" onclick={handleCancelDelete} disabled={isDeleting}>Cancel</Button>
 			<Button variant="destructive" onclick={handleConfirmDelete} disabled={isDeleting}>
 				{#if isDeleting}
@@ -217,9 +179,9 @@
 					Delete
 				{/if}
 			</Button>
-		</DialogFooter>
-	</DialogContent>
-</Dialog>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
 
 <style>
 	/* ── Entrance animation ── */

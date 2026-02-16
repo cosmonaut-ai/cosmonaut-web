@@ -406,33 +406,62 @@ export async function getAuthToken(forceRefresh = false): Promise<string | null>
 
 /**
  * Refresh the streaming session by calling /auth/session
- * This sets signed cookies for CloudFront streaming access
+ * This sets signed cookies for CloudFront streaming access.
+ * Results are cached for STREAMING_SESSION_TTL_MS to avoid redundant round-trips.
  */
+const STREAMING_SESSION_TTL_MS = 5 * 60 * 1000; // 5 minutes
+let _streamingSessionValidUntil = 0;
+let _streamingSessionPromise: Promise<boolean> | null = null;
+
 export async function refreshStreamingSession(): Promise<boolean> {
 	// In local environment, no session refresh needed
 	if (isLocalEnvironment) {
 		return true;
 	}
 
-	const token = await getAuthToken();
-	if (!token) {
-		return false;
+	// Return cached result if still valid
+	if (Date.now() < _streamingSessionValidUntil) {
+		return true;
 	}
 
-	try {
-		const response = await fetch(`${API_BASE_URL}/auth/session`, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${token}`
-			},
-			credentials: 'include' // Important: include cookies
-		});
-
-		return response.ok;
-	} catch (error) {
-		console.error('Failed to refresh streaming session:', error);
-		return false;
+	// Deduplicate concurrent calls
+	if (_streamingSessionPromise) {
+		return _streamingSessionPromise;
 	}
+
+	_streamingSessionPromise = (async () => {
+		const token = await getAuthToken();
+		if (!token) {
+			return false;
+		}
+
+		try {
+			const response = await fetch(`${API_BASE_URL}/auth/session`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`
+				},
+				credentials: 'include'
+			});
+
+			if (response.ok) {
+				_streamingSessionValidUntil = Date.now() + STREAMING_SESSION_TTL_MS;
+			}
+			return response.ok;
+		} catch (error) {
+			console.error('Failed to refresh streaming session:', error);
+			return false;
+		} finally {
+			_streamingSessionPromise = null;
+		}
+	})();
+
+	return _streamingSessionPromise;
+}
+
+/** Invalidate the cached streaming session (e.g. after a 401/403 from streaming). */
+export function invalidateStreamingSession(): void {
+	_streamingSessionValidUntil = 0;
 }
 
 // Export reactive getters

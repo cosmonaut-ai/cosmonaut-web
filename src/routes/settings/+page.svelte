@@ -22,6 +22,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { ArrowLeft, User, CreditCard, BarChart3, ExternalLink, Trash2 } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import { formatDate } from '$lib/utils/date';
 
 	const auth = useAuth();
 	const usageQuery = useUsage();
@@ -56,15 +57,6 @@
 		} finally {
 			isDeleting = false;
 		}
-	}
-
-	function formatDate(dateStr: string | null): string {
-		if (!dateStr) return 'N/A';
-		return new Date(dateStr).toLocaleDateString('en-US', {
-			month: 'long',
-			day: 'numeric',
-			year: 'numeric'
-		});
 	}
 </script>
 

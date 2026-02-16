@@ -5,6 +5,7 @@
 	import { TooltipContent } from '$lib/components/ui/tooltip';
 	import { Button } from '$lib/components/ui/button';
 	import { Sparkles } from '@lucide/svelte';
+	import { formatResetDate } from '$lib/utils/date';
 
 	interface Props {
 		/** Which resource hit the limit */
@@ -38,20 +39,6 @@
 		if (resource === 'worlds') return 'World limit reached';
 		return 'Generation limit reached';
 	});
-
-	function formatResetDate(dateStr: string | null): string {
-		if (!dateStr) return '';
-		const date = new Date(dateStr);
-		const now = new Date();
-		const diffMs = date.getTime() - now.getTime();
-		const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-		if (diffDays <= 0) return 'Resets soon';
-		if (diffDays === 1) return 'Resets tomorrow';
-		if (diffDays <= 7) return `Resets in ${diffDays} days`;
-
-		return `Resets ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-	}
 </script>
 
 <TooltipContent class="flex max-w-xs flex-col gap-2 px-4 py-3">
