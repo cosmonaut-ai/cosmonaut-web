@@ -178,7 +178,12 @@ export async function generateNodeText(
 					// Handle error events before processing as text
 					if (currentEventType === 'error') {
 						reader.cancel();
-						const status = content.startsWith('Quota exceeded') ? 429 : 500;
+						let status = 500;
+						if (content.startsWith('Quota exceeded')) {
+							status = 429;
+						} else if (/Cannot generate text for node/i.test(content)) {
+							status = 400;
+						}
 						throw new ApiError(status, content);
 					}
 

@@ -137,13 +137,15 @@ export class ApiError extends Error {
 
 	/**
 	 * Whether the error indicates the node has already been processed (completed/generating).
-	 * This happens when a network error occurs mid-stream: the server finishes generation
-	 * but the client doesn't receive the response, so retrying returns 400.
+	 * This can happen in two scenarios:
+	 * - A network error mid-stream: the server finishes but the client retries (HTTP 400)
+	 * - A race condition where two requests both pass the pre-check and the second
+	 *   fails at the atomic status transition, returning via SSE error (status 500)
+	 * We match on the message pattern only, since the status code varies by error path.
 	 */
 	get isNodeAlreadyProcessed(): boolean {
-		return (
-			this.status === 400 &&
-			/Cannot generate text for node .+ with status (completed|generating)/i.test(this.detail)
+		return /Cannot generate text for node .+ with status (completed|generating)/i.test(
+			this.detail
 		);
 	}
 
