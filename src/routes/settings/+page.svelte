@@ -29,10 +29,10 @@
 
 	const usage = $derived(usageQuery.data);
 	const tierConfig = $derived(usage ? getTierConfig(usage.tier) : null);
-	const isFree = $derived(usage?.tier === 'SCOUT');
+	const isFree = $derived(usage?.tier === 'FREE');
 
 	const tierBadgeClass: Record<string, string> = {
-		SCOUT: 'bg-muted text-muted-foreground border-border',
+		FREE: 'bg-muted text-muted-foreground border-border',
 		EXPLORER: 'bg-primary/15 text-primary border-primary/30',
 		COSMONAUT: 'bg-amber-500/15 text-amber-400 border-amber-500/30'
 	};

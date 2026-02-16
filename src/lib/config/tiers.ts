@@ -20,8 +20,8 @@ export interface TierConfig {
  */
 export const TIER_CONFIG: TierConfig[] = [
 	{
-		key: 'SCOUT',
-		name: 'Scout',
+		key: 'FREE',
+		name: 'Free',
 		price: '$0',
 		priceDetail: 'forever',
 		worldsLimit: 3,
@@ -86,7 +86,7 @@ export function getTierConfig(tier: SubscriptionTier): TierConfig {
 }
 
 /** Tier ordering for comparison (higher index = higher tier) */
-const TIER_ORDER: SubscriptionTier[] = ['SCOUT', 'EXPLORER', 'COSMONAUT'];
+const TIER_ORDER: SubscriptionTier[] = ['FREE', 'EXPLORER', 'COSMONAUT'];
 
 export function tierRank(tier: SubscriptionTier): number {
 	return TIER_ORDER.indexOf(tier);

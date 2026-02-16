@@ -18,7 +18,7 @@
 	const billingPortalMutation = useBillingPortal();
 
 	const usage = $derived(usageQuery.data);
-	const isFree = $derived(usage?.tier === 'SCOUT');
+	const isFree = $derived(usage?.tier === 'FREE');
 
 	const isStorageResource = $derived(resource === 'worlds_storage');
 	const isAudioResource = $derived(resource === 'audio');
