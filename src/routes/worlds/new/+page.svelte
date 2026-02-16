@@ -326,9 +326,9 @@
 						</div>
 					</div>
 
-					<!-- Visibility -->
+					<!-- General access -->
 					<div class="space-y-2">
-						<Label for="visibility">Visibility</Label>
+						<Label for="visibility">General access</Label>
 						<Select.Root
 							type="single"
 							value={visibility}
@@ -337,13 +337,20 @@
 							}}
 						>
 							<Select.Trigger id="visibility" class="w-full" disabled={loading}>
-								{visibility === 'public' ? 'Public' : 'Private'}
+								{visibility === 'public' ? 'Anyone with the link' : 'Restricted'}
 							</Select.Trigger>
 							<Select.Content>
-								<Select.Item value="private">Private - Only you can access</Select.Item>
-								<Select.Item value="public">Public - Anyone with the link can view</Select.Item>
+								<Select.Item value="private">Restricted - Only you can access</Select.Item>
+								<Select.Item value="public">Anyone with the link - Anyone can view</Select.Item>
 							</Select.Content>
 						</Select.Root>
+						<p class="text-xs text-muted-foreground">
+							{#if visibility === 'public'}
+								Anyone on the internet with your world's link will be able to view it.
+							{:else}
+								Only you can access this world. You can add people later from the share menu.
+							{/if}
+						</p>
 					</div>
 
 					<!-- Story Length -->
