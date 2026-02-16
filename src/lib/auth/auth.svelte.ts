@@ -1,7 +1,19 @@
 import { Amplify } from 'aws-amplify';
-import { signInWithRedirect, signOut, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
+import {
+	signInWithRedirect,
+	signOut,
+	getCurrentUser,
+	fetchAuthSession,
+	signUp,
+	confirmSignUp,
+	signIn,
+	resetPassword,
+	confirmResetPassword,
+	resendSignUpCode
+} from 'aws-amplify/auth';
 import { amplifyConfig, isLocalEnvironment, isAuthConfigured, API_BASE_URL } from '$lib/config';
 import { browser } from '$app/environment';
+import { goto } from '$app/navigation';
 
 // Auth state using Svelte 5 runes
 let isAuthenticated = $state(false);
@@ -129,12 +141,11 @@ export async function checkAuthState(): Promise<void> {
 }
 
 /**
- * Sign in with Google OAuth (or mock login in local development)
- * Safe to call when already authenticated -- will no-op and return early.
+ * Navigate to the login page (replaces direct Google OAuth redirect).
+ * In local environment, uses mock authentication and redirects to dashboard.
  */
 export async function login(): Promise<void> {
-	// Guard: prevent signInWithRedirect when a session already exists
-	// (AWS Amplify throws UserAlreadyAuthenticatedException otherwise)
+	// Guard: prevent navigation when already authenticated
 	if (isAuthenticated) {
 		return;
 	}
@@ -158,12 +169,155 @@ export async function login(): Promise<void> {
 		return;
 	}
 
+	// Navigate to the login page instead of direct Google redirect
+	await goto('/login');
+}
+
+/**
+ * Sign in directly with Google OAuth (used from the login page)
+ */
+export async function loginWithGoogle(): Promise<void> {
+	if (isAuthenticated) return;
+
+	if (!isAuthConfigured) {
+		console.warn('Cannot login: Auth is not configured');
+		return;
+	}
+
 	try {
 		await signInWithRedirect({ provider: 'Google' });
 	} catch (error) {
-		console.error('Login failed:', error);
+		console.error('Google login failed:', error);
 		throw error;
 	}
+}
+
+/**
+ * Sign up with email and password
+ */
+export async function signUpWithEmail(
+	email: string,
+	password: string
+): Promise<{ isConfirmationRequired: boolean }> {
+	if (isLocalEnvironment) {
+		isAuthenticated = true;
+		user = { ...LOCAL_DEV_USER, email };
+		return { isConfirmationRequired: false };
+	}
+
+	if (!isAuthConfigured) throw new Error('Auth is not configured');
+
+	const result = await signUp({
+		username: email,
+		password,
+		options: {
+			userAttributes: {
+				email
+			}
+		}
+	});
+
+	return {
+		isConfirmationRequired: result.nextStep.signUpStep === 'CONFIRM_SIGN_UP'
+	};
+}
+
+/**
+ * Confirm sign-up with the verification code sent via email
+ */
+export async function confirmSignUpWithCode(email: string, code: string): Promise<void> {
+	if (isLocalEnvironment) return;
+	if (!isAuthConfigured) throw new Error('Auth is not configured');
+
+	await confirmSignUp({
+		username: email,
+		confirmationCode: code
+	});
+}
+
+/**
+ * Resend the verification code for sign-up confirmation
+ */
+export async function resendVerificationCode(email: string): Promise<void> {
+	if (isLocalEnvironment) return;
+	if (!isAuthConfigured) throw new Error('Auth is not configured');
+
+	await resendSignUpCode({ username: email });
+}
+
+/**
+ * Sign in with email and password
+ */
+export async function signInWithEmail(email: string, password: string): Promise<void> {
+	if (isLocalEnvironment) {
+		isAuthenticated = true;
+		user = { ...LOCAL_DEV_USER, email };
+		return;
+	}
+
+	if (!isAuthConfigured) throw new Error('Auth is not configured');
+
+	const result = await signIn({
+		username: email,
+		password
+	});
+
+	if (result.isSignedIn) {
+		await checkAuthState();
+	} else if (result.nextStep.signInStep === 'CONFIRM_SIGN_UP') {
+		throw new SignUpNotConfirmedError();
+	}
+}
+
+/**
+ * Initiate forgot-password flow — sends a reset code to the user's email
+ */
+export async function forgotPassword(email: string): Promise<void> {
+	if (isLocalEnvironment) return;
+	if (!isAuthConfigured) throw new Error('Auth is not configured');
+
+	await resetPassword({ username: email });
+}
+
+/**
+ * Complete the forgot-password flow with code + new password
+ */
+export async function confirmForgotPassword(
+	email: string,
+	code: string,
+	newPassword: string
+): Promise<void> {
+	if (isLocalEnvironment) return;
+	if (!isAuthConfigured) throw new Error('Auth is not configured');
+
+	await confirmResetPassword({
+		username: email,
+		confirmationCode: code,
+		newPassword
+	});
+}
+
+/**
+ * Delete the current user's account via the API, then sign out
+ */
+export async function deleteAccount(): Promise<void> {
+	const token = await getAuthToken();
+	if (!token && !isLocalEnvironment) {
+		throw new Error('Not authenticated');
+	}
+
+	const response = await fetch(`${API_BASE_URL}/auth/account`, {
+		method: 'DELETE',
+		headers: token ? { Authorization: `Bearer ${token}` } : {}
+	});
+
+	if (!response.ok) {
+		const body = await response.json().catch(() => ({ detail: 'Account deletion failed' }));
+		throw new Error(body.detail || 'Account deletion failed');
+	}
+
+	// Sign out locally after server-side deletion
+	await logout();
 }
 
 /**
@@ -294,6 +448,17 @@ export function getUser(): UserInfo | null {
 	return user;
 }
 
+/**
+ * Custom error for sign-up not confirmed — the caller should prompt for
+ * the verification code.
+ */
+export class SignUpNotConfirmedError extends Error {
+	constructor() {
+		super('Sign-up not confirmed. Please enter the verification code sent to your email.');
+		this.name = 'SignUpNotConfirmedError';
+	}
+}
+
 // Export a reactive auth state object for components
 export function useAuth() {
 	return {
@@ -310,6 +475,14 @@ export function useAuth() {
 			return !isLocalEnvironment;
 		},
 		login,
+		loginWithGoogle,
+		signUpWithEmail,
+		confirmSignUpWithCode,
+		resendVerificationCode,
+		signInWithEmail,
+		forgotPassword,
+		confirmForgotPassword,
+		deleteAccount,
 		logout,
 		checkAuthState
 	};
