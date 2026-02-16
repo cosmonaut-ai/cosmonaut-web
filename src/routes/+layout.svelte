@@ -5,14 +5,12 @@
 	import { onMount } from 'svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import {
-		isLocalEnvironment,
 		isDevEnvironment,
 		PRODUCTION_URL,
 		DEV_ALLOWED_EMAILS
 	} from '$lib/config';
 	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { Spinner } from '$lib/components/ui/spinner';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { TooltipProvider } from '$lib/components/ui/tooltip';
 	import { ModeWatcher, setMode } from 'mode-watcher';
@@ -24,8 +22,6 @@
 	let { children } = $props();
 
 	const auth = useAuth();
-
-	let isSigningIn = $state(false);
 
 	// Check if we're on the landing page - it has its own header
 	const isLandingPage = $derived(page.url.pathname === '/');
@@ -52,30 +48,12 @@
 		}
 	});
 
-	async function handleSignIn() {
-		if (isSigningIn) return;
-
-		// If already authenticated, navigate to dashboard instead of re-triggering OAuth
+	function handleSignIn() {
 		if (auth.isAuthenticated) {
 			goto('/dashboard');
 			return;
 		}
-
-		try {
-			isSigningIn = true;
-			await auth.login();
-			// In local environment, redirect after login (OAuth redirects via callback)
-			if (isLocalEnvironment && auth.isAuthenticated) {
-				goto('/dashboard');
-			}
-		} catch (error) {
-			console.error('Failed to sign in:', error);
-		} finally {
-			// Only reset if we're still on this page (local env)
-			if (isLocalEnvironment) {
-				isSigningIn = false;
-			}
-		}
+		goto('/login');
 	}
 </script>
 
@@ -109,15 +87,9 @@
 									size="sm"
 									class="text-muted-foreground hover:text-foreground"
 									onclick={handleSignIn}
-									disabled={isSigningIn}
 								>
-									{#if isSigningIn}
-										<Spinner />
-										Signing in...
-									{:else}
-										<LogIn class="h-4 w-4" />
-										Sign In
-									{/if}
+									<LogIn class="h-4 w-4" />
+									Sign In
 								</Button>
 							{/if}
 						</div>
