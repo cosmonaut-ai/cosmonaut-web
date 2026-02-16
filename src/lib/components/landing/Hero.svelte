@@ -204,9 +204,6 @@
 	.hero-enter {
 		animation: hero-fade-up 0.8s ease-out both;
 	}
-	.hero-enter-1 {
-		animation-delay: 0.1s;
-	}
 	.hero-enter-2 {
 		animation-delay: 0.25s;
 	}

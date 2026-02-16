@@ -30,7 +30,7 @@
 	);
 
 	// Use TanStack Query for world data with polling for generation status
-	const worldQuery = useWorld(worldId, {
+	const worldQuery = useWorld(() => page.params.worldId!, {
 		enablePolling: true
 	});
 
