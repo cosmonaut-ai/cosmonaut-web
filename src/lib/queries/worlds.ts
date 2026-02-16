@@ -27,21 +27,32 @@ export function useWorlds() {
 	}));
 }
 
+type MaybeGetter<T> = T | (() => T);
+
+/** Resolve a value that might be a getter */
+function resolve<T>(value: MaybeGetter<T>): T {
+	return typeof value === 'function' ? (value as () => T)() : value;
+}
+
 /**
  * Query hook to fetch a specific world by ID
+ * Pass a getter function to ensure reactivity with $derived values
  * Supports polling for world generation status
  */
-export function useWorld(worldId: string, options?: { enablePolling?: boolean }) {
-	return createQuery(() => ({
-		queryKey: worldKeys.detail(worldId),
-		queryFn: () => getWorld(worldId),
-		enabled: !!worldId,
-		refetchInterval: (query: { state: { data?: World } }) => {
-			if (!options?.enablePolling) return false;
-			const status = query.state.data?.generation_status;
-			return status === 'completed' || status === 'failed' ? false : 2000;
-		}
-	}));
+export function useWorld(worldId: MaybeGetter<string>, options?: { enablePolling?: boolean }) {
+	return createQuery(() => {
+		const id = resolve(worldId);
+		return {
+			queryKey: worldKeys.detail(id),
+			queryFn: () => getWorld(id),
+			enabled: !!id,
+			refetchInterval: (query: { state: { data?: World } }) => {
+				if (!options?.enablePolling) return false;
+				const status = query.state.data?.generation_status;
+				return status === 'completed' || status === 'failed' ? false : 2000;
+			}
+		};
+	});
 }
 
 /**
