@@ -1,5 +1,5 @@
 import { untrack } from 'svelte';
-import { generateNodeText, retryNodeProcessing } from '$lib/api/client';
+import { generateNodeText, getNode, retryNodeProcessing } from '$lib/api/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { updateNodeInCache, usageKeys } from '$lib/queries';
 import { showError } from '$lib/utils/toast';
@@ -73,22 +73,51 @@ export interface UseStreamingNodeOptions {
 					isStreaming = false;
 					return completedNode;
 				})
-				.catch((err) => {
-					if (err instanceof ApiError && err.isQuotaExceeded) {
-						showQuotaPrompt = true;
-						queryClient.invalidateQueries({ queryKey: usageKeys.all });
-					} else if (err instanceof ApiError && err.isNodeAlreadyProcessed) {
-						nodeQuery.refetch();
-					} else {
-						showError(
-							'Failed to generate text',
-							err instanceof Error ? err.message : String(err)
-						);
-						generatingNodeId = null;
-					}
+				.catch(async (err) => {
 					isStreaming = false;
 					streamingText = '';
 					streamingDone = false;
+
+					if (err instanceof ApiError && err.isQuotaExceeded) {
+						showQuotaPrompt = true;
+						queryClient.invalidateQueries({ queryKey: usageKeys.all });
+						throw err;
+					}
+
+					if (err instanceof ApiError && err.isNodeAlreadyProcessed) {
+						nodeQuery.refetch();
+						throw err;
+					}
+
+					// Stream may have been interrupted (network stutter) while the backend
+					// continues generating. Check actual node status before showing an error.
+					try {
+						const freshNode = await getNode(worldIdVal, nodeIdVal);
+						if (
+							freshNode.generation_status === 'generating' ||
+							(freshNode.generation_status === 'completed' && freshNode.text)
+						) {
+							// Backend is still processing or already finished.
+							// Update cache and clear override so the query data drives the UI.
+							// For 'generating', the existing useNode polling (every 2s) +
+							// isNodeGenerating UI will handle the transition to 'completed'.
+							updateNodeInCache(queryClient, worldIdVal, freshNode);
+							setCurrentNodeOverride(null);
+							if (freshNode.generation_status === 'completed') {
+								onStreamingComplete(freshNode);
+								generatingNodeId = null;
+							}
+							return;
+						}
+					} catch {
+						// Couldn't reach the server — fall through to error display
+					}
+
+					showError(
+						'Failed to generate text',
+						err instanceof Error ? err.message : String(err)
+					);
+					generatingNodeId = null;
 					throw err;
 				})
 				.finally(() => {
