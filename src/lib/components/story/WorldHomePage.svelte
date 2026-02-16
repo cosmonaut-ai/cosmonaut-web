@@ -184,10 +184,10 @@
 				<Badge variant="outline" class="gap-1.5 border-border/50 bg-background/30 backdrop-blur-sm">
 					{#if world.visibility === 'public'}
 						<Globe class="h-3 w-3" />
-						Public
+						Anyone with the link
 					{:else}
 						<Lock class="h-3 w-3" />
-						Private
+						Restricted
 					{/if}
 				</Badge>
 				{#if getWorldLengthLabel(world.world_length)}
