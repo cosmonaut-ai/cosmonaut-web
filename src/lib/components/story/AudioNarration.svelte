@@ -303,11 +303,15 @@
 	// Reset state when user navigates to a *different* node (actual value change).
 	// Using explicit string comparison avoids spurious cleanup from reactive
 	// re-evaluation when the cache is patched (same nodeId, new object ref).
-	let lastNodeId = nodeId;
+	let lastNodeId = $state<string | undefined>(undefined);
 
 	$effect(() => {
 		const currentId = nodeId;
 		untrack(() => {
+			if (lastNodeId === undefined) {
+				lastNodeId = currentId;
+				return;
+			}
 			if (currentId !== lastNodeId) {
 				audioElement?.pause();
 				playerVisible = false;
@@ -497,12 +501,15 @@
 						<!-- Volume -->
 						<DropdownMenu.Group>
 							<DropdownMenu.Label>Volume</DropdownMenu.Label>
-							<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-							<div
-								class="flex items-center gap-2 px-2 py-1.5"
-								onclick={(e) => e.stopPropagation()}
-								onpointerdown={(e) => e.stopPropagation()}
-							>
+						<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+						<div
+							class="flex items-center gap-2 px-2 py-1.5"
+							onclick={(e) => e.stopPropagation()}
+							onkeydown={(e) => e.stopPropagation()}
+							onpointerdown={(e) => e.stopPropagation()}
+							role="group"
+							aria-label="Volume"
+						>
 								<Button
 									variant="ghost"
 									size="icon-sm"
