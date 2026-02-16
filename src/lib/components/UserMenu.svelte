@@ -13,7 +13,7 @@
 	const tierConfig = $derived(usageQuery.data ? getTierConfig(usageQuery.data.tier) : null);
 
 	const tierBadgeClass: Record<string, string> = {
-		SCOUT: 'bg-muted text-muted-foreground border-border',
+		FREE: 'bg-muted text-muted-foreground border-border',
 		EXPLORER: 'bg-primary/15 text-primary border-primary/30',
 		COSMONAUT: 'bg-amber-500/15 text-amber-400 border-amber-500/30'
 	};
