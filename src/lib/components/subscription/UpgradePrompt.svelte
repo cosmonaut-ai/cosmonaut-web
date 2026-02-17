@@ -4,6 +4,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Sparkles, ExternalLink } from '@lucide/svelte';
+	import { formatDate } from '$lib/utils/date';
 
 	interface Props {
 		open: boolean;
@@ -18,7 +19,7 @@
 	const billingPortalMutation = useBillingPortal();
 
 	const usage = $derived(usageQuery.data);
-	const isFree = $derived(usage?.tier === 'SCOUT');
+	const isFree = $derived(usage?.tier === 'FREE');
 
 	const isStorageResource = $derived(resource === 'worlds_storage');
 	const isAudioResource = $derived(resource === 'audio');
@@ -28,15 +29,6 @@
 		if (isAudioResource) return 'audio narration';
 		return 'story generation';
 	});
-
-	function formatDate(dateStr: string | null): string {
-		if (!dateStr) return '';
-		return new Date(dateStr).toLocaleDateString('en-US', {
-			month: 'long',
-			day: 'numeric',
-			year: 'numeric'
-		});
-	}
 </script>
 
 <Dialog.Root {open} {onOpenChange}>

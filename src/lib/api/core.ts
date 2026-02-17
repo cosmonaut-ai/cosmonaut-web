@@ -1,0 +1,96 @@
+import { ApiError } from '$lib/types/api';
+import { isLocalEnvironment } from '$lib/config';
+import {
+	getAuthToken,
+	refreshStreamingSession
+} from '$lib/auth/auth.svelte';
+
+/** Delay after streaming completes to ensure server-side persistence before re-fetching */
+export const POST_STREAM_DELAY_MS = 500;
+
+/** Default polling interval for world generation status */
+export const POLL_INTERVAL_MS = 2_000;
+
+/** Maximum number of polling attempts before timing out */
+export const MAX_POLL_ATTEMPTS = 120;
+
+export { ApiError };
+
+/**
+ * Get authorization headers for API requests
+ * @param forceRefresh - If true, forces a token refresh
+ */
+export async function getAuthHeaders(forceRefresh = false): Promise<HeadersInit> {
+	const token = await getAuthToken(forceRefresh);
+	const headers: HeadersInit = {
+		'Content-Type': 'application/json'
+	};
+
+	if (token) {
+		headers['Authorization'] = `Bearer ${token}`;
+	} else if (!isLocalEnvironment) {
+		console.warn('No auth token available for API request');
+	}
+
+	return headers;
+}
+
+/**
+ * Handle API response and throw on error.
+ * Gracefully handles 204 No Content (e.g. DELETE) by returning undefined.
+ */
+async function handleResponse<T>(response: Response): Promise<T> {
+	if (!response.ok) {
+		const errorBody: { detail?: string } = await response.json().catch(() => ({
+			detail: `HTTP ${response.status}: ${response.statusText}`
+		}));
+		throw new ApiError(response.status, errorBody.detail || response.statusText);
+	}
+	// Handle empty responses (204 No Content or zero-length body)
+	if (response.status === 204 || response.headers.get('content-length') === '0') {
+		return undefined as T;
+	}
+	return response.json();
+}
+
+/**
+ * Perform an authenticated API request with automatic retry on 401
+ */
+export async function apiRequest<T>(
+	url: string,
+	options: RequestInit = {},
+	retry = true,
+	fetchFn: typeof fetch = fetch
+): Promise<T> {
+	const headers = await getAuthHeaders();
+	const response = await fetchFn(url, {
+		...options,
+		headers: {
+			...(headers as Record<string, string>),
+			...(options.headers as Record<string, string>)
+		}
+	});
+
+	if (response.status === 401 && retry && !isLocalEnvironment) {
+		console.log('API returned 401, attempting token refresh and retry...');
+		// Force token refresh
+		const newHeaders = await getAuthHeaders(true);
+
+		// Also refresh streaming session (sets signed cookies for CloudFront)
+		// This is often required by the backend in addition to the Bearer token
+		await refreshStreamingSession();
+
+		// Retry once
+		const retryResponse = await fetchFn(url, {
+			...options,
+			headers: {
+				...(newHeaders as Record<string, string>),
+				...(options.headers as Record<string, string>)
+			}
+		});
+
+		return handleResponse<T>(retryResponse);
+	}
+
+	return handleResponse<T>(response);
+}
