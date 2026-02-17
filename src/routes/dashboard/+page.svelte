@@ -9,7 +9,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Tooltip, TooltipTrigger } from '$lib/components/ui/tooltip';
-	import { Plus, Rocket, TrendingUp, Users } from '@lucide/svelte';
+	import { Plus, Rocket } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
 
 	const worldsQuery = useWorlds();
@@ -141,49 +141,6 @@
 			{/if}
 		</section>
 
-		<!-- Trending Worlds Section (Scaffolded) -->
-		<section class="mb-16">
-			<div class="mb-8">
-				<div class="flex items-center gap-3">
-					<TrendingUp class="h-6 w-6 text-primary" />
-					<h2 class="text-2xl font-bold text-foreground">Trending Worlds</h2>
-				</div>
-				<p class="mt-1 text-muted-foreground">Discover popular story worlds from the community</p>
-			</div>
-
-			<Card class="border-dashed">
-				<CardContent class="flex flex-col items-center justify-center py-12">
-					<TrendingUp class="mb-4 h-12 w-12 text-muted-foreground/50" />
-					<h3 class="mb-2 text-lg font-semibold text-foreground">Coming Soon</h3>
-					<p class="max-w-md text-center text-sm text-muted-foreground">
-						Explore trending worlds created by other storytellers. This feature is under
-						development.
-					</p>
-				</CardContent>
-			</Card>
-		</section>
-
-		<!-- Multiplayer Section (Scaffolded) -->
-		<section>
-			<div class="mb-8">
-				<div class="flex items-center gap-3">
-					<Users class="h-6 w-6 text-primary" />
-					<h2 class="text-2xl font-bold text-foreground">Multiplayer Adventures</h2>
-				</div>
-				<p class="mt-1 text-muted-foreground">Explore stories together with friends</p>
-			</div>
-
-			<Card class="border-dashed">
-				<CardContent class="flex flex-col items-center justify-center py-12">
-					<Users class="mb-4 h-12 w-12 text-muted-foreground/50" />
-					<h3 class="mb-2 text-lg font-semibold text-foreground">Coming Soon</h3>
-					<p class="max-w-md text-center text-sm text-muted-foreground">
-						Create multiplayer lobbies and experience interactive stories with friends. This feature
-						is under development.
-					</p>
-				</CardContent>
-			</Card>
-		</section>
 	</main>
 
 	<UpgradePrompt

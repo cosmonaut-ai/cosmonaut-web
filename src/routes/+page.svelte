@@ -1,14 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import { isLocalEnvironment } from '$lib/config';
 	import Starfield from '$lib/components/landing/Starfield.svelte';
 	import Hero from '$lib/components/landing/Hero.svelte';
 	import DemoStory from '$lib/components/landing/DemoStory.svelte';
 	import Features from '$lib/components/landing/Features.svelte';
 	import Footer from '$lib/components/landing/Footer.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Spinner } from '$lib/components/ui/spinner';
 	import { Rocket, LogIn } from '@lucide/svelte';
 	import { browser } from '$app/environment';
 	import SEO from '$lib/components/SEO.svelte';
@@ -16,7 +14,6 @@
 	const auth = useAuth();
 
 	let isScrolled = $state(false);
-	let isSigningIn = $state(false);
 
 	const prefersReducedMotion = browser
 		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -52,53 +49,19 @@
 		};
 	}
 
-	async function handleGetStarted() {
-		if (isSigningIn) return;
-
-		try {
-			if (auth.isAuthenticated) {
-				goto('/dashboard');
-			} else {
-				isSigningIn = true;
-				await auth.login();
-				// In local environment, redirect after login (OAuth redirects via callback)
-				if (isLocalEnvironment && auth.isAuthenticated) {
-					goto('/dashboard');
-				}
-			}
-		} catch (error) {
-			console.error('Failed to get started:', error);
-		} finally {
-			// Only reset if we're still on this page (local env)
-			if (isLocalEnvironment) {
-				isSigningIn = false;
-			}
+	function handleGetStarted() {
+		if (auth.isAuthenticated) {
+			goto('/dashboard');
+		} else {
+			goto('/login');
 		}
 	}
 
-	async function handleSignIn() {
-		if (isSigningIn) return;
-
-		// If already authenticated, navigate to dashboard instead of re-triggering OAuth
+	function handleSignIn() {
 		if (auth.isAuthenticated) {
 			goto('/dashboard');
-			return;
-		}
-
-		try {
-			isSigningIn = true;
-			await auth.login();
-			// In local environment, redirect after login (OAuth redirects via callback)
-			if (isLocalEnvironment && auth.isAuthenticated) {
-				goto('/dashboard');
-			}
-		} catch (error) {
-			console.error('Failed to sign in:', error);
-		} finally {
-			// Only reset if we're still on this page (local env)
-			if (isLocalEnvironment) {
-				isSigningIn = false;
-			}
+		} else {
+			goto('/login');
 		}
 	}
 
@@ -166,22 +129,12 @@
 					size="sm"
 					class="text-muted-foreground hover:text-foreground"
 					onclick={handleSignIn}
-					disabled={isSigningIn}
 				>
-					{#if isSigningIn}
-						<Spinner />
-						Signing in...
-					{:else}
-						<LogIn class="h-4 w-4" />
-						Sign In
-					{/if}
+					<LogIn class="h-4 w-4" />
+					Sign In
 				</Button>
-				<Button size="sm" onclick={handleGetStarted} disabled={isSigningIn}>
-					{#if isSigningIn}
-						<Spinner />
-					{:else}
-						<Rocket class="h-4 w-4" />
-					{/if}
+				<Button size="sm" onclick={handleGetStarted}>
+					<Rocket class="h-4 w-4" />
 					Get Started
 				</Button>
 			{/if}
@@ -192,7 +145,7 @@
 <!-- Main content -->
 <main>
 	<!-- Hero section -->
-	<Hero onGetStarted={handleGetStarted} onSignIn={handleSignIn} isLoading={isSigningIn} />
+	<Hero onGetStarted={handleGetStarted} onSignIn={handleSignIn} isLoading={false} />
 
 	<!-- Demo story section -->
 	<DemoStory />
@@ -215,13 +168,8 @@
 				size="lg"
 				class="gap-2 px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
 				onclick={handleGetStarted}
-				disabled={isSigningIn}
 			>
-				{#if isSigningIn}
-					<Spinner class="h-5 w-5" />
-				{:else}
-					<Rocket class="h-5 w-5" />
-				{/if}
+				<Rocket class="h-5 w-5" />
 				Start Your Journey
 			</Button>
 		</div>

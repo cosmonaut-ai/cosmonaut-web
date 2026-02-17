@@ -4,15 +4,9 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import {
-		isLocalEnvironment,
-		isDevEnvironment,
-		PRODUCTION_URL,
-		DEV_ALLOWED_EMAILS
-	} from '$lib/config';
+	import { isDevEnvironment, PRODUCTION_URL, DEV_ALLOWED_EMAILS } from '$lib/config';
 	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { Spinner } from '$lib/components/ui/spinner';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { TooltipProvider } from '$lib/components/ui/tooltip';
 	import { ModeWatcher, setMode } from 'mode-watcher';
@@ -25,13 +19,28 @@
 
 	const auth = useAuth();
 
-	let isSigningIn = $state(false);
+	// Routes that do not require authentication
+	const PUBLIC_ROUTES = ['/', '/login', '/callback', '/terms', '/privacy', '/pricing', '/about'];
+
+	function isPublicRoute(pathname: string): boolean {
+		const normalized =
+			pathname.endsWith('/') && pathname !== '/' ? pathname.slice(0, -1) : pathname;
+		return PUBLIC_ROUTES.includes(normalized);
+	}
 
 	// Check if we're on the landing page - it has its own header
 	const isLandingPage = $derived(page.url.pathname === '/');
 
 	// Show header on non-landing pages (works in both local and production)
 	const showGlobalHeader = $derived(!isLandingPage);
+
+	// Redirect unauthenticated users on protected routes to the login page
+	$effect(() => {
+		if (!auth.isLoading && !auth.isAuthenticated && !isPublicRoute(page.url.pathname)) {
+			const redirectPath = page.url.pathname + page.url.search;
+			goto(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+		}
+	});
 
 	// Redirect non-allowlisted users away from the dev environment to production
 	$effect(() => {
@@ -52,30 +61,12 @@
 		}
 	});
 
-	async function handleSignIn() {
-		if (isSigningIn) return;
-
-		// If already authenticated, navigate to dashboard instead of re-triggering OAuth
+	function handleSignIn() {
 		if (auth.isAuthenticated) {
 			goto('/dashboard');
 			return;
 		}
-
-		try {
-			isSigningIn = true;
-			await auth.login();
-			// In local environment, redirect after login (OAuth redirects via callback)
-			if (isLocalEnvironment && auth.isAuthenticated) {
-				goto('/dashboard');
-			}
-		} catch (error) {
-			console.error('Failed to sign in:', error);
-		} finally {
-			// Only reset if we're still on this page (local env)
-			if (isLocalEnvironment) {
-				isSigningIn = false;
-			}
-		}
+		goto('/login');
 	}
 </script>
 
@@ -83,6 +74,12 @@
 <Toaster richColors />
 <QueryClientProvider client={queryClient}>
 	<TooltipProvider>
+		<a
+			href="#main-content"
+			class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+		>
+			Skip to main content
+		</a>
 		<div class="flex h-full flex-col">
 			<!-- Global Header for authenticated pages -->
 			{#if showGlobalHeader}
@@ -109,15 +106,9 @@
 									size="sm"
 									class="text-muted-foreground hover:text-foreground"
 									onclick={handleSignIn}
-									disabled={isSigningIn}
 								>
-									{#if isSigningIn}
-										<Spinner />
-										Signing in...
-									{:else}
-										<LogIn class="h-4 w-4" />
-										Sign In
-									{/if}
+									<LogIn class="h-4 w-4" />
+									Sign In
 								</Button>
 							{/if}
 						</div>
@@ -125,7 +116,7 @@
 				</header>
 			{/if}
 
-			<div class="min-h-0 flex-1">
+			<div id="main-content" class="min-h-0 flex-1">
 				{@render children()}
 			</div>
 		</div>

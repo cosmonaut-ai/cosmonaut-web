@@ -38,7 +38,7 @@
 	const tierRankValue = $derived(tierRank(tier.key));
 	const isUpgrade = $derived(tierRankValue > currentRank);
 	const isDowngrade = $derived(tierRankValue < currentRank && currentTier !== null);
-	const isFree = $derived(tier.key === 'SCOUT');
+	const isFree = $derived(tier.key === 'FREE');
 	const isCosmonaut = $derived(tier.key === 'COSMONAUT');
 
 	const buttonLabel = $derived.by(() => {
