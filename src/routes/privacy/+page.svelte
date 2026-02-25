@@ -24,7 +24,7 @@
 			</p>
 			<p>
 				This Privacy Policy describes how we collect, use, and share information when you use our
-				website, <strong>cosmonaut.ai</strong> (the "Service").
+				website, <strong>cosmonaut-ai.com</strong> (the "Service").
 			</p>
 
 			<h2>1. Information We Collect</h2>
@@ -137,7 +137,7 @@
 			</ul>
 			<p>
 				To exercise these rights, email us at
-				<a href="mailto:support@cosmonaut.ai">support@cosmonaut.ai</a>.
+				<a href="mailto:support@cosmonaut-ai.com">support@cosmonaut-ai.com</a>.
 			</p>
 
 			<h2>7. Changes to This Policy</h2>
@@ -151,8 +151,8 @@
 			<p>
 				<strong>Contact Us</strong><br />
 				Matson Software LLC<br />
-				Email: <a href="mailto:support@cosmonaut.ai">support@cosmonaut.ai</a><br />
-				Website: <a href="https://cosmonaut.ai">https://cosmonaut.ai</a>
+				Email: <a href="mailto:support@cosmonaut-ai.com">support@cosmonaut-ai.com</a><br />
+				Website: <a href="https://cosmonaut-ai.com">https://cosmonaut-ai.com</a>
 			</p>
 		</article>
 	</main>
