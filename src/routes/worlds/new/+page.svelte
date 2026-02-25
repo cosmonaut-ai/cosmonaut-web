@@ -324,11 +324,13 @@
 							}}
 						>
 							<Select.Trigger id="visibility" class="w-full" disabled={loading}>
-								{visibility === 'public' ? 'Anyone with the link' : 'Restricted'}
+								{visibility === 'public' ? 'Public' : 'Private'}
 							</Select.Trigger>
 							<Select.Content>
-								<Select.Item value="private">Restricted - Only you can access</Select.Item>
-								<Select.Item value="public">Anyone with the link - Anyone can view</Select.Item>
+								<Select.Item value="private"
+									>Private - Only you and people you invite can access</Select.Item
+								>
+								<Select.Item value="public">Public - Anyone can view</Select.Item>
 							</Select.Content>
 						</Select.Root>
 						<p class="text-xs text-muted-foreground">
