@@ -24,6 +24,7 @@
 		Check,
 		MessageSquareText
 	} from '@lucide/svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	function getWorldLengthLabel(length: string | null): string | null {
 		switch (length) {
@@ -52,6 +53,7 @@
 		if (!world.world_prompt) return;
 		try {
 			await navigator.clipboard.writeText(world.world_prompt);
+			trackEvent('world_prompt_copied');
 			promptCopied = true;
 			setTimeout(() => (promptCopied = false), 2000);
 		} catch {

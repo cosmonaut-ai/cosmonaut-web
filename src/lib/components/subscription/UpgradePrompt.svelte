@@ -5,6 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Sparkles, ExternalLink } from '@lucide/svelte';
 	import { formatDate } from '$lib/utils/date';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	interface Props {
 		open: boolean;
@@ -20,6 +21,12 @@
 
 	const usage = $derived(usageQuery.data);
 	const isFree = $derived(usage?.tier === 'FREE');
+
+	$effect(() => {
+		if (open) {
+			trackEvent('upgrade_prompt_shown', { resource });
+		}
+	});
 
 	const isStorageResource = $derived(resource === 'worlds_storage');
 	const isAudioResource = $derived(resource === 'audio');

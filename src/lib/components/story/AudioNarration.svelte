@@ -342,7 +342,7 @@
 		{playbackRate}
 		{isGenerating}
 		{voices}
-		effectiveVoiceId={effectiveVoiceId}
+		{effectiveVoiceId}
 		onTogglePlayPause={togglePlayPause}
 		onSeek={handleSeek}
 		onVolumeChange={handleVolumeChange}

@@ -39,7 +39,9 @@
 		onSwitchToSignIn
 	}: Props = $props();
 
-	const passwordsMatch = $derived(newPassword === confirmNewPassword && confirmNewPassword.length > 0);
+	const passwordsMatch = $derived(
+		newPassword === confirmNewPassword && confirmNewPassword.length > 0
+	);
 </script>
 
 {#if view === 'forgot'}
@@ -69,8 +71,7 @@
 {:else}
 	<div class="space-y-4">
 		<p class="text-sm text-muted-foreground">
-			Enter the code sent to <strong class="text-foreground">{email}</strong> and choose a new
-			password.
+			Enter the code sent to <strong class="text-foreground">{email}</strong> and choose a new password.
 		</p>
 		<div class="space-y-2">
 			<Label for="reset-code">Reset code</Label>
