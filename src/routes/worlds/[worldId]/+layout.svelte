@@ -4,7 +4,7 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { useWorld } from '$lib/queries';
-	import { ApiError, type World } from '$lib/types/api';
+	import { ApiError } from '$lib/types/api';
 	import { warmWorldCache } from '$lib/api/client';
 	import WorldHeader from '$lib/components/story/WorldHeader.svelte';
 	import WorldGenerationProgress from '$lib/components/story/WorldGenerationProgress.svelte';
@@ -60,11 +60,6 @@
 			});
 		}
 	});
-
-	function handleWorldUpdate(_: World) {
-		// Invalidate the world query to refresh data
-		worldQuery.refetch();
-	}
 </script>
 
 <SEO
@@ -80,7 +75,7 @@
 
 {#if isWorldLoading}
 	<!-- Loading world data -->
-	<div class="h-full overflow-y-auto bg-background">
+	<div class="min-h-full bg-background">
 		<header class="border-b border-border bg-card/50">
 			<div class="mx-auto flex max-w-3xl items-center gap-4 px-6 py-4">
 				<Skeleton class="h-8 w-20" />
@@ -98,7 +93,7 @@
 	</div>
 {:else if isAccessDenied}
 	<!-- Access denied -->
-	<div class="h-full overflow-y-auto bg-background">
+	<div class="min-h-full bg-background">
 		<main class="mx-auto max-w-3xl px-6 py-12">
 			<Card class="border-border/50">
 				<CardContent class="flex flex-col items-center py-12 text-center">
@@ -111,8 +106,8 @@
 						You don't have access to this world
 					</h2>
 					<p class="mb-6 max-w-md text-sm text-muted-foreground">
-						It looks like you don't have permission to view this world. Ask the owner to
-						share it with you.
+						It looks like you don't have permission to view this world. Ask the owner to share it
+						with you.
 					</p>
 					<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
 				</CardContent>
@@ -121,7 +116,7 @@
 	</div>
 {:else if !world}
 	<!-- World not found -->
-	<div class="h-full overflow-y-auto bg-background">
+	<div class="min-h-full bg-background">
 		<main class="mx-auto max-w-3xl px-6 py-12">
 			<Card class="border-destructive/50">
 				<CardContent class="py-12 text-center">
@@ -133,31 +128,31 @@
 	</div>
 {:else if !isWorldComplete && !isWorldFailed}
 	<!-- World Generation Progress View -->
-	<div class="h-full overflow-y-auto bg-background">
+	<div class="min-h-full bg-background">
 		<WorldGenerationProgress {generationStatus} />
 	</div>
 {:else if isWorldFailed}
 	<!-- World Generation Failed View -->
-	<div class="h-full overflow-y-auto bg-background">
+	<div class="min-h-full bg-background">
 		<WorldGenerationFailed />
 	</div>
 {:else if isGraphPage || isMapPage}
-	<!-- Graph/Map pages handle their own layout (full screen) -->
-	<div class="flex h-full flex-col bg-background">
-		<WorldHeader {world} onWorldUpdate={handleWorldUpdate} />
+	<!-- Graph/Map pages handle their own layout (full screen, absolute to fill #main-content) -->
+	<div class="absolute inset-0 flex flex-col bg-background">
+		<WorldHeader {world} />
 		<div class="min-h-0 flex-1">
 			{@render children()}
 		</div>
 	</div>
 {:else if isMainWorldPage}
 	<!-- Main world page — has its own navigation -->
-	<div class="h-full overflow-y-auto bg-background">
+	<div class="min-h-full bg-background">
 		{@render children()}
 	</div>
 {:else}
 	<!-- Story pages with scrollable content -->
-	<div class="h-full overflow-y-auto bg-background">
-		<WorldHeader {world} onWorldUpdate={handleWorldUpdate} />
+	<div class="min-h-full bg-background">
+		<WorldHeader {world} />
 		{@render children()}
 	</div>
 {/if}

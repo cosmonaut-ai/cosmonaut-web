@@ -1,23 +1,20 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { retryNodeProcessing } from '$lib/api/client';
-	import {
-		useNode,
-		useChooseOption,
-		useUsage,
-		type ChoiceOption
-	} from '$lib/queries';
+	import { useNode, useChooseOption, useUsage, useWorld, type ChoiceOption } from '$lib/queries';
 	import { showError } from '$lib/utils/toast';
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
 	import SlideTransition from './SlideTransition.svelte';
 	import AudioNarration from './AudioNarration.svelte';
+	import ShareModal from './ShareModal.svelte';
 	import UpgradePrompt from '$lib/components/subscription/UpgradePrompt.svelte';
 	import { useStreamingNode } from './useStreamingNode.svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket } from '@lucide/svelte';
+	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket, Home, Share2 } from '@lucide/svelte';
 
 	interface Props {
 		worldId: string;
@@ -77,9 +74,7 @@
 	});
 
 	// Check if node is being generated elsewhere (poll until complete)
-	const isNodeGenerating = $derived(
-		effectiveNodeStatus === 'generating' && !stream.isStreaming
-	);
+	const isNodeGenerating = $derived(effectiveNodeStatus === 'generating' && !stream.isStreaming);
 
 	// Check if node generation failed
 	const isNodeFailed = $derived(effectiveNodeStatus === 'failed');
@@ -123,11 +118,16 @@
 
 	async function handleChoiceSelect(choiceIndex: number) {
 		if (!currentNode || loading || isProcessingChoice) return;
+		if (!currentNode.parent_id) {
+			trackEvent('story_started', { world_id: worldId });
+		}
+		trackEvent('choice_made', { world_id: worldId, choice_type: 'preset' });
 		await executeChoice({ choiceIndex });
 	}
 
 	async function handleCustomChoice(text: string) {
 		if (!currentNode || loading || isProcessingChoice) return;
+		trackEvent('custom_choice_made', { world_id: worldId, choice_type: 'custom' });
 		await executeChoice({ customChoice: text });
 	}
 
@@ -181,7 +181,7 @@
 	}
 
 	async function handleBack() {
-		if (!currentNode?.parent_id || isProcessingChoice) return;
+		if (!currentNode?.parent_id) return;
 		slideDirection = 'back';
 		currentNodeOverride = null;
 		goto(`/worlds/${worldId}/nodes/${currentNode.parent_id}`, {
@@ -191,7 +191,8 @@
 	}
 
 	async function handleRestart() {
-		if (!rootNodeId || isProcessingChoice) return;
+		if (!rootNodeId) return;
+		trackEvent('story_restarted', { world_id: worldId });
 		slideDirection = 'back';
 		currentNodeOverride = null;
 		goto(`/worlds/${worldId}/nodes/${rootNodeId}`, {
@@ -207,64 +208,59 @@
 	const canGoBack = $derived(!!currentNode?.parent_id);
 	const pathLength = $derived((currentNode?.ancestors?.length || 0) + 1);
 
+	$effect(() => {
+		if (isEnding) {
+			trackEvent('story_ended', { world_id: worldId, path_length: pathLength });
+		}
+	});
+
 	// ── Audio Narration ──
-	const audio = $derived(currentNode?.audio ?? {});
 	let audioPlayerVisible = $state(false);
+
+	// ── World data for ShareModal ──
+	const worldQuery = useWorld(() => worldId);
+	const world = $derived(worldQuery.data);
+	let shareModalOpen = $state(false);
 </script>
 
 <main class="mx-auto max-w-4xl px-6 py-8 {audioPlayerVisible ? 'pb-24' : ''}">
-	<!-- Path indicator -->
-	{#if currentNode}
-		<div class="mb-6 flex items-center justify-between">
-			<div class="flex items-center gap-2">
-				{#if canGoBack}
-					<Button
-						variant="ghost"
-						size="sm"
-						onclick={handleBack}
-						disabled={isLoading || isProcessingChoice}
-						class="gap-1"
-					>
-						<ChevronLeft class="h-4 w-4" />
-						Previous
-					</Button>
-				{/if}
-			</div>
-
-			<div class="flex items-center gap-2 text-sm text-muted-foreground">
-				{#if pathLength > 1}
-					<Button
-						variant="ghost"
-						size="sm"
-						onclick={handleRestart}
-						disabled={isLoading || isProcessingChoice}
-						class="gap-1"
-					>
-						<RotateCcw class="h-4 w-4" />
-						Restart
-					</Button>
-				{/if}
-				<Button
-					variant="ghost"
-					size="sm"
-					onclick={() => goto(`/worlds/${worldId}/graph?node=${nodeId}`)}
-					disabled={isProcessingChoice}
-					class="gap-1"
-				>
-					<Map class="h-4 w-4" />
-					Map
-				</Button>
-				<AudioNarration
-					{worldId}
-					nodeId={currentNode.id}
-					{audio}
-					isNodeCompleted={currentNode?.generation_status === 'completed'}
-					onQuotaExceeded={() => (stream.showAudioQuotaPrompt = true)}
-					bind:playerVisible={audioPlayerVisible}
-				/>
-			</div>
+	<!-- Toolbar -->
+	<div class="mb-6 flex items-center justify-between">
+		<div class="flex items-center gap-1">
+			<Button variant="ghost" size="sm" onclick={handleBack} disabled={!canGoBack} class="gap-1">
+				<ChevronLeft class="h-4 w-4" />
+				Undo
+			</Button>
 		</div>
-	{/if}
+
+		<div class="flex items-center gap-1">
+			<Button
+				variant="ghost"
+				size="sm"
+				onclick={() => goto(`/worlds/${worldId}/graph?node=${nodeId}`)}
+				class="gap-1"
+			>
+				<Map class="h-4 w-4" />
+				Map
+			</Button>
+			<AudioNarration
+				{worldId}
+				nodeId={currentNode?.id ?? nodeId}
+				audio={currentNode?.audio ?? {}}
+				isNodeCompleted={currentNode?.generation_status === 'completed'}
+				onQuotaExceeded={() => (stream.showAudioQuotaPrompt = true)}
+				bind:playerVisible={audioPlayerVisible}
+			/>
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				onclick={() => (shareModalOpen = true)}
+				aria-label="Share"
+			>
+				<Share2 class="h-4 w-4" />
+			</Button>
+		</div>
+	</div>
 
 	<!-- Story Content with Slide Transition -->
 	{#if stream.isStreaming || isNodeGenerating || isNodeFailed || currentNode}
@@ -287,6 +283,7 @@
 					<StoryCard
 						text=""
 						choices={[]}
+						parentChoice={currentNode?.parent_choice}
 						isTyping={true}
 						isLoading={true}
 						showCustomChoice={false}
@@ -394,4 +391,13 @@
 		onOpenChange={(v) => (stream.showAudioQuotaPrompt = v)}
 		resource="audio"
 	/>
+
+	{#if world}
+		<ShareModal
+			{world}
+			open={shareModalOpen}
+			onOpenChange={(open) => (shareModalOpen = open)}
+			onWorldUpdate={() => worldQuery.refetch()}
+		/>
+	{/if}
 </main>

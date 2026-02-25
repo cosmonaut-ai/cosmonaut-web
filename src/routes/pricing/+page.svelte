@@ -14,6 +14,7 @@
 	import { showSuccess, showInfo } from '$lib/utils/toast';
 	import { ArrowLeft } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	const auth = useAuth();
 	const usageQuery = useUsage();
@@ -27,6 +28,7 @@
 	onMount(() => {
 		const checkoutStatus = page.url.searchParams.get('checkout');
 		if (checkoutStatus === 'success') {
+			trackEvent('checkout_completed');
 			showSuccess('Subscription activated!', 'Welcome to your new plan.');
 			queryClient.invalidateQueries({ queryKey: usageKeys.all });
 			// Clean the URL
@@ -50,14 +52,14 @@
 		if (targetRank === currentRank) return;
 
 		if (currentTier === 'FREE') {
-			// Free -> Paid: use Stripe Checkout
+			trackEvent('begin_checkout', { tier });
 			checkoutMutation.mutate({
 				tier: tier as 'EXPLORER' | 'COSMONAUT',
 				success_url: `${window.location.origin}/pricing?checkout=success`,
 				cancel_url: `${window.location.origin}/pricing?checkout=cancelled`
 			});
 		} else {
-			// Paid -> Different paid tier: use Billing Portal (Stripe handles plan changes)
+			trackEvent('billing_portal_opened');
 			billingPortalMutation.mutate();
 		}
 	}

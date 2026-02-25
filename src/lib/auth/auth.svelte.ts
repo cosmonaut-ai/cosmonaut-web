@@ -56,18 +56,9 @@ export function initializeAuth(): Promise<void> {
 				isLoading = false;
 			}
 		} else if (isLocalEnvironment) {
-			// In local environment, restore auth state from localStorage
-			if (browser) {
-				try {
-					const savedAuth = localStorage.getItem(LOCAL_AUTH_KEY);
-					if (savedAuth === 'true') {
-						isAuthenticated = true;
-						user = LOCAL_DEV_USER;
-					}
-				} catch {
-					// localStorage might not be available
-				}
-			}
+			// In local environment, always auto-authenticate
+			isAuthenticated = true;
+			user = LOCAL_DEV_USER;
 			isLoading = false;
 		} else {
 			console.warn('Auth is not configured for non-local environment');
@@ -252,6 +243,13 @@ export async function signInWithEmail(email: string, password: string): Promise<
 	if (isLocalEnvironment) {
 		isAuthenticated = true;
 		user = { ...LOCAL_DEV_USER, email };
+		if (browser) {
+			try {
+				localStorage.setItem(LOCAL_AUTH_KEY, 'true');
+			} catch {
+				// localStorage might not be available
+			}
+		}
 		return;
 	}
 

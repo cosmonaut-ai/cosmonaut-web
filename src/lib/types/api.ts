@@ -148,9 +148,7 @@ export class ApiError extends Error {
 	 * We match on the message pattern only, since the status code varies by error path.
 	 */
 	get isNodeAlreadyProcessed(): boolean {
-		return /Cannot generate text for node .+ with status (completed|generating)/i.test(
-			this.detail
-		);
+		return /Cannot generate text for node .+ with status (completed|generating)/i.test(this.detail);
 	}
 
 	/**

@@ -5,7 +5,7 @@
 	import { getTierConfig } from '$lib/config/tiers';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Badge } from '$lib/components/ui/badge';
-	import { Settings, CreditCard, LogOut, ChevronDown } from '@lucide/svelte';
+	import { LayoutDashboard, Settings, CreditCard, LogOut, ChevronDown } from '@lucide/svelte';
 
 	const auth = useAuth();
 	const usageQuery = useUsage();
@@ -58,6 +58,11 @@
 		</div>
 
 		<DropdownMenu.Separator />
+
+		<DropdownMenu.Item onclick={() => goto('/dashboard')} class="cursor-pointer">
+			<LayoutDashboard class="h-4 w-4" />
+			Dashboard
+		</DropdownMenu.Item>
 
 		<DropdownMenu.Item onclick={() => goto('/settings')} class="cursor-pointer">
 			<Settings class="h-4 w-4" />

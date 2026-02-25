@@ -21,6 +21,7 @@
 	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Info } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { formatResetDate } from '$lib/utils/date';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	// ── localStorage helpers ────────────────────────────────────────────
 	const STORAGE_KEY_LENGTH = 'cosmonaut-world-length';
@@ -156,6 +157,7 @@
 		const prompt = getRandomPrompt(list);
 		if (prompt) {
 			worldPrompt = prompt;
+			trackEvent('random_prompt_used');
 		}
 	}
 
@@ -175,7 +177,11 @@
 			},
 			{
 				onSuccess: (world) => {
-					// Navigate to the world page (will show generation progress)
+					trackEvent('world_created', {
+						visibility,
+						world_length: worldLength,
+						family_friendly: familyFriendly
+					});
 					goto(`/worlds/${world.id}`);
 				}
 			}

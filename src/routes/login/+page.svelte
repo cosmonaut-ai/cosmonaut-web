@@ -5,6 +5,7 @@
 	import { useAuth, SignUpNotConfirmedError } from '$lib/auth/auth.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import SEO from '$lib/components/SEO.svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 	import SignInForm from './SignInForm.svelte';
 	import SignUpForm from './SignUpForm.svelte';
 	import VerifyForm from './VerifyForm.svelte';
@@ -126,6 +127,7 @@
 		isSubmitting = true;
 		try {
 			await auth.signInWithEmail(email, password);
+			trackEvent('login', { method: 'email' });
 			goto(consumeRedirectUrl());
 		} catch (error) {
 			if (error instanceof SignUpNotConfirmedError) {
@@ -153,6 +155,7 @@
 		isSubmitting = true;
 		try {
 			const result = await auth.signUpWithEmail(email, password);
+			trackEvent('sign_up', { method: 'email' });
 			if (result.isConfirmationRequired) {
 				view = 'verify';
 				successMessage = 'Check your email for a verification code.';
@@ -172,6 +175,7 @@
 		isSubmitting = true;
 		try {
 			await auth.confirmSignUpWithCode(email, verificationCode);
+			trackEvent('email_verified');
 			await auth.signInWithEmail(email, password);
 			goto(consumeRedirectUrl());
 		} catch (error) {
@@ -220,6 +224,7 @@
 		isSubmitting = true;
 		try {
 			await auth.confirmForgotPassword(email, verificationCode, newPassword);
+			trackEvent('password_reset');
 			view = 'signin';
 			successMessage = 'Password reset successfully. Please sign in with your new password.';
 			password = '';
@@ -235,6 +240,7 @@
 		clearMessages();
 		isSubmitting = true;
 		try {
+			trackEvent('login', { method: 'google' });
 			await auth.loginWithGoogle();
 		} catch (error) {
 			errorMessage = formatError(error);
@@ -352,7 +358,7 @@
 						/>
 					{:else if view === 'forgot' || view === 'reset'}
 						<ForgotPasswordForm
-							view={view}
+							{view}
 							{email}
 							{verificationCode}
 							{newPassword}

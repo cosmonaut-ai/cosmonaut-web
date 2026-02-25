@@ -11,6 +11,7 @@
 	import { Tooltip, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import { Plus, Rocket } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	const worldsQuery = useWorlds();
 	const deleteMutation = useDeleteWorld();
@@ -27,6 +28,7 @@
 	const isAtWorldLimit = $derived(isAtStorageLimit || isAtPeriodLimit);
 
 	function handleDeleteWorld(worldId: string) {
+		trackEvent('world_deleted');
 		deletingWorldId = worldId;
 		deleteMutation.mutate(worldId, {
 			onSettled: () => {
@@ -140,7 +142,6 @@
 				</div>
 			{/if}
 		</section>
-
 	</main>
 
 	<UpgradePrompt
