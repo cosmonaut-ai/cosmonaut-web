@@ -5,6 +5,7 @@
 	import { RotateCcw, ChevronRight } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 	import { browser } from '$app/environment';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	let currentNodeId = $state(startNodeId);
 	let visitedPath = $state<string[]>([startNodeId]);
@@ -57,6 +58,7 @@
 
 	function selectChoice(targetId: string) {
 		if (isTransitioning || isTyping) return;
+		trackEvent('demo_choice_made');
 
 		isTransitioning = true;
 
@@ -68,6 +70,7 @@
 	}
 
 	function restart() {
+		trackEvent('demo_restarted');
 		isTransitioning = true;
 		setTimeout(() => {
 			currentNodeId = startNodeId;
@@ -84,12 +87,12 @@
 <section class="relative bg-background py-24">
 	<!-- Subtle top fade for smoother transition from hero -->
 	<div
-		class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-transparent to-background"
+		class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-transparent to-background"
 	></div>
 
 	<!-- Bottom gradient to fade back to transparent starfield -->
 	<div
-		class="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-transparent to-background"
+		class="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-transparent to-background"
 	></div>
 
 	<div class="relative mx-auto max-w-4xl px-6">

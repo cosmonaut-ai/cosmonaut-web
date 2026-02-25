@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import { isDevEnvironment, PRODUCTION_URL, DEV_ALLOWED_EMAILS } from '$lib/config';
+	import { trackPageView } from '$lib/utils/analytics';
 	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Toaster } from '$lib/components/ui/sonner';
@@ -33,6 +34,11 @@
 
 	// Show header on non-landing pages (works in both local and production)
 	const showGlobalHeader = $derived(!isLandingPage);
+
+	// Track SPA page views on route changes
+	$effect(() => {
+		trackPageView(page.url.pathname);
+	});
 
 	// Redirect unauthenticated users on protected routes to the login page
 	$effect(() => {
@@ -76,14 +82,14 @@
 	<TooltipProvider>
 		<a
 			href="#main-content"
-			class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+			class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
 		>
 			Skip to main content
 		</a>
-		<div class="flex h-full flex-col">
+		<div class="flex min-h-dvh flex-col">
 			<!-- Global Header for authenticated pages -->
 			{#if showGlobalHeader}
-				<header class="shrink-0 border-b border-border bg-card">
+				<header class="border-b border-border bg-card">
 					<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
 						<a href="/" class="flex items-center gap-2">
 							<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
@@ -116,7 +122,7 @@
 				</header>
 			{/if}
 
-			<div id="main-content" class="min-h-0 flex-1">
+			<div id="main-content" class="relative flex-1">
 				{@render children()}
 			</div>
 		</div>

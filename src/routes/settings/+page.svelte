@@ -23,6 +23,7 @@
 	import { ArrowLeft, User, CreditCard, BarChart3, ExternalLink, Trash2 } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { formatDate } from '$lib/utils/date';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	const auth = useAuth();
 	const usageQuery = useUsage();
@@ -51,6 +52,7 @@
 		isDeleting = true;
 		try {
 			await auth.deleteAccount();
+			trackEvent('account_deleted');
 			goto('/');
 		} catch (error) {
 			deleteError = error instanceof Error ? error.message : 'Account deletion failed.';
@@ -267,9 +269,7 @@
 						<Dialog.Root bind:open={deleteDialogOpen}>
 							<Dialog.Trigger>
 								{#snippet child({ props })}
-									<Button variant="destructive" size="sm" {...props}>
-										Delete Account
-									</Button>
+									<Button variant="destructive" size="sm" {...props}>Delete Account</Button>
 								{/snippet}
 							</Dialog.Trigger>
 							<Dialog.Content class="sm:max-w-md">
@@ -279,12 +279,16 @@
 										Delete Account
 									</Dialog.Title>
 									<Dialog.Description>
-										This will permanently delete your account, all your worlds, story nodes, and all associated data. Any active subscriptions will be cancelled. This action cannot be undone.
+										This will permanently delete your account, all your worlds, story nodes, and all
+										associated data. Any active subscriptions will be cancelled. This action cannot
+										be undone.
 									</Dialog.Description>
 								</Dialog.Header>
 								<div class="space-y-4 py-4">
 									{#if deleteError}
-										<div class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+										<div
+											class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+										>
 											{deleteError}
 										</div>
 									{/if}
@@ -303,10 +307,22 @@
 									</div>
 								</div>
 								<Dialog.Footer>
-									<Button variant="outline" onclick={() => { deleteDialogOpen = false; deleteConfirmText = ''; deleteError = ''; }} disabled={isDeleting}>
+									<Button
+										variant="outline"
+										onclick={() => {
+											deleteDialogOpen = false;
+											deleteConfirmText = '';
+											deleteError = '';
+										}}
+										disabled={isDeleting}
+									>
 										Cancel
 									</Button>
-									<Button variant="destructive" onclick={handleDeleteAccount} disabled={!canDelete || isDeleting}>
+									<Button
+										variant="destructive"
+										onclick={handleDeleteAccount}
+										disabled={!canDelete || isDeleting}
+									>
 										{#if isDeleting}
 											<Spinner class="mr-2" />
 											Deleting...

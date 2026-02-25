@@ -5,11 +5,14 @@
 	import { browser } from '$app/environment';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Share2, X, Plus, Globe, Lock, Link, Copy } from '@lucide/svelte';
+	import { Share2, X, Plus, Globe, Lock, Link, Copy, Check } from '@lucide/svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	interface Props {
 		world: World;
@@ -22,25 +25,33 @@
 
 	const worldId = $derived(world.id);
 
-	let visibility = $derived<WorldVisibility>(world.visibility || 'private');
-	let sharedWith = $derived<string[]>([...(world.shared_with || [])]);
+	let visibility = $state<WorldVisibility>('private');
+	let sharedWith = $state<string[]>([]);
 	let newEmail = $state('');
 	let emailTouched = $state(false);
+	let emailToRemove = $state<string | null>(null);
+	let justSaved = $state(false);
+	let saveTimeout: ReturnType<typeof setTimeout> | undefined;
+	let savedTimeout: ReturnType<typeof setTimeout> | undefined;
 
-	// Use mutation for updating sharing settings
+	// Re-initialize local state when dialog opens
+	$effect(() => {
+		if (open) {
+			visibility = world.visibility || 'private';
+			sharedWith = [...(world.shared_with || [])];
+			justSaved = false;
+			clearTimeout(saveTimeout);
+			clearTimeout(savedTimeout);
+		}
+	});
+
 	const updateMutation = $derived.by(() => useUpdateWorldSharing(worldId));
 	const saving = $derived(updateMutation.isPending);
-	const hasChanges = $derived.by(() => {
-		const currentVisibility = world.visibility || 'private';
-		const currentSharedWith = world.shared_with || [];
-		return visibility !== currentVisibility || !areEmailListsEqual(sharedWith, currentSharedWith);
-	});
 
 	function isValidEmail(email: string): boolean {
 		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 	}
 
-	// Inline email validation
 	const emailError = $derived.by(() => {
 		const trimmed = newEmail.trim();
 		if (!emailTouched || !trimmed) return '';
@@ -54,41 +65,62 @@
 		return a.every((value, index) => value === b[index]);
 	}
 
+	function hasUnsavedChanges(): boolean {
+		const currentVisibility = world.visibility || 'private';
+		const currentSharedWith = world.shared_with || [];
+		return visibility !== currentVisibility || !areEmailListsEqual(sharedWith, currentSharedWith);
+	}
+
+	function scheduleSave() {
+		clearTimeout(saveTimeout);
+		saveTimeout = setTimeout(() => {
+			if (!hasUnsavedChanges()) return;
+			triggerSave();
+		}, 500);
+	}
+
+	function triggerSave() {
+		updateMutation.mutate(
+			{ visibility, shared_with: sharedWith },
+			{
+				onSuccess: (updatedWorld) => {
+					trackEvent('share_settings_saved', {
+						visibility,
+						shared_count: sharedWith.length
+					});
+					onWorldUpdate?.(updatedWorld);
+					justSaved = true;
+					clearTimeout(savedTimeout);
+					savedTimeout = setTimeout(() => {
+						justSaved = false;
+					}, 2000);
+				}
+			}
+		);
+	}
+
 	function addEmail() {
 		emailTouched = true;
 		const email = newEmail.trim().toLowerCase();
 		if (!email) return;
-
-		if (!isValidEmail(email)) {
-			return; // Inline error message will display
-		}
-
-		if (sharedWith.includes(email)) {
-			return; // Inline error message will display
-		}
+		if (!isValidEmail(email)) return;
+		if (sharedWith.includes(email)) return;
 
 		sharedWith = [...sharedWith, email];
 		newEmail = '';
 		emailTouched = false;
+		scheduleSave();
 	}
 
-	function removeEmail(email: string) {
-		sharedWith = sharedWith.filter((e) => e !== email);
+	function confirmRemove(email: string) {
+		emailToRemove = email;
 	}
 
-	function handleSave() {
-		updateMutation.mutate(
-			{
-				visibility,
-				shared_with: sharedWith
-			},
-			{
-				onSuccess: (updatedWorld) => {
-					onWorldUpdate?.(updatedWorld);
-					onOpenChange(false);
-				}
-			}
-		);
+	function executeRemove() {
+		if (!emailToRemove) return;
+		sharedWith = sharedWith.filter((e) => e !== emailToRemove);
+		emailToRemove = null;
+		scheduleSave();
 	}
 
 	function handleKeyDown(e: KeyboardEvent) {
@@ -115,6 +147,7 @@
 				throw new Error('Clipboard unavailable');
 			}
 			await navigator.clipboard.writeText(link);
+			trackEvent('share_link_copied');
 			showSuccess('Link copied');
 		} catch {
 			showError('Failed to copy link');
@@ -127,7 +160,22 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<Share2 class="h-5 w-5 text-primary" />
-				Share "{world.title || 'Untitled World'}"
+				<span class="truncate">Share "{world.title || 'Untitled World'}"</span>
+				{#if saving}
+					<span
+						class="ml-auto flex shrink-0 items-center gap-1.5 text-xs font-normal text-muted-foreground"
+					>
+						<Spinner class="h-3 w-3" />
+						Saving…
+					</span>
+				{:else if justSaved}
+					<span
+						class="ml-auto flex shrink-0 items-center gap-1.5 text-xs font-normal text-green-600 dark:text-green-400"
+					>
+						<Check class="h-3 w-3" />
+						Saved
+					</span>
+				{/if}
 			</Dialog.Title>
 		</Dialog.Header>
 
@@ -139,7 +187,10 @@
 					type="single"
 					value={visibility}
 					onValueChange={(v) => {
-						if (v) visibility = v as WorldVisibility;
+						if (v) {
+							visibility = v as WorldVisibility;
+							scheduleSave();
+						}
 					}}
 				>
 					<Select.Trigger class="w-full">
@@ -246,45 +297,53 @@
 				{/if}
 			</div>
 
-			<!-- Shared users list -->
+			<!-- Shared users as badges -->
 			{#if sharedWith.length > 0}
 				<div class="space-y-2">
 					<Label class="text-muted-foreground">People with access ({sharedWith.length})</Label>
-					<div class="max-h-40 space-y-2 overflow-y-auto rounded-lg border border-border p-2">
+					<div class="flex flex-wrap gap-1.5">
 						{#each sharedWith as email (email)}
-							<div
-								class="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2 text-sm"
-							>
-								<span class="truncate">{email}</span>
-								<Button
-									variant="ghost"
-									size="icon"
-									onclick={() => removeEmail(email)}
+							<Badge variant="secondary" class="gap-1 py-1 pr-1 pl-2.5">
+								<span class="max-w-[200px] truncate">{email}</span>
+								<button
+									onclick={() => confirmRemove(email)}
 									disabled={saving}
-									class="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+									class="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-destructive/20 hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
 									aria-label="Remove {email}"
 								>
-									<X class="h-3.5 w-3.5" />
-								</Button>
-							</div>
+									<X class="h-3 w-3" />
+								</button>
+							</Badge>
 						{/each}
 					</div>
 				</div>
 			{/if}
 		</div>
-
-		<Dialog.Footer>
-			<Button variant="outline" onclick={() => onOpenChange(false)} disabled={saving}>
-				Cancel
-			</Button>
-			<Button onclick={handleSave} disabled={saving || !hasChanges}>
-				{#if saving}
-					<Spinner class="mr-2" />
-					Saving...
-				{:else}
-					Save Changes
-				{/if}
-			</Button>
-		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
+
+<!-- Removal confirmation -->
+<AlertDialog.Root
+	open={emailToRemove !== null}
+	onOpenChange={(o) => {
+		if (!o) emailToRemove = null;
+	}}
+>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Remove access?</AlertDialog.Title>
+			<AlertDialog.Description>
+				<span class="font-medium">{emailToRemove}</span> will no longer be able to view this world.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Action
+				class="bg-destructive text-white hover:bg-destructive/90"
+				onclick={executeRemove}
+			>
+				Remove
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>

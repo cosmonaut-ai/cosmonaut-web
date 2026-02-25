@@ -144,7 +144,7 @@
 </script>
 
 <Card
-	class="story-card rounded-none border-l-0 border-l-primary bg-card sm:rounded-lg sm:border-l-4"
+	class="story-card rounded-none border-l-0 border-l-primary bg-card py-0 sm:rounded-lg sm:border-l-4"
 >
 	<CardContent class="p-3 sm:p-6 lg:p-8">
 		<!-- Parent choice context -->
