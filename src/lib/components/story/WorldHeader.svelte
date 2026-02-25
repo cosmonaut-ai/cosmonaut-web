@@ -77,10 +77,10 @@
 					<Badge variant="outline" class="shrink-0 gap-1 border-border/50 bg-background/50">
 						{#if world.visibility === 'public'}
 							<Globe class="h-3 w-3" />
-							Anyone with the link
+							Public
 						{:else}
 							<Lock class="h-3 w-3" />
-							Restricted
+							Private
 						{/if}
 					</Badge>
 				</div>

@@ -146,10 +146,10 @@
 						<div class="flex items-center gap-2">
 							{#if visibility === 'public'}
 								<Globe class="h-4 w-4 text-primary" />
-								<span>Anyone with the link</span>
+								<span>Public</span>
 							{:else}
 								<Lock class="h-4 w-4 text-muted-foreground" />
-								<span>Restricted</span>
+								<span>Private</span>
 							{/if}
 						</div>
 					</Select.Trigger>
@@ -158,9 +158,9 @@
 							<div class="flex items-center gap-2">
 								<Lock class="h-4 w-4" />
 								<div>
-									<div class="font-medium">Restricted</div>
+									<div class="font-medium">Private</div>
 									<div class="text-xs text-muted-foreground">
-										Only you and people you add can access
+										Only you and people you invite can access
 									</div>
 								</div>
 							</div>
@@ -169,9 +169,9 @@
 							<div class="flex items-center gap-2">
 								<Globe class="h-4 w-4" />
 								<div>
-									<div class="font-medium">Anyone with the link</div>
+									<div class="font-medium">Public</div>
 									<div class="text-xs text-muted-foreground">
-										Anyone on the internet with this link can view
+										Anyone on the internet with the link can view
 									</div>
 								</div>
 							</div>
@@ -180,10 +180,10 @@
 				</Select.Root>
 				<p class="text-xs text-muted-foreground">
 					{#if visibility === 'public'}
-						Anyone on the internet with the link can view this world. People you add can also view
-						it.
+						Anyone on the internet with the link can view this world. People you invite can also
+						view it.
 					{:else}
-						Only you and people you add below can access this world.
+						Only you and people you invite below can access this world.
 					{/if}
 				</p>
 			</div>
@@ -216,7 +216,7 @@
 
 			<!-- Add people -->
 			<div class="space-y-2">
-				<Label>Add people</Label>
+				<Label>Invite others</Label>
 				<div class="flex gap-2">
 					<Input
 						type="email"
