@@ -107,7 +107,7 @@
 				return 'An account with this email already exists.';
 			if (msg.includes('InvalidPasswordException')) return 'Password does not meet requirements.';
 			if (msg.includes('NotAuthorizedException')) return 'Incorrect email or password.';
-			if (msg.includes('UserNotFoundException')) return 'No account found with this email address.';
+			if (msg.includes('UserNotFoundException')) return 'Incorrect email or password.';
 			if (msg.includes('CodeMismatchException'))
 				return 'Invalid verification code. Please try again.';
 			if (msg.includes('ExpiredCodeException'))
