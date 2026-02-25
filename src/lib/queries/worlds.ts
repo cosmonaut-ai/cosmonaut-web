@@ -117,7 +117,6 @@ export function useUpdateWorldSharing(worldId: string) {
 		onSuccess: (updatedWorld: World) => {
 			client.setQueryData(worldKeys.detail(worldId), updatedWorld);
 			client.invalidateQueries({ queryKey: worldKeys.all });
-			showSuccess('Sharing settings updated');
 		},
 		onError: (error: Error) => {
 			showError('Failed to update sharing settings', error.message);

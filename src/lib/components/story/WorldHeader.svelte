@@ -1,23 +1,14 @@
 <script lang="ts">
 	import type { World } from '$lib/types/api';
 	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui/button';
-	import ShareModal from './ShareModal.svelte';
-	import { ArrowLeft, Share2, Globe, Lock } from '@lucide/svelte';
+	import { Globe, Lock } from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 
 	interface Props {
 		world: World;
-		onWorldUpdate?: (world: World) => void;
 	}
 
-	let { world, onWorldUpdate }: Props = $props();
-
-	let shareModalOpen = $state(false);
-
-	function handleBack() {
-		goto('/dashboard');
-	}
+	let { world }: Props = $props();
 
 	function handleWorldHome() {
 		goto(`/worlds/${world.id}`);
@@ -40,19 +31,6 @@
 	{/if}
 
 	<div class="relative z-10 mx-auto max-w-4xl px-6 py-4">
-		<!-- Top row: navigation and actions -->
-		<div class="mb-4 flex items-center justify-between">
-			<Button variant="ghost" size="sm" onclick={handleBack} class="gap-2">
-				<ArrowLeft class="h-4 w-4" />
-				Dashboard
-			</Button>
-
-			<Button variant="outline" size="sm" onclick={() => (shareModalOpen = true)} class="gap-2">
-				<Share2 class="h-4 w-4" />
-				Share
-			</Button>
-		</div>
-
 		<!-- World info — links to world home page -->
 		<button
 			onclick={handleWorldHome}
@@ -96,11 +74,3 @@
 		</button>
 	</div>
 </header>
-
-<!-- Share Modal -->
-<ShareModal
-	{world}
-	open={shareModalOpen}
-	onOpenChange={(open) => (shareModalOpen = open)}
-	{onWorldUpdate}
-/>

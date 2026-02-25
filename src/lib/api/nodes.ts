@@ -6,11 +6,7 @@ import {
 	refreshStreamingSession,
 	invalidateStreamingSession
 } from '$lib/auth/auth.svelte';
-import {
-	apiRequest,
-	getAuthHeaders,
-	POST_STREAM_DELAY_MS
-} from './core';
+import { apiRequest, getAuthHeaders, POST_STREAM_DELAY_MS } from './core';
 
 /**
  * Get a specific story node
