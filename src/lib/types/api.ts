@@ -124,11 +124,11 @@ export class ApiError extends Error {
 	}
 
 	get isStorageQuotaExceeded(): boolean {
-		return this.status === 403;
+		return this.status === 403 && /storage quota exceeded/i.test(this.detail);
 	}
 
 	get isForbidden(): boolean {
-		return this.status === 403;
+		return this.status === 403 && !/storage quota exceeded/i.test(this.detail);
 	}
 
 	get isNotFound(): boolean {
@@ -148,9 +148,7 @@ export class ApiError extends Error {
 	 * We match on the message pattern only, since the status code varies by error path.
 	 */
 	get isNodeAlreadyProcessed(): boolean {
-		return /Cannot generate text for node .+ with status (completed|generating)/i.test(
-			this.detail
-		);
+		return /Cannot generate text for node .+ with status (completed|generating)/i.test(this.detail);
 	}
 
 	/**
