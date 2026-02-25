@@ -51,12 +51,13 @@ export function useNode(
 			queryKey: nodeKeys.detail(wId, nId ?? ''),
 			queryFn: () => getNode(wId, nId!),
 			enabled: !!wId && !!nId,
-			refetchInterval: (query: { state: { data?: StoryNode } }) => {
+			refetchInterval: (query: { state: { data?: StoryNode; error: Error | null } }) => {
 				if (!options?.enablePolling) return false;
+				if (query.state.error) return false;
 				const status = query.state.data?.generation_status;
-				// Poll while node is being generated elsewhere
 				return status === 'generating' ? 2000 : false;
-			}
+			},
+			refetchIntervalInBackground: false
 		};
 	});
 }
