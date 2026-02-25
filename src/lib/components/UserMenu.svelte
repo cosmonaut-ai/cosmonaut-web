@@ -5,7 +5,15 @@
 	import { getTierConfig } from '$lib/config/tiers';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Badge } from '$lib/components/ui/badge';
-	import { LayoutDashboard, Settings, CreditCard, LogOut, ChevronDown } from '@lucide/svelte';
+	import {
+		LayoutDashboard,
+		Settings,
+		CreditCard,
+		MessageSquare,
+		HelpCircle,
+		LogOut,
+		ChevronDown
+	} from '@lucide/svelte';
 
 	const auth = useAuth();
 	const usageQuery = useUsage();
@@ -72,6 +80,19 @@
 		<DropdownMenu.Item onclick={() => goto('/pricing')} class="cursor-pointer">
 			<CreditCard class="h-4 w-4" />
 			Plans & Pricing
+		</DropdownMenu.Item>
+
+		<DropdownMenu.Item onclick={() => goto('/feedback')} class="cursor-pointer">
+			<MessageSquare class="h-4 w-4" />
+			Send Feedback
+		</DropdownMenu.Item>
+
+		<DropdownMenu.Item
+			onclick={() => window.open('mailto:support@cosmonaut-ai.com', '_self')}
+			class="cursor-pointer"
+		>
+			<HelpCircle class="h-4 w-4" />
+			Help & Support
 		</DropdownMenu.Item>
 
 		<DropdownMenu.Separator />

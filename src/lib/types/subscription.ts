@@ -18,6 +18,7 @@ export interface UsageInfo {
 	subscription_status: SubscriptionStatus;
 	pending_tier: SubscriptionTier | null;
 	pending_tier_date: string | null;
+	newsletter_opted_in: boolean;
 }
 
 export interface CheckoutRequest {

@@ -23,4 +23,9 @@ export {
 	retryNodeProcessing
 } from './nodes';
 export { listVoices, generateNodeAudio } from './voices';
-export { getUsage, createCheckoutSession, createBillingPortalSession } from './subscription';
+export {
+	getUsage,
+	createCheckoutSession,
+	createBillingPortalSession,
+	updateNewsletter
+} from './subscription';

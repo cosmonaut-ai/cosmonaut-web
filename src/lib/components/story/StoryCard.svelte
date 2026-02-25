@@ -43,8 +43,17 @@
 	let customChoiceText = $state('');
 	const MAX_CUSTOM_CHOICE_LENGTH = 200;
 
+	function escapeHtml(text: string): string {
+		return text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	}
+
 	function formatText(content: string): string {
-		return content.replace(/\*([^*]+)\*/g, '<em class="text-primary/90">$1</em>');
+		return escapeHtml(content).replace(/\*([^*]+)\*/g, '<em class="text-primary/90">$1</em>');
 	}
 
 	function handleCustomChoice() {

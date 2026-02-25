@@ -35,3 +35,13 @@ export async function createBillingPortalSession(): Promise<BillingPortalRespons
 		method: 'POST'
 	});
 }
+
+/**
+ * Update the user's newsletter subscription preference.
+ */
+export async function updateNewsletter(optedIn: boolean): Promise<{ status: string }> {
+	return apiRequest<{ status: string }>(`${API_BASE_URL}/auth/newsletter`, {
+		method: 'POST',
+		body: JSON.stringify({ opted_in: optedIn })
+	});
+}

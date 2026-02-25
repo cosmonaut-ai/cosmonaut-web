@@ -15,6 +15,7 @@
 	import { queryClient } from '$lib/queries/client';
 	import { LogIn } from '@lucide/svelte';
 	import UserMenu from '$lib/components/UserMenu.svelte';
+	import AppFooter from '$lib/components/AppFooter.svelte';
 
 	let { children } = $props();
 
@@ -34,6 +35,13 @@
 
 	// Show header on non-landing pages (works in both local and production)
 	const showGlobalHeader = $derived(!isLandingPage);
+
+	const showFooter = $derived(
+		!page.url.pathname.startsWith('/login') &&
+			!page.url.pathname.startsWith('/callback') &&
+			!page.url.pathname.includes('/graph') &&
+			!page.url.pathname.includes('/map')
+	);
 
 	// Track SPA page views on route changes
 	$effect(() => {
@@ -95,7 +103,13 @@
 							<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
 								<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
 							</div>
-							<span class="font-semibold text-foreground">Cosmonaut</span>
+							<span class="font-[family-name:var(--font-orbitron)] font-semibold text-foreground"
+								>Cosmonaut</span
+							>
+							<span
+								class="-translate-y-1 rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
+								>BETA</span
+							>
 						</a>
 
 						<div class="flex items-center gap-3">
@@ -125,6 +139,9 @@
 			<div id="main-content" class="relative flex-1">
 				{@render children()}
 			</div>
+			{#if showFooter}
+				<AppFooter isAuthenticated={auth.isAuthenticated} />
+			{/if}
 		</div>
 	</TooltipProvider>
 </QueryClientProvider>

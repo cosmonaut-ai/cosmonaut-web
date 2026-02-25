@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { useAuth, SignUpNotConfirmedError } from '$lib/auth/auth.svelte';
+	import { updateNewsletter } from '$lib/api/subscription';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import SEO from '$lib/components/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
@@ -26,6 +27,7 @@
 	let confirmNewPassword = $state('');
 	let showPassword = $state(false);
 	let showConfirmPassword = $state(false);
+	let newsletterOptIn = $state(true);
 	let isSubmitting = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
@@ -82,6 +84,18 @@
 			passwordChecks.symbol
 	);
 	const passwordsMatch = $derived(password === confirmPassword && confirmPassword.length > 0);
+
+	$effect(() => {
+		try {
+			if (newsletterOptIn) {
+				localStorage.setItem('cosmonaut-newsletter-opt-in', 'true');
+			} else {
+				localStorage.removeItem('cosmonaut-newsletter-opt-in');
+			}
+		} catch {
+			/* localStorage might not be available */
+		}
+	});
 
 	// Redirect if already authenticated
 	$effect(() => {
@@ -177,6 +191,15 @@
 			await auth.confirmSignUpWithCode(email, verificationCode);
 			trackEvent('email_verified');
 			await auth.signInWithEmail(email, password);
+			try {
+				const optedIn = localStorage.getItem('cosmonaut-newsletter-opt-in') === 'true';
+				if (optedIn) {
+					await updateNewsletter(true);
+				}
+				localStorage.removeItem('cosmonaut-newsletter-opt-in');
+			} catch {
+				// Newsletter sync is non-critical
+			}
 			goto(consumeRedirectUrl());
 		} catch (error) {
 			errorMessage = formatError(error);
@@ -273,7 +296,13 @@
 				<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
 					<img src="/logo.png" alt="Cosmonaut logo" class="h-7 w-7" />
 				</div>
-				<span class="text-xl font-semibold text-foreground">Cosmonaut</span>
+				<span class="font-[family-name:var(--font-orbitron)] text-xl font-semibold text-foreground"
+					>Cosmonaut</span
+				>
+				<span
+					class="-translate-y-1 rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
+					>BETA</span
+				>
 			</a>
 			<p class="text-sm text-muted-foreground">
 				{#if hasRedirect && (view === 'signin' || view === 'signup')}
@@ -337,11 +366,13 @@
 							{passwordValid}
 							{passwordsMatch}
 							{isSubmitting}
+							{newsletterOptIn}
 							onEmailChange={(v) => (email = v)}
 							onPasswordChange={(v) => (password = v)}
 							onConfirmPasswordChange={(v) => (confirmPassword = v)}
 							onShowPasswordChange={(v) => (showPassword = v)}
 							onShowConfirmPasswordChange={(v) => (showConfirmPassword = v)}
+							onNewsletterChange={(v) => (newsletterOptIn = v)}
 							onSignUp={handleSignUp}
 							onGoogleSignIn={handleGoogleSignIn}
 							onSwitchToSignIn={() => switchView('signin')}
