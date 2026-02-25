@@ -79,8 +79,17 @@
 		}, transitionDelay);
 	}
 
+	function escapeHtml(text: string): string {
+		return text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	}
+
 	function formatText(text: string): string {
-		return text.replace(/\*([^*]+)\*/g, '<em class="text-primary/90">$1</em>');
+		return escapeHtml(text).replace(/\*([^*]+)\*/g, '<em class="text-primary/90">$1</em>');
 	}
 </script>
 

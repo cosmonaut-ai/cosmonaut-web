@@ -69,7 +69,6 @@ export async function apiRequest<T>(
 	});
 
 	if (response.status === 401 && retry && !isLocalEnvironment) {
-		console.log('API returned 401, attempting token refresh and retry...');
 		// Force token refresh
 		const newHeaders = await getAuthHeaders(true);
 

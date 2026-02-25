@@ -14,7 +14,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket, Home, Share2 } from '@lucide/svelte';
+	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket, Share2 } from '@lucide/svelte';
 
 	interface Props {
 		worldId: string;
@@ -342,6 +342,15 @@
 					<Spinner class="h-4 w-4" />
 					<span>Loading story...</span>
 				</div>
+			</CardContent>
+		</Card>
+	{:else if nodeQuery.isError}
+		<!-- Query error state -->
+		<Card class="border-destructive bg-destructive/5">
+			<CardContent class="flex flex-col items-center justify-center gap-4 py-16">
+				<AlertTriangle class="h-12 w-12 text-destructive" />
+				<p class="text-destructive">Failed to load story node. Please try again.</p>
+				<Button variant="outline" onclick={() => nodeQuery.refetch()}>Retry</Button>
 			</CardContent>
 		</Card>
 	{:else}

@@ -13,7 +13,9 @@
 					<Rocket class="h-5 w-5 text-primary" />
 				</div>
 				<div>
-					<p class="font-semibold text-foreground">Cosmonaut</p>
+					<p class="font-[family-name:var(--font-orbitron)] font-semibold text-foreground">
+						Cosmonaut
+					</p>
 					<p class="text-sm text-muted-foreground">Explore infinite worlds</p>
 				</div>
 			</div>

@@ -5,7 +5,6 @@
 	import Hero from '$lib/components/landing/Hero.svelte';
 	import DemoStory from '$lib/components/landing/DemoStory.svelte';
 	import Features from '$lib/components/landing/Features.svelte';
-	import Footer from '$lib/components/landing/Footer.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Rocket, LogIn } from '@lucide/svelte';
 	import { browser } from '$app/environment';
@@ -118,7 +117,13 @@
 			>
 				<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
 			</div>
-			<span class="font-semibold text-foreground">Cosmonaut</span>
+			<span class="font-[family-name:var(--font-orbitron)] font-semibold text-foreground"
+				>Cosmonaut</span
+			>
+			<span
+				class="-translate-y-1 rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
+				>BETA</span
+			>
 		</a>
 
 		<!-- Nav actions -->
@@ -177,9 +182,6 @@
 		</div>
 	</section>
 </main>
-
-<!-- Footer -->
-<Footer />
 
 <style>
 	.cta-section {

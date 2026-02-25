@@ -88,6 +88,13 @@
 				<p class="text-sm text-muted-foreground">Loading story map...</p>
 			</div>
 		</div>
+	{:else if nodesQuery.isError}
+		<div class="flex h-full items-center justify-center">
+			<div class="flex flex-col items-center justify-center gap-4 p-8">
+				<p class="text-destructive">Failed to load story nodes. Please try again.</p>
+				<Button variant="outline" onclick={() => nodesQuery.refetch()}>Retry</Button>
+			</div>
+		</div>
 	{:else if nodes.length === 0}
 		<div class="flex h-full items-center justify-center">
 			<div class="text-center">

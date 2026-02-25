@@ -128,6 +128,7 @@
 			<img
 				src={world.world_image_url}
 				alt={world.world_image_alt_text || world.title || 'World image'}
+				loading="lazy"
 				class="hero-img absolute inset-0 h-full w-full object-cover object-center"
 			/>
 		{:else}
