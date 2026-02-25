@@ -46,11 +46,13 @@ export function useWorld(worldId: MaybeGetter<string>, options?: { enablePolling
 			queryKey: worldKeys.detail(id),
 			queryFn: () => getWorld(id),
 			enabled: !!id,
-			refetchInterval: (query: { state: { data?: World } }) => {
+			refetchInterval: (query: { state: { data?: World; error: Error | null } }) => {
 				if (!options?.enablePolling) return false;
+				if (query.state.error) return false;
 				const status = query.state.data?.generation_status;
 				return status === 'completed' || status === 'failed' ? false : 2000;
-			}
+			},
+			refetchIntervalInBackground: false
 		};
 	});
 }
