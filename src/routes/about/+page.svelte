@@ -92,10 +92,10 @@
 				Have questions, feedback, or just want to say hello? We'd love to hear from you.
 			</p>
 			<a
-				href="mailto:support@cosmonaut.ai"
+				href="mailto:support@cosmonaut-ai.com"
 				class="text-primary underline underline-offset-4 transition-colors hover:text-primary/80"
 			>
-				support@cosmonaut.ai
+				support@cosmonaut-ai.com
 			</a>
 			<p class="mt-4 text-sm text-muted-foreground">
 				Cosmonaut is built by <strong class="text-foreground">Matson Software LLC</strong>.

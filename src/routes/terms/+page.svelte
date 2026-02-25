@@ -19,7 +19,7 @@
 
 			<p>
 				<strong>Matson Software LLC</strong> ("we," "us," "Cosmonaut AI") provides the website
-				<strong>cosmonaut.ai</strong> (the "Service") to you subject to the following Terms of Service
+				<strong>cosmonaut-ai.com</strong> (the "Service") to you subject to the following Terms of Service
 				("Terms"). By creating an account or using the Service, you agree to these Terms.
 			</p>
 
@@ -122,7 +122,7 @@
 			<h2>9. Contact Information</h2>
 			<p>
 				For questions about these Terms, please contact us at
-				<a href="mailto:support@cosmonaut.ai">support@cosmonaut.ai</a>.
+				<a href="mailto:support@cosmonaut-ai.com">support@cosmonaut-ai.com</a>.
 			</p>
 		</article>
 	</main>

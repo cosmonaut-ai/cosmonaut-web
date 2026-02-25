@@ -4,7 +4,7 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { useWorld } from '$lib/queries';
-	import type { World } from '$lib/types/api';
+	import { ApiError, type World } from '$lib/types/api';
 	import { warmWorldCache } from '$lib/api/client';
 	import WorldHeader from '$lib/components/story/WorldHeader.svelte';
 	import WorldGenerationProgress from '$lib/components/story/WorldGenerationProgress.svelte';
@@ -13,6 +13,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { ShieldAlert } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
 
 	interface Props {
@@ -42,6 +43,9 @@
 	const isWorldComplete = $derived(world?.generation_status === 'completed');
 	const isWorldFailed = $derived(world?.generation_status === 'failed');
 	const generationStatus = $derived(world?.generation_status ?? 'initialized');
+	const isAccessDenied = $derived(
+		worldQuery.error instanceof ApiError && worldQuery.error.isForbidden
+	);
 
 	// Pre-warm Gemini cache when the world is loaded and complete.
 	// This avoids ~500-2000ms of cache-creation latency on the first node generation.
@@ -88,6 +92,29 @@
 			<Card>
 				<CardContent class="flex items-center justify-center py-16">
 					<Spinner class="h-8 w-8" />
+				</CardContent>
+			</Card>
+		</main>
+	</div>
+{:else if isAccessDenied}
+	<!-- Access denied -->
+	<div class="h-full overflow-y-auto bg-background">
+		<main class="mx-auto max-w-3xl px-6 py-12">
+			<Card class="border-border/50">
+				<CardContent class="flex flex-col items-center py-12 text-center">
+					<div
+						class="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-primary/10"
+					>
+						<ShieldAlert class="h-6 w-6 text-primary" />
+					</div>
+					<h2 class="mb-2 text-lg font-semibold text-foreground">
+						You don't have access to this world
+					</h2>
+					<p class="mb-6 max-w-md text-sm text-muted-foreground">
+						It looks like you don't have permission to view this world. Ask the owner to
+						share it with you.
+					</p>
+					<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
 				</CardContent>
 			</Card>
 		</main>
