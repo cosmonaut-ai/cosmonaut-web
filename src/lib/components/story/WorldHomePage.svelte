@@ -19,7 +19,10 @@
 		Sparkles,
 		Eye,
 		Clock,
-		ShieldCheck
+		ShieldCheck,
+		Copy,
+		Check,
+		MessageSquareText
 	} from '@lucide/svelte';
 
 	function getWorldLengthLabel(length: string | null): string | null {
@@ -43,6 +46,18 @@
 	let { world, onWorldUpdate }: Props = $props();
 
 	let shareModalOpen = $state(false);
+	let promptCopied = $state(false);
+
+	async function copyPrompt() {
+		if (!world.world_prompt) return;
+		try {
+			await navigator.clipboard.writeText(world.world_prompt);
+			promptCopied = true;
+			setTimeout(() => (promptCopied = false), 2000);
+		} catch {
+			// Clipboard API may not be available
+		}
+	}
 
 	/** Detect prefers-reduced-motion */
 	const prefersReducedMotion = browser
@@ -50,10 +65,12 @@
 		: false;
 
 	// Track visibility for scroll-triggered sections
+	let promptVisible = $state(false);
 	let briefingVisible = $state(false);
 	let locationsVisible = $state(false);
 	let endingsVisible = $state(false);
 
+	const hasPrompt = $derived(world.world_prompt !== null && world.world_prompt.trim() !== '');
 	const hasLocations = $derived(world.locations !== null && world.locations.length > 0);
 	const hasEndings = $derived(
 		world.potential_endings !== null && world.potential_endings.length > 0
@@ -272,7 +289,77 @@
 	</section>
 
 	<!-- ═══════════════════════════════════════════════════════════════════
-	     3. CONSTELLATION DIVIDER + SETTING
+	     3. CREATION PROMPT
+	     ═══════════════════════════════════════════════════════════════════ -->
+	{#if hasPrompt}
+		<div class="flex items-center justify-center gap-3 py-4" aria-hidden="true">
+			<span class="hero-twinkle hero-twinkle-1 text-sm text-primary/40">✦</span>
+			<div class="h-px w-12 bg-primary/20"></div>
+			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
+			<div class="h-px w-24 bg-primary/20"></div>
+			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
+			<div class="h-px w-12 bg-primary/20"></div>
+			<span class="hero-twinkle hero-twinkle-2 text-sm text-primary/40">✦</span>
+		</div>
+
+		<section
+			class="section-animate mx-auto max-w-4xl px-6 py-8 {promptVisible
+				? 'section-visible'
+				: 'section-hidden'}"
+			{@attach observeSection((v) => {
+				promptVisible = v;
+			})}
+		>
+			<div class="mb-8 text-center">
+				<p class="mb-3 text-xs font-medium tracking-[0.3em] text-primary/60 uppercase">
+					✦ Creation Prompt ✦
+				</p>
+			</div>
+
+			<Card class="mb-6 border-border/50 bg-card/50">
+				<CardContent class="p-6">
+					<div class="flex items-start gap-4">
+						<div
+							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10"
+						>
+							<MessageSquareText class="h-5 w-5 text-primary" />
+						</div>
+						<div class="min-w-0 flex-1">
+							<div class="mb-1 flex items-center justify-between">
+								<p
+									class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+								>
+									Prompt
+								</p>
+								<Button
+									variant="ghost"
+									size="sm"
+									class="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+									onclick={copyPrompt}
+								>
+									{#if promptCopied}
+										<Check class="h-3.5 w-3.5 text-primary" />
+										Copied
+									{:else}
+										<Copy class="h-3.5 w-3.5" />
+										Copy
+									{/if}
+								</Button>
+							</div>
+							<p
+								class="whitespace-pre-wrap text-sm leading-relaxed text-card-foreground/80 italic"
+							>
+								"{world.world_prompt}"
+							</p>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+		</section>
+	{/if}
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     4. CONSTELLATION DIVIDER + SETTING
 	     ═══════════════════════════════════════════════════════════════════ -->
 	{#if hasSetting}
 		<div class="flex items-center justify-center gap-3 py-4" aria-hidden="true">
