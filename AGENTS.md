@@ -21,3 +21,31 @@ You MUST use this tool whenever writing Svelte code before sending it to the use
 
 Generates a Svelte Playground link with the provided code.
 After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
+
+## Cursor Cloud specific instructions
+
+### Project overview
+
+Cosmonaut AI (`cosmonaut-web`) is a SvelteKit 2 / Svelte 5 frontend SPA for an AI-powered interactive storytelling platform. It uses `adapter-static` and talks to a separate backend API (not in this repo).
+
+### Dev commands
+
+Standard commands from `package.json`:
+
+- **Dev server:** `npm run dev` (Vite on `localhost:5173`)
+- **Lint:** `npm run lint` (Prettier check + ESLint). Note: run `npm run format` first to auto-fix Prettier issues, then `npx eslint . --fix` for ESLint.
+- **Type check:** `npm run check` (svelte-check)
+- **Build:** `npm run build` (static output to `build/`)
+- **Full verify:** `bash scripts/verify.sh` or `npm run verify` (format → svelte-check → lint --fix → build)
+
+### Local dev auth
+
+Authentication is **automatically mocked** when no Cognito env vars are set (the default). The app uses a `LOCAL_DEV_USER` identity — no AWS Cognito setup is needed. You can sign in with any email/password on the login form.
+
+### Backend API
+
+The frontend expects a backend at `http://localhost:8000` (configurable via `PUBLIC_API_BASE_URL`). The backend is in a **separate repository** and is not required for frontend-only development. API calls will fail with "Failed to fetch" when the backend is absent — this is expected.
+
+### Pre-existing lint issues
+
+There is one pre-existing ESLint error in `src/routes/login/ForgotPasswordForm.svelte` (unused variable `passwordsMatch`). This is not caused by your changes.
