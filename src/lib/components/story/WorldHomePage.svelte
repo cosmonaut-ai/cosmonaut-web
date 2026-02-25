@@ -201,10 +201,10 @@
 				<Badge variant="outline" class="gap-1.5 border-border/50 bg-background/30 backdrop-blur-sm">
 					{#if world.visibility === 'public'}
 						<Globe class="h-3 w-3" />
-						Anyone with the link
+						Public
 					{:else}
 						<Lock class="h-3 w-3" />
-						Restricted
+						Private
 					{/if}
 				</Badge>
 				{#if getWorldLengthLabel(world.world_length)}
@@ -326,9 +326,7 @@
 						</div>
 						<div class="min-w-0 flex-1">
 							<div class="mb-1 flex items-center justify-between">
-								<p
-									class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-								>
+								<p class="text-xs font-medium tracking-wider text-muted-foreground uppercase">
 									Prompt
 								</p>
 								<Button
@@ -346,9 +344,7 @@
 									{/if}
 								</Button>
 							</div>
-							<p
-								class="whitespace-pre-wrap text-sm leading-relaxed text-card-foreground/80 italic"
-							>
+							<p class="text-sm leading-relaxed whitespace-pre-wrap text-card-foreground/80 italic">
 								"{world.world_prompt}"
 							</p>
 						</div>
