@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import { retryNodeProcessing } from '$lib/api/client';
 	import { useNode, useChooseOption, useUsage, useWorld, type ChoiceOption } from '$lib/queries';
 	import { showError } from '$lib/utils/toast';
@@ -113,6 +114,15 @@
 	$effect(() => {
 		if (nodeId && currentNodeOverride?.id !== nodeId) {
 			currentNodeOverride = null;
+		}
+	});
+
+	// Reset scroll position when navigating to a new node so the footer
+	// (pushed off-screen by min-h-dvh) doesn't stay in view.
+	$effect(() => {
+		void nodeId;
+		if (browser) {
+			window.scrollTo({ top: 0 });
 		}
 	});
 

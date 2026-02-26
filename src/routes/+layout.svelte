@@ -103,9 +103,7 @@
 							<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
 								<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
 							</div>
-							<span class="font-[family-name:var(--font-orbitron)] font-semibold text-foreground"
-								>Cosmonaut</span
-							>
+							<span class="font-orbitron font-semibold text-foreground">Cosmonaut</span>
 							<span
 								class="-translate-y-1 rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
 								>BETA</span

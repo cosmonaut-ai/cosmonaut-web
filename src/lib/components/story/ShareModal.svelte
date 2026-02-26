@@ -156,11 +156,11 @@
 </script>
 
 <Dialog.Root {open} {onOpenChange}>
-	<Dialog.Content class="sm:max-w-md">
-		<Dialog.Header>
-			<Dialog.Title class="flex items-center gap-2">
+	<Dialog.Content class="overflow-hidden sm:max-w-md">
+		<Dialog.Header class="min-w-0">
+			<Dialog.Title class="flex items-center gap-2 overflow-hidden">
 				<Share2 class="h-5 w-5 text-primary" />
-				<span class="truncate">Share "{world.title || 'Untitled World'}"</span>
+				<span class="truncate overflow-hidden">Share "{world.title || 'Untitled World'}"</span>
 				{#if saving}
 					<span
 						class="ml-auto flex shrink-0 items-center gap-1.5 text-xs font-normal text-muted-foreground"
@@ -179,7 +179,7 @@
 			</Dialog.Title>
 		</Dialog.Header>
 
-		<div class="space-y-6 py-4">
+		<div class="min-w-0 space-y-6 py-4">
 			<!-- General access -->
 			<div class="space-y-3">
 				<Label class="text-sm font-medium">General access</Label>
