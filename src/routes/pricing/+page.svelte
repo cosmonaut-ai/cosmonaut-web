@@ -9,7 +9,6 @@
 	import type { SubscriptionTier } from '$lib/types/subscription';
 	import PricingCard from '$lib/components/subscription/PricingCard.svelte';
 	import SubscriptionStatusBanner from '$lib/components/subscription/SubscriptionStatusBanner.svelte';
-	import Footer from '$lib/components/landing/Footer.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { showSuccess, showInfo } from '$lib/utils/toast';
 	import { ArrowLeft } from '@lucide/svelte';
@@ -125,6 +124,4 @@
 			</p>
 		</div>
 	</main>
-
-	<Footer />
 </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import { retryNodeProcessing } from '$lib/api/client';
 	import { useNode, useChooseOption, useUsage, useWorld, type ChoiceOption } from '$lib/queries';
 	import { showError } from '$lib/utils/toast';
@@ -14,7 +15,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket, Home, Share2 } from '@lucide/svelte';
+	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket, Share2 } from '@lucide/svelte';
 
 	interface Props {
 		worldId: string;
@@ -113,6 +114,15 @@
 	$effect(() => {
 		if (nodeId && currentNodeOverride?.id !== nodeId) {
 			currentNodeOverride = null;
+		}
+	});
+
+	// Reset scroll position when navigating to a new node so the footer
+	// (pushed off-screen by min-h-dvh) doesn't stay in view.
+	$effect(() => {
+		void nodeId;
+		if (browser) {
+			window.scrollTo({ top: 0 });
 		}
 	});
 
@@ -342,6 +352,15 @@
 					<Spinner class="h-4 w-4" />
 					<span>Loading story...</span>
 				</div>
+			</CardContent>
+		</Card>
+	{:else if nodeQuery.isError}
+		<!-- Query error state -->
+		<Card class="border-destructive bg-destructive/5">
+			<CardContent class="flex flex-col items-center justify-center gap-4 py-16">
+				<AlertTriangle class="h-12 w-12 text-destructive" />
+				<p class="text-destructive">Failed to load story node. Please try again.</p>
+				<Button variant="outline" onclick={() => nodeQuery.refetch()}>Retry</Button>
 			</CardContent>
 		</Card>
 	{:else}

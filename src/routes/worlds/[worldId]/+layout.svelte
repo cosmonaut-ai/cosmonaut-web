@@ -151,7 +151,7 @@
 	</div>
 {:else}
 	<!-- Story pages with scrollable content -->
-	<div class="min-h-full bg-background">
+	<div class="min-h-dvh bg-background">
 		<WorldHeader {world} />
 		{@render children()}
 	</div>

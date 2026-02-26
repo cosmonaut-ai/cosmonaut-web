@@ -37,6 +37,16 @@
 			await new Promise((resolve) => setTimeout(resolve, 500));
 
 			if (getIsAuthenticated()) {
+				try {
+					const optedIn = localStorage.getItem('cosmonaut-newsletter-opt-in');
+					if (optedIn === 'true') {
+						const { updateNewsletter } = await import('$lib/api/subscription');
+						await updateNewsletter(true);
+					}
+					localStorage.removeItem('cosmonaut-newsletter-opt-in');
+				} catch {
+					// Newsletter sync is non-critical
+				}
 				goto(consumeRedirectUrl());
 			} else {
 				// Check again after a delay
@@ -44,6 +54,16 @@
 				await checkAuthState();
 
 				if (getIsAuthenticated()) {
+					try {
+						const optedIn = localStorage.getItem('cosmonaut-newsletter-opt-in');
+						if (optedIn === 'true') {
+							const { updateNewsletter } = await import('$lib/api/subscription');
+							await updateNewsletter(true);
+						}
+						localStorage.removeItem('cosmonaut-newsletter-opt-in');
+					} catch {
+						// Newsletter sync is non-critical
+					}
 					goto(consumeRedirectUrl());
 				} else {
 					error = 'Authentication failed. Please try again.';

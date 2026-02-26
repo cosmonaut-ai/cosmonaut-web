@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Footer from '$lib/components/landing/Footer.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { Rocket, BookOpen, Sparkles, Users } from '@lucide/svelte';
 </script>
@@ -102,6 +101,4 @@
 			</p>
 		</section>
 	</main>
-
-	<Footer />
 </div>

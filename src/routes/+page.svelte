@@ -5,9 +5,8 @@
 	import Hero from '$lib/components/landing/Hero.svelte';
 	import DemoStory from '$lib/components/landing/DemoStory.svelte';
 	import Features from '$lib/components/landing/Features.svelte';
-	import Footer from '$lib/components/landing/Footer.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Rocket, LogIn } from '@lucide/svelte';
+	import { Rocket } from '@lucide/svelte';
 	import { browser } from '$app/environment';
 	import SEO from '$lib/components/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
@@ -118,7 +117,11 @@
 			>
 				<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
 			</div>
-			<span class="font-semibold text-foreground">Cosmonaut</span>
+			<span class="font-orbitron font-semibold text-foreground">Cosmonaut</span>
+			<span
+				class="-translate-y-1 rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
+				>BETA</span
+			>
 		</a>
 
 		<!-- Nav actions -->
@@ -126,15 +129,6 @@
 			{#if auth.isAuthenticated}
 				<Button variant="ghost" size="sm" onclick={() => goto('/dashboard')}>Dashboard</Button>
 			{:else}
-				<Button
-					variant="ghost"
-					size="sm"
-					class="text-muted-foreground hover:text-foreground"
-					onclick={handleSignIn}
-				>
-					<LogIn class="h-4 w-4" />
-					Sign In
-				</Button>
 				<Button size="sm" onclick={() => handleGetStarted('nav')}>
 					<Rocket class="h-4 w-4" />
 					Get Started
@@ -177,9 +171,6 @@
 		</div>
 	</section>
 </main>
-
-<!-- Footer -->
-<Footer />
 
 <style>
 	.cta-section {
