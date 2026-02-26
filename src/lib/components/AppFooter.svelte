@@ -9,9 +9,9 @@
 </script>
 
 <footer class="relative overflow-hidden border-t border-border/50">
-	<div class="absolute inset-0 bg-gradient-to-b from-background via-card/80 to-card"></div>
+	<div class="absolute inset-0 bg-linear-to-b from-background via-card/80 to-card"></div>
 	<div
-		class="pointer-events-none absolute -top-px right-0 left-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+		class="pointer-events-none absolute -top-px right-0 left-0 h-px bg-linear-to-r from-transparent via-primary/40 to-transparent"
 	></div>
 
 	<div class="relative mx-auto max-w-7xl px-6 pt-12 pb-8">
@@ -23,10 +23,7 @@
 					>
 						<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
 					</div>
-					<span
-						class="font-[family-name:var(--font-orbitron)] text-lg font-semibold text-foreground"
-						>Cosmonaut</span
-					>
+					<span class="font-orbitron text-lg font-semibold text-foreground">Cosmonaut</span>
 					<span
 						class="rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
 						>BETA</span
