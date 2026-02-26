@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import { useUsage, useBillingPortal } from '$lib/queries';
+	import { useUsage, useBillingPortal, useUpdateNewsletter } from '$lib/queries';
 	import { getTierConfig } from '$lib/config/tiers';
 	import UsageBar from '$lib/components/subscription/UsageBar.svelte';
 	import SubscriptionStatusBanner from '$lib/components/subscription/SubscriptionStatusBanner.svelte';
@@ -19,6 +19,7 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { Switch } from '$lib/components/ui/switch';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { ArrowLeft, User, CreditCard, BarChart3, ExternalLink, Trash2 } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
@@ -28,6 +29,7 @@
 	const auth = useAuth();
 	const usageQuery = useUsage();
 	const billingPortalMutation = useBillingPortal();
+	const newsletterMutation = useUpdateNewsletter();
 
 	const usage = $derived(usageQuery.data);
 	const tierConfig = $derived(usage ? getTierConfig(usage.tier) : null);
@@ -249,6 +251,28 @@
 					{/if}
 				</CardContent>
 			</Card>
+
+			<Card>
+				<CardHeader>
+					<CardTitle>Email Preferences</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div class="flex items-center justify-between">
+						<div class="space-y-0.5">
+							<p class="text-sm font-medium">Product Updates Newsletter</p>
+							<p class="text-sm text-muted-foreground">
+								Receive occasional emails about new features and improvements
+							</p>
+						</div>
+						<Switch
+							checked={usageQuery.data?.newsletter_opted_in ?? false}
+							onCheckedChange={(checked) => newsletterMutation.mutate(checked)}
+							disabled={newsletterMutation.isPending}
+						/>
+					</div>
+				</CardContent>
+			</Card>
+
 			<!-- Danger Zone -->
 			<Card class="border-destructive/30">
 				<CardHeader>

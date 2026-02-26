@@ -38,10 +38,6 @@
 		onResetPassword,
 		onSwitchToSignIn
 	}: Props = $props();
-
-	const passwordsMatch = $derived(
-		newPassword === confirmNewPassword && confirmNewPassword.length > 0
-	);
 </script>
 
 {#if view === 'forgot'}

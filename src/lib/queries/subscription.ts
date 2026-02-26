@@ -1,5 +1,10 @@
-import { createQuery, createMutation } from '@tanstack/svelte-query';
-import { getUsage, createCheckoutSession, createBillingPortalSession } from '$lib/api/client';
+import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
+import {
+	getUsage,
+	createCheckoutSession,
+	createBillingPortalSession,
+	updateNewsletter
+} from '$lib/api/client';
 import type { CheckoutRequest } from '$lib/types/subscription';
 import { showError } from '$lib/utils/toast';
 import { useAuth } from '$lib/auth/auth.svelte';
@@ -54,6 +59,23 @@ export function useBillingPortal() {
 		},
 		onError: (error: Error) => {
 			showError('Failed to open billing portal', error.message);
+		}
+	}));
+}
+
+/**
+ * Mutation hook to update the user's newsletter preference.
+ * Invalidates the usage query on success to reflect the change.
+ */
+export function useUpdateNewsletter() {
+	const queryClient = useQueryClient();
+	return createMutation(() => ({
+		mutationFn: (optedIn: boolean) => updateNewsletter(optedIn),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: usageKeys.all });
+		},
+		onError: (error: Error) => {
+			showError('Failed to update newsletter preference', error.message);
 		}
 	}));
 }

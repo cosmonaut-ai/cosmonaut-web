@@ -103,7 +103,6 @@ export async function generateNodeText(
 
 	// Retry on auth errors
 	if ((response.status === 401 || response.status === 403) && !isLocalEnvironment) {
-		console.log('Streaming API returned auth error, refreshing session and retrying...');
 		invalidateStreamingSession();
 		const refreshedToken = await getAuthToken(true);
 		const sessionRefreshed = await refreshStreamingSession();
