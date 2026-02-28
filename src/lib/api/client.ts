@@ -12,7 +12,6 @@ export {
 	createWorld,
 	updateWorldSharing,
 	deleteWorld,
-	warmWorldCache,
 	pollWorldCompletion
 } from './worlds';
 export {

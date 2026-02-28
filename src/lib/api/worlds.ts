@@ -48,18 +48,6 @@ export async function deleteWorld(worldId: string): Promise<void> {
 }
 
 /**
- * Pre-warm the Gemini content cache for a world.
- * Fire-and-forget: errors are silently logged.
- */
-export async function warmWorldCache(worldId: string): Promise<void> {
-	try {
-		await apiRequest<void>(`${API_BASE_URL}/worlds/${worldId}/warm-cache`, { method: 'POST' });
-	} catch {
-		// Non-critical: cache will be created on first generation if this fails
-	}
-}
-
-/**
  * Poll for world generation completion
  * Returns when generation_status is 'completed' or 'failed'
  */

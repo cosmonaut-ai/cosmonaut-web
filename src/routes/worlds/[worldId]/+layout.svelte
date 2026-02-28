@@ -2,10 +2,8 @@
 	import type { Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { untrack } from 'svelte';
 	import { useWorld } from '$lib/queries';
 	import { ApiError } from '$lib/types/api';
-	import { warmWorldCache } from '$lib/api/client';
 	import WorldHeader from '$lib/components/story/WorldHeader.svelte';
 	import WorldGenerationProgress from '$lib/components/story/WorldGenerationProgress.svelte';
 	import WorldGenerationFailed from '$lib/components/story/WorldGenerationFailed.svelte';
@@ -46,20 +44,6 @@
 	const isAccessDenied = $derived(
 		worldQuery.error instanceof ApiError && worldQuery.error.isForbidden
 	);
-
-	// Pre-warm Gemini cache when the world is loaded and complete.
-	// This avoids ~500-2000ms of cache-creation latency on the first node generation.
-	let warmedWorldId = $state<string | null>(null);
-	$effect(() => {
-		const wId = worldId;
-		const complete = isWorldComplete;
-		if (complete && wId && warmedWorldId !== wId) {
-			untrack(() => {
-				warmedWorldId = wId;
-				warmWorldCache(wId);
-			});
-		}
-	});
 </script>
 
 <SEO
@@ -134,7 +118,7 @@
 {:else if isWorldFailed}
 	<!-- World Generation Failed View -->
 	<div class="min-h-full bg-background">
-		<WorldGenerationFailed />
+		<WorldGenerationFailed worldPrompt={world?.world_prompt} />
 	</div>
 {:else if isGraphPage || isMapPage}
 	<!-- Graph/Map pages handle their own layout (full screen, absolute to fill #main-content) -->
