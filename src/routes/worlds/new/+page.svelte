@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { page } from '$app/state';
 	import { useCreateWorld, useUsage } from '$lib/queries';
 	import type { WorldVisibility, WorldLength } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
@@ -55,8 +56,8 @@
 		{ value: 'long', label: 'Long', description: '~20 min read' }
 	];
 
-	// Form state
-	let worldPrompt = $state('');
+	// Form state — pre-fill from URL if retrying after a failed world creation
+	let worldPrompt = $state(page.url.searchParams.get('prompt') ?? '');
 	let visibility = $state<WorldVisibility>('private');
 	let worldLength = $state<WorldLength>(getStoredWorldLength());
 	let familyFriendly = $state<boolean>(getStoredFamilyFriendly());

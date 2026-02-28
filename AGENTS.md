@@ -2,6 +2,34 @@ You are able to use the Svelte MCP server, where you have access to comprehensiv
 
 Do not attempt to resize the browser window programmatically — use DevTools device emulation or Playwright for responsive testing instead.
 
+## General Guidelines
+
+### 🔍 Search First, Assume Never
+
+When in doubt — search. If your knowledge of a library, API, pattern, or behavior is uncertain or potentially outdated, use available search tools to verify before proceeding. A well-researched implementation beats a confident wrong one every time. This applies to documentation, error messages, version-specific behavior, and edge cases alike.
+
+### 🧠 Understand Before You Touch
+
+Before making any changes, take the time to deeply understand the codebase. Read the relevant files, trace function calls, identify side effects, and map dependencies. Understand _why_ the code is written the way it is — not just _what_ it does. Quality over quantity: a single well-reasoned, correct change is worth far more than several hasty ones that require follow-up fixes.
+
+Ask yourself:
+
+- What does this code currently do, end-to-end?
+- What are the downstream effects of changing it?
+- Are there edge cases or existing patterns I should respect?
+
+Do not begin writing code until you can answer these confidently.
+
+### 💬 Communicate Proactively
+
+Ambiguity is the enemy of good code. If a requirement is unclear, the intended behavior is vague, or you're weighing multiple valid approaches, **ask before acting**. A quick clarifying question upfront saves significant rework later. Surface assumptions, flag potential conflicts with existing patterns, and confirm scope when tasks feel underspecified.
+
+Err on the side of communicating more, not less.
+
+### 🖥️ Verify Frontend Changes in the Browser
+
+Any change that touches the UI — layout, styles, interactivity, responsiveness — must be verified visually in the browser before considering it complete. Do not rely solely on code review or static reasoning. Check for visual regressions, broken layouts across screen sizes, and interaction states (hover, focus, disabled, loading, error). If browser tooling is available, use it.
+
 ## Available MCP Tools:
 
 ### 1. list-sections

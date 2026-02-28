@@ -3,6 +3,20 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Sparkles, ArrowLeft, RotateCcw } from '@lucide/svelte';
+
+	interface Props {
+		worldPrompt?: string | null;
+	}
+
+	let { worldPrompt }: Props = $props();
+
+	function retryCreate() {
+		const url = new URL('/worlds/new', window.location.origin);
+		if (worldPrompt) {
+			url.searchParams.set('prompt', worldPrompt);
+		}
+		goto(url.pathname + url.search);
+	}
 </script>
 
 <div class="gen-failed-root">
@@ -42,7 +56,7 @@
 							<ArrowLeft class="h-4 w-4" />
 							Dashboard
 						</Button>
-						<Button onclick={() => goto('/worlds/new')} class="gap-2">
+						<Button onclick={retryCreate} class="gap-2">
 							<RotateCcw class="h-4 w-4" />
 							Try Again
 						</Button>

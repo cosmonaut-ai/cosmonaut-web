@@ -1,17 +1,16 @@
 import { untrack } from 'svelte';
-import { generateNodeText, getNode, retryNodeProcessing } from '$lib/api/client';
+import { generateNodeText, getNode } from '$lib/api/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { updateNodeInCache, usageKeys } from '$lib/queries';
 import { showError } from '$lib/utils/toast';
 import { ApiError, type StoryNode } from '$lib/types/api';
-import type { StoryNodeGenerationStatus, StoryNodeProcessingStatus } from '$lib/types/api';
+import type { StoryNodeGenerationStatus } from '$lib/types/api';
 
 export interface UseStreamingNodeOptions {
 	worldId: () => string;
 	nodeId: () => string;
 	effectiveNodeId: () => string | undefined;
 	effectiveNodeStatus: () => StoryNodeGenerationStatus | undefined;
-	effectiveProcessingStatus: () => StoryNodeProcessingStatus | undefined;
 	loading: () => boolean;
 	setLoading: (value: boolean) => void;
 	currentNodeOverride: () => StoryNode | null;
@@ -30,7 +29,6 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 		nodeId,
 		effectiveNodeId,
 		effectiveNodeStatus,
-		effectiveProcessingStatus,
 		loading,
 		setLoading,
 		currentNodeOverride,
@@ -47,7 +45,6 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 	let streamingDone = $state(false);
 	let pendingNode = $state<StoryNode | null>(null);
 	let generatingNodeId = $state<string | null>(null);
-	let retryingProcessingNodeId = $state<string | null>(null);
 	let showQuotaPrompt = $state(false);
 	let showAudioQuotaPrompt = $state(false);
 
@@ -93,29 +90,32 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 				// continues generating. Check actual node status before showing an error.
 				try {
 					const freshNode = await getNode(worldIdVal, nodeIdVal);
-					if (
-						freshNode.generation_status === 'generating' ||
-						(freshNode.generation_status === 'completed' && freshNode.text)
-					) {
-						// Backend is still processing or already finished.
-						// Update cache and clear override so the query data drives the UI.
-						// For 'generating', the existing useNode polling (every 2s) +
+
+					updateNodeInCache(queryClient, worldIdVal, freshNode);
+					setCurrentNodeOverride(null);
+
+					if (freshNode.generation_status === 'generating') {
+						// Backend still processing — useNode polling (every 2s) +
 						// isNodeGenerating UI will handle the transition to 'completed'.
-						updateNodeInCache(queryClient, worldIdVal, freshNode);
-						setCurrentNodeOverride(null);
-						if (freshNode.generation_status === 'completed') {
-							onStreamingComplete(freshNode);
-							generatingNodeId = null;
-						}
 						return;
 					}
-				} catch {
-					// Couldn't reach the server — fall through to error display
-				}
+					if (freshNode.generation_status === 'completed' && freshNode.text) {
+						onStreamingComplete(freshNode);
+						generatingNodeId = null;
+						return;
+					}
 
-				showError('Failed to generate text', err instanceof Error ? err.message : String(err));
-				generatingNodeId = null;
-				throw err;
+					// Terminal state (e.g. 'failed') — cache update triggers the
+					// "Generation Failed" card, so no toast is needed.
+					generatingNodeId = null;
+					return;
+				} catch {
+					// Couldn't reach the server — show a single toast.
+					// Keep generatingNodeId set so the auto-generation effect
+					// doesn't re-fire and create a retry loop.
+					showError('Failed to generate text', err instanceof Error ? err.message : String(err));
+					throw err;
+				}
 			})
 			.finally(() => {
 				if (opts?.setLoading) setLoading(false);
@@ -158,32 +158,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 		}
 	});
 
-	// Automatically retry processing for nodes with failed processing_status
-	$effect(() => {
-		const currentId = effectiveNodeId();
-		const processingStatus = effectiveProcessingStatus();
-
-		if (!currentId || processingStatus !== 'failed') return;
-		if (retryingProcessingNodeId === currentId) return;
-
-		const nodeIdToRetry = currentId;
-		const currentWorldId = worldId();
-
-		untrack(() => {
-			retryingProcessingNodeId = nodeIdToRetry;
-
-			retryNodeProcessing(currentWorldId, nodeIdToRetry)
-				.then((updatedNode) => {
-					updateNodeInCache(queryClient, currentWorldId, updatedNode);
-				})
-				.catch((err) => {
-					console.warn('Failed to retry node processing:', err);
-					retryingProcessingNodeId = null;
-				});
-		});
-	});
-
-	// Clear generation guards when nodeId changes
+	// Clear generation guard when nodeId changes
 	$effect(() => {
 		const currentNodeId = nodeId();
 		const override = currentNodeOverride();
@@ -191,9 +166,6 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 		if (currentNodeId && override?.id !== currentNodeId) {
 			if (generatingNodeId !== currentNodeId) {
 				generatingNodeId = null;
-			}
-			if (retryingProcessingNodeId !== currentNodeId) {
-				retryingProcessingNodeId = null;
 			}
 		}
 	});
@@ -213,9 +185,6 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 		},
 		get generatingNodeId() {
 			return generatingNodeId;
-		},
-		get retryingProcessingNodeId() {
-			return retryingProcessingNodeId;
 		},
 		get showQuotaPrompt() {
 			return showQuotaPrompt;

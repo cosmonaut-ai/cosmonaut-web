@@ -45,16 +45,11 @@
 	const effectiveNodeStatus = $derived(
 		currentNodeOverride?.generation_status ?? nodeQuery.data?.generation_status
 	);
-	const effectiveProcessingStatus = $derived(
-		currentNodeOverride?.processing_status ?? nodeQuery.data?.processing_status
-	);
-
 	const stream = useStreamingNode({
 		worldId: () => worldId,
 		nodeId: () => nodeId,
 		effectiveNodeId: () => effectiveNodeId,
 		effectiveNodeStatus: () => effectiveNodeStatus,
-		effectiveProcessingStatus: () => effectiveProcessingStatus,
 		loading: () => loading,
 		setLoading: (v) => {
 			loading = v;
