@@ -157,8 +157,7 @@
 		<div class="mx-auto max-w-4xl px-6 text-center">
 			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">Ready to Create?</h2>
 			<p class="mx-auto mb-8 max-w-2xl text-muted-foreground">
-				Join thousands of storytellers crafting unique adventures. Your world is waiting to be
-				discovered.
+				Your universe is one prompt away. Describe a world, step inside, and let the story unfold.
 			</p>
 			<Button
 				size="lg"

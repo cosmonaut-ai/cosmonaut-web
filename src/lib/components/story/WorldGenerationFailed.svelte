@@ -42,13 +42,13 @@
 						<Sparkles class="h-10 w-10 text-destructive" />
 					</div>
 
-					<h2 class="mb-2 text-2xl font-bold text-foreground">Something Went Wrong</h2>
+					<h2 class="mb-2 text-2xl font-bold text-foreground">A Rift in the Cosmos</h2>
 					<p class="mb-2 max-w-md text-center text-muted-foreground">
-						We hit a snag while forging your world. These things happen — the cosmos can be
-						unpredictable.
+						We hit a snag while forging your world. The cosmos can be unpredictable — but your spark
+						is safe.
 					</p>
 					<p class="mb-8 text-center text-sm text-muted-foreground/70">
-						Your prompt is safe. Give it another shot and we'll try again.
+						Your original prompt is waiting. Give it another shot and we'll chart the course again.
 					</p>
 
 					<div class="flex items-center gap-3">
