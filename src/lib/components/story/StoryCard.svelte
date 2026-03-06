@@ -320,21 +320,31 @@
 
 		<!-- Ending state -->
 		{#if !isTyping && isEnding}
-			<div
-				class="mt-8 border-t border-border pt-8 text-center"
-				in:fade={{ duration: 300, delay: 100 }}
-			>
-				<p class="story-ending mb-6 text-muted-foreground">
-					<span class="story-star story-star-1">✦</span>
-					This path has ended
-					<span class="story-star story-star-2">✦</span>
-				</p>
-				{#if onRestart}
-					<Button variant="outline" onclick={onRestart} class="gap-2">
-						<RotateCcw class="h-4 w-4" />
-						Start Over
-					</Button>
-				{/if}
+			<div class="mt-8 border-t border-border pt-8" in:fade={{ duration: 300, delay: 100 }}>
+				<div class="ending-hero relative overflow-hidden rounded-xl">
+					<img
+						src="/art/ending-sunset.webp"
+						alt=""
+						class="h-48 w-full object-cover sm:h-56 lg:h-64"
+					/>
+					<div
+						class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/40 backdrop-blur-[2px]"
+					>
+						<p class="story-ending font-orbitron text-2xl text-white drop-shadow-lg">
+							This path has ended
+						</p>
+						{#if onRestart}
+							<Button
+								variant="outline"
+								onclick={onRestart}
+								class="gap-2 border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+							>
+								<RotateCcw class="h-4 w-4" />
+								Start Over
+							</Button>
+						{/if}
+					</div>
+				</div>
 			</div>
 		{/if}
 
@@ -422,18 +432,28 @@
 	/* ── Story card left border glow ── */
 	:global(.story-card) {
 		border-left-color: var(--primary) !important;
+		background: linear-gradient(
+			135deg,
+			var(--card) 0%,
+			oklch(from var(--primary) l c h / 0.02) 100%
+		);
 	}
 
 	@media (min-width: 640px) {
 		:global(.story-card) {
-			box-shadow: -2px 0 12px oklch(from var(--primary) l c h / 0.06);
+			box-shadow: -2px 0 16px oklch(from var(--primary) l c h / 0.08);
 		}
 	}
 
 	/* ── Ending star flourish ── */
+	.story-ending {
+		text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+	}
+
 	.story-star {
 		display: inline-block;
 		color: var(--primary);
+		filter: brightness(1.3);
 		animation: star-twinkle 2s ease-in-out infinite;
 	}
 	.story-star-1 {

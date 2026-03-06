@@ -25,6 +25,7 @@
 		MessageSquareText
 	} from '@lucide/svelte';
 	import { trackEvent } from '$lib/utils/analytics';
+	import ConstellationDivider from '$lib/components/ConstellationDivider.svelte';
 
 	function getWorldLengthLabel(length: string | null): string | null {
 		switch (length) {
@@ -295,15 +296,7 @@
 	     3. CREATION PROMPT
 	     ═══════════════════════════════════════════════════════════════════ -->
 	{#if hasPrompt}
-		<div class="flex items-center justify-center gap-3 py-4" aria-hidden="true">
-			<span class="hero-twinkle hero-twinkle-1 text-sm text-primary/40">✦</span>
-			<div class="h-px w-12 bg-primary/20"></div>
-			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
-			<div class="h-px w-24 bg-primary/20"></div>
-			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
-			<div class="h-px w-12 bg-primary/20"></div>
-			<span class="hero-twinkle hero-twinkle-2 text-sm text-primary/40">✦</span>
-		</div>
+		<ConstellationDivider />
 
 		<section
 			class="section-animate mx-auto max-w-4xl px-6 py-8 {promptVisible
@@ -361,15 +354,7 @@
 	     4. CONSTELLATION DIVIDER + SETTING
 	     ═══════════════════════════════════════════════════════════════════ -->
 	{#if hasSetting}
-		<div class="flex items-center justify-center gap-3 py-4" aria-hidden="true">
-			<span class="hero-twinkle hero-twinkle-1 text-sm text-primary/40">✦</span>
-			<div class="h-px w-12 bg-primary/20"></div>
-			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
-			<div class="h-px w-24 bg-primary/20"></div>
-			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
-			<div class="h-px w-12 bg-primary/20"></div>
-			<span class="hero-twinkle hero-twinkle-2 text-sm text-primary/40">✦</span>
-		</div>
+		<ConstellationDivider />
 
 		<section
 			class="section-animate mx-auto max-w-4xl px-6 py-8 {briefingVisible
@@ -407,16 +392,7 @@
 	     6. LOCATIONS — "Star Chart"
 	     ═══════════════════════════════════════════════════════════════════ -->
 	{#if hasLocations}
-		<!-- Constellation divider -->
-		<div class="flex items-center justify-center gap-3 py-4" aria-hidden="true">
-			<span class="text-sm text-primary/40">✦</span>
-			<div class="h-px w-12 bg-primary/20"></div>
-			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
-			<div class="h-px w-24 bg-primary/20"></div>
-			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
-			<div class="h-px w-12 bg-primary/20"></div>
-			<span class="text-sm text-primary/40">✦</span>
-		</div>
+		<ConstellationDivider />
 
 		<section
 			class="section-animate mx-auto max-w-4xl px-6 py-8 {locationsVisible
@@ -475,16 +451,7 @@
 	     7. POTENTIAL ENDINGS — "Possible Destinations"
 	     ═══════════════════════════════════════════════════════════════════ -->
 	{#if hasEndings}
-		<!-- Constellation divider -->
-		<div class="flex items-center justify-center gap-3 py-4" aria-hidden="true">
-			<span class="text-sm text-primary/40">✦</span>
-			<div class="h-px w-12 bg-primary/20"></div>
-			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
-			<div class="h-px w-24 bg-primary/20"></div>
-			<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
-			<div class="h-px w-12 bg-primary/20"></div>
-			<span class="text-sm text-primary/40">✦</span>
-		</div>
+		<ConstellationDivider />
 
 		<section
 			class="section-animate mx-auto max-w-4xl px-6 py-8 {endingsVisible
@@ -759,6 +726,7 @@
 	.ending-text {
 		filter: blur(5px);
 		user-select: none;
+		transition: filter 0.5s ease;
 	}
 
 	.ending-card:hover .ending-text,

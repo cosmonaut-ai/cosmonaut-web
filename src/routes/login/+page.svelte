@@ -288,129 +288,205 @@
 	noindex
 />
 
-<div class="flex min-h-full items-center justify-center bg-background px-4 py-12">
-	<div class="w-full max-w-sm">
-		<!-- Logo -->
-		<div class="mb-8 flex flex-col items-center gap-3">
-			<a href="/" class="flex items-center gap-2.5">
-				<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-					<img src="/logo.png" alt="Cosmonaut logo" class="h-7 w-7" />
-				</div>
-				<span class="font-orbitron text-xl font-semibold text-foreground">Cosmonaut</span>
-				<span
-					class="-translate-y-1 rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
-					>BETA</span
-				>
-			</a>
-			<p class="text-sm text-muted-foreground">
-				{#if hasRedirect && (view === 'signin' || view === 'signup')}
-					Sign in or create an account to continue
-				{:else if view === 'signin'}
-					Sign in to continue your adventures
-				{:else if view === 'signup'}
-					Create your account
-				{:else if view === 'verify'}
-					Verify your email
-				{:else if view === 'forgot'}
-					Reset your password
-				{:else if view === 'reset'}
-					Enter your new password
-				{/if}
-			</p>
+<div class="flex min-h-full flex-col bg-background md:flex-row">
+	<!-- Left panel: Illustration (desktop only) -->
+	<div
+		class="login-panel relative hidden flex-col items-center justify-center overflow-hidden md:flex md:flex-1"
+	>
+		<!-- Ambient glow -->
+		<div class="login-glow" aria-hidden="true"></div>
+
+		<!-- Astronaut + Doorway composition -->
+		<div class="relative z-10 flex items-center justify-center">
+			<img
+				src="/art/sign-in-astronaut.webp"
+				alt=""
+				class="login-astronaut relative z-20 -mr-6 h-36 w-auto object-contain lg:h-44"
+			/>
+			<img
+				src="/art/sign-in-doorway.webp"
+				alt=""
+				class="login-doorway relative z-10 h-[40vh] w-auto object-contain lg:h-[45vh]"
+			/>
 		</div>
 
-		<Card class="border-border/50 bg-card/80 backdrop-blur-sm">
-			<CardContent class="pt-6">
-				<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-				<form onkeydown={handleFormKeyDown} onsubmit={(e) => e.preventDefault()}>
-					<!-- Messages -->
-					{#if errorMessage}
-						<div
-							class="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-						>
-							{errorMessage}
-						</div>
-					{/if}
-					{#if successMessage}
-						<div
-							class="mb-4 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary"
-						>
-							{successMessage}
-						</div>
-					{/if}
+		<!-- Tagline -->
+		<p class="relative z-20 mt-8 font-orbitron text-sm tracking-widest text-primary/70 uppercase">
+			Every choice shapes the narrative
+		</p>
+	</div>
 
-					{#if view === 'signin'}
-						<SignInForm
-							{email}
-							{password}
-							{showPassword}
-							{isSubmitting}
-							onEmailChange={(v) => (email = v)}
-							onPasswordChange={(v) => (password = v)}
-							onShowPasswordChange={(v) => (showPassword = v)}
-							onSignIn={handleSignIn}
-							onGoogleSignIn={handleGoogleSignIn}
-							onSwitchToSignUp={() => switchView('signup')}
-							onSwitchToForgot={() => switchView('forgot')}
-						/>
+	<!-- Right panel: Form -->
+	<div
+		class="flex w-full flex-col items-center justify-center px-4 py-8 md:flex-1 md:border-l md:border-border/30 md:py-12"
+	>
+		<div class="w-full max-w-sm">
+			<!-- Logo -->
+			<div class="mb-8 flex flex-col items-center gap-3">
+				<a href="/" class="flex items-center gap-2.5">
+					<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+						<img src="/logo.png" alt="Cosmonaut logo" class="h-7 w-7" />
+					</div>
+					<span class="font-orbitron text-xl font-semibold text-foreground">Cosmonaut</span>
+					<span
+						class="-translate-y-1 rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
+						>BETA</span
+					>
+				</a>
+				<p class="text-sm text-muted-foreground">
+					{#if hasRedirect && (view === 'signin' || view === 'signup')}
+						Sign in or create an account to continue
+					{:else if view === 'signin'}
+						Sign in to continue your adventures
 					{:else if view === 'signup'}
-						<SignUpForm
-							{email}
-							{password}
-							{confirmPassword}
-							{showPassword}
-							{showConfirmPassword}
-							{passwordChecks}
-							{passwordValid}
-							{passwordsMatch}
-							{isSubmitting}
-							{newsletterOptIn}
-							onEmailChange={(v) => (email = v)}
-							onPasswordChange={(v) => (password = v)}
-							onConfirmPasswordChange={(v) => (confirmPassword = v)}
-							onShowPasswordChange={(v) => (showPassword = v)}
-							onShowConfirmPasswordChange={(v) => (showConfirmPassword = v)}
-							onNewsletterChange={(v) => (newsletterOptIn = v)}
-							onSignUp={handleSignUp}
-							onGoogleSignIn={handleGoogleSignIn}
-							onSwitchToSignIn={() => switchView('signin')}
-						/>
+						Create your account
 					{:else if view === 'verify'}
-						<VerifyForm
-							{email}
-							{verificationCode}
-							{isSubmitting}
-							onVerificationCodeChange={(v) => (verificationCode = v)}
-							onVerify={handleVerify}
-							onResendCode={handleResendCode}
-							onSwitchToSignIn={() => switchView('signin')}
-						/>
-					{:else if view === 'forgot' || view === 'reset'}
-						<ForgotPasswordForm
-							{view}
-							{email}
-							{verificationCode}
-							{newPassword}
-							{confirmNewPassword}
-							{isSubmitting}
-							onEmailChange={(v) => (email = v)}
-							onVerificationCodeChange={(v) => (verificationCode = v)}
-							onNewPasswordChange={(v) => (newPassword = v)}
-							onConfirmNewPasswordChange={(v) => (confirmNewPassword = v)}
-							onForgotPassword={handleForgotPassword}
-							onResetPassword={handleResetPassword}
-							onSwitchToSignIn={() => switchView('signin')}
-						/>
+						Verify your email
+					{:else if view === 'forgot'}
+						Reset your password
+					{:else if view === 'reset'}
+						Enter your new password
 					{/if}
-				</form>
-			</CardContent>
-		</Card>
+				</p>
+			</div>
 
-		<!-- Footer links -->
-		<div class="mt-6 flex justify-center gap-4 text-xs text-muted-foreground">
-			<a href="/terms" class="transition-colors hover:text-foreground">Terms</a>
-			<a href="/privacy" class="transition-colors hover:text-foreground">Privacy</a>
-			<a href="/about" class="transition-colors hover:text-foreground">About</a>
+			<Card class="border-border/50 bg-card/80 backdrop-blur-sm">
+				<CardContent class="pt-6">
+					<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+					<form onkeydown={handleFormKeyDown} onsubmit={(e) => e.preventDefault()}>
+						<!-- Messages -->
+						{#if errorMessage}
+							<div
+								class="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+							>
+								{errorMessage}
+							</div>
+						{/if}
+						{#if successMessage}
+							<div
+								class="mb-4 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary"
+							>
+								{successMessage}
+							</div>
+						{/if}
+
+						{#if view === 'signin'}
+							<SignInForm
+								{email}
+								{password}
+								{showPassword}
+								{isSubmitting}
+								onEmailChange={(v) => (email = v)}
+								onPasswordChange={(v) => (password = v)}
+								onShowPasswordChange={(v) => (showPassword = v)}
+								onSignIn={handleSignIn}
+								onGoogleSignIn={handleGoogleSignIn}
+								onSwitchToSignUp={() => switchView('signup')}
+								onSwitchToForgot={() => switchView('forgot')}
+							/>
+						{:else if view === 'signup'}
+							<SignUpForm
+								{email}
+								{password}
+								{confirmPassword}
+								{showPassword}
+								{showConfirmPassword}
+								{passwordChecks}
+								{passwordValid}
+								{passwordsMatch}
+								{isSubmitting}
+								{newsletterOptIn}
+								onEmailChange={(v) => (email = v)}
+								onPasswordChange={(v) => (password = v)}
+								onConfirmPasswordChange={(v) => (confirmPassword = v)}
+								onShowPasswordChange={(v) => (showPassword = v)}
+								onShowConfirmPasswordChange={(v) => (showConfirmPassword = v)}
+								onNewsletterChange={(v) => (newsletterOptIn = v)}
+								onSignUp={handleSignUp}
+								onGoogleSignIn={handleGoogleSignIn}
+								onSwitchToSignIn={() => switchView('signin')}
+							/>
+						{:else if view === 'verify'}
+							<VerifyForm
+								{email}
+								{verificationCode}
+								{isSubmitting}
+								onVerificationCodeChange={(v) => (verificationCode = v)}
+								onVerify={handleVerify}
+								onResendCode={handleResendCode}
+								onSwitchToSignIn={() => switchView('signin')}
+							/>
+						{:else if view === 'forgot' || view === 'reset'}
+							<ForgotPasswordForm
+								{view}
+								{email}
+								{verificationCode}
+								{newPassword}
+								{confirmNewPassword}
+								{isSubmitting}
+								onEmailChange={(v) => (email = v)}
+								onVerificationCodeChange={(v) => (verificationCode = v)}
+								onNewPasswordChange={(v) => (newPassword = v)}
+								onConfirmNewPasswordChange={(v) => (confirmNewPassword = v)}
+								onForgotPassword={handleForgotPassword}
+								onResetPassword={handleResetPassword}
+								onSwitchToSignIn={() => switchView('signin')}
+							/>
+						{/if}
+					</form>
+				</CardContent>
+			</Card>
+
+			<!-- Footer links -->
+			<div class="mt-6 flex justify-center gap-4 text-xs text-muted-foreground">
+				<a href="/terms" class="transition-colors hover:text-foreground">Terms</a>
+				<a href="/privacy" class="transition-colors hover:text-foreground">Privacy</a>
+				<a href="/about" class="transition-colors hover:text-foreground">About</a>
+			</div>
 		</div>
 	</div>
 </div>
+
+<style>
+	.login-glow {
+		position: absolute;
+		top: 40%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 500px;
+		height: 500px;
+		border-radius: 50%;
+		background: radial-gradient(
+			circle,
+			oklch(from var(--primary) l c h / 0.08) 0%,
+			transparent 70%
+		);
+		filter: blur(60px);
+		pointer-events: none;
+	}
+
+	.login-doorway {
+		filter: drop-shadow(0 0 40px oklch(from var(--primary) l c h / 0.15));
+	}
+
+	.login-astronaut {
+		animation: astronaut-drift 5s ease-in-out infinite;
+		filter: drop-shadow(0 0 20px oklch(from var(--primary) l c h / 0.1));
+	}
+
+	@keyframes astronaut-drift {
+		0%,
+		100% {
+			transform: translateX(0);
+		}
+		50% {
+			transform: translateX(10px);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.login-astronaut {
+			animation: none;
+		}
+	}
+</style>

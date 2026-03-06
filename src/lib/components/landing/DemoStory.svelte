@@ -197,12 +197,12 @@
 							>
 								<p class="demo-ending mb-6 text-muted-foreground">
 									<span class="demo-star demo-star-1">✦</span>
-									This path has ended
+									This path has reached its destination
 									<span class="demo-star demo-star-2">✦</span>
 								</p>
 								<Button variant="outline" onclick={restart} class="gap-2">
 									<RotateCcw class="h-4 w-4" />
-									Explore Again
+									Chart a New Course
 								</Button>
 							</div>
 						{/if}

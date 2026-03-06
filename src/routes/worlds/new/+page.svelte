@@ -51,9 +51,9 @@
 
 	// ── World length metadata ───────────────────────────────────────────
 	const WORLD_LENGTH_OPTIONS: { value: WorldLength; label: string; description: string }[] = [
-		{ value: 'short', label: 'Short', description: '~5 min read' },
-		{ value: 'medium', label: 'Medium', description: '~10 min read' },
-		{ value: 'long', label: 'Long', description: '~20 min read' }
+		{ value: 'short', label: 'Short', description: '5-10 min read' },
+		{ value: 'medium', label: 'Medium', description: '10-20 min read' },
+		{ value: 'long', label: 'Long', description: '20-30 min read' }
 	];
 
 	// Form state — pre-fill from URL if retrying after a failed world creation
@@ -253,7 +253,7 @@
 			<CardHeader>
 				<CardTitle class="text-2xl">Describe Your World</CardTitle>
 				<CardDescription>
-					Tell us about the story world you want to create. Be as detailed or brief as you like.
+					The cosmos awaits your vision. Be as detailed or brief as you like — a sentence or a saga.
 				</CardDescription>
 			</CardHeader>
 			<CardContent>

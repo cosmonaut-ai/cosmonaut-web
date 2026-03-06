@@ -9,7 +9,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Tooltip, TooltipTrigger } from '$lib/components/ui/tooltip';
-	import { Plus, Rocket } from '@lucide/svelte';
+	import { Plus } from '@lucide/svelte';
+	import ConstellationDivider from '$lib/components/ConstellationDivider.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
@@ -113,14 +114,14 @@
 					>
 						<!-- Radial glow behind icon -->
 						<div class="empty-glow" aria-hidden="true"></div>
-						<div
-							class="empty-icon relative mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10"
-						>
-							<Rocket class="h-8 w-8 text-primary" />
-						</div>
+						<img
+							src="/art/no-worlds-astronaut.webp"
+							alt=""
+							class="empty-icon relative mb-6 h-40 w-auto object-contain sm:h-48"
+						/>
 						<h3 class="mb-2 text-xl font-semibold text-foreground">No worlds yet</h3>
 						<p class="mb-6 max-w-md text-center text-muted-foreground">
-							Create your first interactive story world and start exploring infinite narratives.
+							Every great adventure starts with a single spark. Light yours.
 						</p>
 						<Button onclick={() => goto('/worlds/new')} class="empty-cta gap-2">
 							<Plus class="h-4 w-4" />
@@ -170,7 +171,7 @@
 		pointer-events: none;
 	}
 
-	/* Rocket icon gentle pulse */
+	/* Empty state illustration gentle pulse */
 	.empty-icon {
 		animation: icon-float 3s ease-in-out infinite;
 	}
