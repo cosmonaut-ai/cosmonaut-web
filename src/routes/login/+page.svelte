@@ -130,6 +130,8 @@
 			if (msg.includes('LimitExceededException'))
 				return 'Too many attempts. Please wait a moment and try again.';
 			if (msg.includes('UserNotConfirmedException')) return 'Please verify your email first.';
+			if (msg.includes('PreSignUp failed with error'))
+				return msg.replace(/.*PreSignUp failed with error\s*/, '');
 			return msg;
 		}
 		return 'An unexpected error occurred. Please try again.';
