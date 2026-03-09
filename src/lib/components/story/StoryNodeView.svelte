@@ -93,18 +93,6 @@
 		loading || nodeQuery.isLoading || isNodeGenerating || chooseMutation.isPending
 	);
 
-	// Store last visited node in localStorage
-	$effect(() => {
-		if (currentNode?.id && worldId) {
-			try {
-				const key = `cosmonaut-last-node-${worldId}`;
-				localStorage.setItem(key, currentNode.id);
-			} catch {
-				// localStorage might not be available
-			}
-		}
-	});
-
 	// Clear override when nodeId changes (e.g., back/forward navigation)
 	$effect(() => {
 		if (nodeId && currentNodeOverride?.id !== nodeId) {

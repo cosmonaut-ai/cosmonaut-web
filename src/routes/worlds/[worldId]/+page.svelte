@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { useWorld } from '$lib/queries';
+	import { useWorld, useWorldProgress } from '$lib/queries';
 	import type { World } from '$lib/types/api';
 	import WorldHomePage from '$lib/components/story/WorldHomePage.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
@@ -17,6 +17,10 @@
 	const worldQuery = useWorld(worldId, {
 		enablePolling: true
 	});
+
+	// Fetch the user's last-visited node in this world
+	const progressQuery = useWorldProgress(worldId);
+	const lastNodeId = $derived(progressQuery.data?.current_node_id ?? null);
 
 	// Derived world data
 	const world = $derived(worldQuery.data);
@@ -37,7 +41,7 @@
 
 <!-- World home page when complete, loading state handled by layout -->
 {#if isWorldComplete && !nodeIdFromUrl && world}
-	<WorldHomePage {world} onWorldUpdate={handleWorldUpdate} />
+	<WorldHomePage {world} {lastNodeId} onWorldUpdate={handleWorldUpdate} />
 {:else if isWorldComplete && nodeIdFromUrl}
 	<main class="mx-auto max-w-4xl px-6 py-8">
 		<Card>

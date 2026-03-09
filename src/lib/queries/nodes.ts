@@ -1,5 +1,11 @@
 import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
-import { getNode, getWorldNodes, chooseOption, generateNodeAudio } from '$lib/api/client';
+import {
+	getNode,
+	getWorldNodes,
+	getWorldProgress,
+	chooseOption,
+	generateNodeAudio
+} from '$lib/api/client';
 import type { StoryNode } from '$lib/types/api';
 import { showError } from '$lib/utils/toast';
 import { usageKeys } from './subscription';
@@ -9,7 +15,8 @@ import { usageKeys } from './subscription';
  */
 export const nodeKeys = {
 	all: (worldId: string) => ['worlds', worldId, 'nodes'] as const,
-	detail: (worldId: string, nodeId: string) => ['worlds', worldId, 'nodes', nodeId] as const
+	detail: (worldId: string, nodeId: string) => ['worlds', worldId, 'nodes', nodeId] as const,
+	progress: (worldId: string) => ['worlds', worldId, 'progress'] as const
 };
 
 /** Helper type for values that can be passed directly or as a getter */
@@ -29,6 +36,20 @@ export function useWorldNodes(worldId: MaybeGetter<string>) {
 		return {
 			queryKey: nodeKeys.all(id),
 			queryFn: () => getWorldNodes(id),
+			enabled: !!id
+		};
+	});
+}
+
+/**
+ * Query hook to fetch the user's last-visited node in a world
+ */
+export function useWorldProgress(worldId: MaybeGetter<string>) {
+	return createQuery(() => {
+		const id = resolve(worldId);
+		return {
+			queryKey: nodeKeys.progress(id),
+			queryFn: () => getWorldProgress(id),
 			enabled: !!id
 		};
 	});

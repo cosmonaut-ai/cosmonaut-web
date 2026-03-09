@@ -10,7 +10,6 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Tooltip, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import { Plus } from '@lucide/svelte';
-	import ConstellationDivider from '$lib/components/ConstellationDivider.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
