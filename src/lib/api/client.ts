@@ -15,6 +15,7 @@ export {
 	pollWorldCompletion
 } from './worlds';
 export {
+	getWorldProgress,
 	getNode,
 	getWorldNodes,
 	chooseOption,

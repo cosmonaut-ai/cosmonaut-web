@@ -8,6 +8,18 @@ import {
 } from '$lib/auth/auth.svelte';
 import { apiRequest, getAuthHeaders, POST_STREAM_DELAY_MS } from './core';
 
+/** Response from the progress endpoint */
+export interface WorldProgressResponse {
+	current_node_id: string | null;
+}
+
+/**
+ * Get the authenticated user's last-visited node in a world
+ */
+export async function getWorldProgress(worldId: string): Promise<WorldProgressResponse> {
+	return apiRequest<WorldProgressResponse>(`${API_BASE_URL}/worlds/${worldId}/progress`);
+}
+
 /**
  * Get a specific story node
  */

@@ -10,6 +10,7 @@
 		ArrowLeft,
 		BookOpen,
 		Map,
+		Play,
 		Share2,
 		MapPin,
 		Compass,
@@ -42,10 +43,13 @@
 
 	interface Props {
 		world: World;
+		lastNodeId?: string | null;
 		onWorldUpdate?: (world: World) => void;
 	}
 
-	let { world, onWorldUpdate }: Props = $props();
+	let { world, lastNodeId = null, onWorldUpdate }: Props = $props();
+
+	const hasProgress = $derived(lastNodeId !== null && lastNodeId !== world.root_node_id);
 
 	let shareModalOpen = $state(false);
 	let promptCopied = $state(false);
@@ -109,8 +113,9 @@
 	}
 
 	function handleEnterStory() {
-		if (world.root_node_id) {
-			goto(`/worlds/${world.id}/nodes/${world.root_node_id}`);
+		const targetNode = lastNodeId ?? world.root_node_id;
+		if (targetNode) {
+			goto(`/worlds/${world.id}/nodes/${targetNode}`);
 		}
 	}
 
@@ -241,8 +246,13 @@
 					class="group gap-2 px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
 					onclick={handleEnterStory}
 				>
-					<BookOpen class="h-5 w-5 transition-transform group-hover:scale-110" />
-					Enter the Story
+					{#if hasProgress}
+						<Play class="h-5 w-5 transition-transform group-hover:scale-110" />
+						Continue Story
+					{:else}
+						<BookOpen class="h-5 w-5 transition-transform group-hover:scale-110" />
+						Enter the Story
+					{/if}
 				</Button>
 			{/if}
 
