@@ -6,7 +6,7 @@ import {
 	type UpdateWorldSharingRequest,
 	type World
 } from '$lib/types/api';
-import { showError, showSuccess } from '$lib/utils/toast';
+import { showError, showSuccess, showWarning } from '$lib/utils/toast';
 import { usageKeys } from './subscription';
 
 /**
@@ -70,7 +70,12 @@ export function useCreateWorld() {
 			showSuccess('World created', 'Your world is being generated');
 		},
 		onError: (error: Error) => {
-			if (error instanceof ApiError && error.isStorageQuotaExceeded) {
+			if (error instanceof ApiError && error.isRateLimited) {
+				showWarning(
+					'Slow down',
+					"You're creating worlds too quickly. Please wait a moment and try again."
+				);
+			} else if (error instanceof ApiError && error.isStorageQuotaExceeded) {
 				client.invalidateQueries({ queryKey: usageKeys.all });
 				showError(
 					'Saved worlds limit reached',

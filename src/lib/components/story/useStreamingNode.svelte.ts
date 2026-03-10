@@ -2,7 +2,7 @@ import { untrack } from 'svelte';
 import { generateNodeText, getNode } from '$lib/api/client';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { updateNodeInCache, usageKeys } from '$lib/queries';
-import { showError } from '$lib/utils/toast';
+import { showError, showWarning } from '$lib/utils/toast';
 import { ApiError, type StoryNode } from '$lib/types/api';
 import type { StoryNodeGenerationStatus } from '$lib/types/api';
 
@@ -74,6 +74,14 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 				isStreaming = false;
 				streamingText = '';
 				streamingDone = false;
+
+				if (err instanceof ApiError && err.isRateLimited) {
+					showWarning(
+						'Slow down',
+						"You're making requests too quickly. Please wait a moment and try again."
+					);
+					throw err;
+				}
 
 				if (err instanceof ApiError && err.isQuotaExceeded) {
 					showQuotaPrompt = true;
