@@ -120,7 +120,11 @@ export class ApiError extends Error {
 	}
 
 	get isQuotaExceeded(): boolean {
-		return this.status === 429;
+		return this.status === 429 && !/rate limit/i.test(this.detail);
+	}
+
+	get isRateLimited(): boolean {
+		return this.status === 429 && /rate limit/i.test(this.detail);
 	}
 
 	get isStorageQuotaExceeded(): boolean {

@@ -158,8 +158,7 @@ export function useGenerateAudio(worldId: MaybeGetter<string>) {
 				client.invalidateQueries({ queryKey: usageKeys.all });
 			},
 			onError: (error: Error) => {
-				// Caller handles 429 (quota exceeded) to show UpgradePrompt.
-				// Only show a toast for unexpected errors.
+				// Caller handles 429 (quota exceeded / rate limited) with appropriate UI.
 				if (!('status' in error && (error as { status: number }).status === 429)) {
 					showError('Audio generation failed', error.message);
 				}

@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { useGenerateAudio, useVoices } from '$lib/queries';
 	import { ApiError } from '$lib/types/api';
+	import { showWarning } from '$lib/utils/toast';
 	import { Button } from '$lib/components/ui/button';
 	import { Volume2 } from '@lucide/svelte';
 	import { untrack } from 'svelte';
@@ -176,7 +177,13 @@
 			localAudio = { ...localAudio, [voiceId]: result.audio_url };
 			await nextTickPlay();
 		} catch (err) {
-			if (err instanceof ApiError && err.isQuotaExceeded) {
+			if (err instanceof ApiError && err.isRateLimited) {
+				playerVisible = false;
+				showWarning(
+					'Slow down',
+					"You're generating audio too quickly. Please wait a moment and try again."
+				);
+			} else if (err instanceof ApiError && err.isQuotaExceeded) {
 				playerVisible = false;
 				onQuotaExceeded();
 			} else {
