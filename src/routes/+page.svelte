@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import Starfield from '$lib/components/landing/Starfield.svelte';
-	import Hero from '$lib/components/landing/Hero.svelte';
-	import DemoStory from '$lib/components/landing/DemoStory.svelte';
-	import Features from '$lib/components/landing/Features.svelte';
+	import Hero from '$lib/components/features/landing/Hero.svelte';
+	import DemoStory from '$lib/components/features/landing/DemoStory.svelte';
+	import Features from '$lib/components/features/landing/Features.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Rocket } from '@lucide/svelte';
 	import { browser } from '$app/environment';
-	import SEO from '$lib/components/SEO.svelte';
+	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
 	const auth = useAuth();
@@ -100,8 +99,9 @@
 	}}
 />
 
-<!-- Animated starfield background -->
-<Starfield />
+{#await import('$lib/components/features/landing/Starfield.svelte') then { default: Starfield }}
+	<Starfield />
+{/await}
 
 <!-- Navigation header -->
 <header

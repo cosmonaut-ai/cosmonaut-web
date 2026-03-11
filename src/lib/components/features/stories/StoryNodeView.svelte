@@ -7,9 +7,9 @@
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
 	import SlideTransition from './SlideTransition.svelte';
-	import AudioNarration from './AudioNarration.svelte';
-	import ShareModal from './ShareModal.svelte';
-	import UpgradePrompt from '$lib/components/subscription/UpgradePrompt.svelte';
+	import AudioNarration from '$lib/components/features/narrator/AudioNarration.svelte';
+	import ShareModal from '$lib/components/features/worlds/ShareModal.svelte';
+	import UpgradePrompt from '$lib/components/features/subscription/UpgradePrompt.svelte';
 	import { useStreamingNode } from './useStreamingNode.svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
@@ -26,8 +26,7 @@
 
 	let { worldId, rootNodeId, nodeId }: Props = $props();
 
-	// Local state for node (used during navigation and streaming)
-	let currentNodeOverride = $state<StoryNode | null>(null);
+	let currentNodeOverride = $state.raw<StoryNode | null>(null);
 	let loading = $state(false);
 
 	// Navigation direction for slide animation

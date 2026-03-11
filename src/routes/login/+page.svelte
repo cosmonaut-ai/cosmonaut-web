@@ -5,13 +5,13 @@
 	import { useAuth, SignUpNotConfirmedError } from '$lib/auth/auth.svelte';
 	import { updateNewsletter } from '$lib/api/subscription';
 	import { Card, CardContent } from '$lib/components/ui/card';
-	import SEO from '$lib/components/SEO.svelte';
+	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 	import { showInfo } from '$lib/utils/toast';
-	import SignInForm from './SignInForm.svelte';
-	import SignUpForm from './SignUpForm.svelte';
-	import VerifyForm from './VerifyForm.svelte';
-	import ForgotPasswordForm from './ForgotPasswordForm.svelte';
+	import SignInForm from '$lib/components/features/auth/SignInForm.svelte';
+	import SignUpForm from '$lib/components/features/auth/SignUpForm.svelte';
+	import VerifyForm from '$lib/components/features/auth/VerifyForm.svelte';
+	import ForgotPasswordForm from '$lib/components/features/auth/ForgotPasswordForm.svelte';
 
 	const REDIRECT_STORAGE_KEY = 'cosmonaut-auth-redirect';
 

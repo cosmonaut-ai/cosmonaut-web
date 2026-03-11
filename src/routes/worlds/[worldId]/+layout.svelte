@@ -4,15 +4,15 @@
 	import { page } from '$app/state';
 	import { useWorld } from '$lib/queries';
 	import { ApiError } from '$lib/types/api';
-	import WorldHeader from '$lib/components/story/WorldHeader.svelte';
-	import WorldGenerationProgress from '$lib/components/story/WorldGenerationProgress.svelte';
-	import WorldGenerationFailed from '$lib/components/story/WorldGenerationFailed.svelte';
+	import WorldHeader from '$lib/components/features/worlds/WorldHeader.svelte';
+	import WorldGenerationProgress from '$lib/components/features/worlds/WorldGenerationProgress.svelte';
+	import WorldGenerationFailed from '$lib/components/features/worlds/WorldGenerationFailed.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { AlertTriangle, ShieldAlert } from '@lucide/svelte';
-	import SEO from '$lib/components/SEO.svelte';
+	import SEO from '$lib/components/shared/SEO.svelte';
 
 	interface Props {
 		children: Snippet;

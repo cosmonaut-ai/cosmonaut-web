@@ -1,5 +1,5 @@
 import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
-import { getWorlds, getWorld, createWorld, deleteWorld, updateWorldSharing } from '$lib/api/client';
+import { getWorlds, getWorld, createWorld, deleteWorld, updateWorldSharing } from '$lib/api/worlds';
 import {
 	ApiError,
 	type CreateWorldRequest,
@@ -7,23 +7,16 @@ import {
 	type World
 } from '$lib/types/api';
 import { showError, showSuccess, showWarning } from '$lib/utils/toast';
-import { usageKeys } from './subscription';
-
-/**
- * Query keys for worlds - use these for cache invalidation
- */
-export const worldKeys = {
-	all: ['worlds'] as const,
-	detail: (id: string) => ['worlds', id] as const
-};
+import { queryKeys } from './keys';
 
 /**
  * Query hook to fetch all worlds for the current user
  */
 export function useWorlds() {
 	return createQuery(() => ({
-		queryKey: worldKeys.all,
-		queryFn: getWorlds
+		queryKey: queryKeys.worlds.all,
+		queryFn: getWorlds,
+		staleTime: 5 * 60_000
 	}));
 }
 
@@ -43,7 +36,7 @@ export function useWorld(worldId: MaybeGetter<string>, options?: { enablePolling
 	return createQuery(() => {
 		const id = resolve(worldId);
 		return {
-			queryKey: worldKeys.detail(id),
+			queryKey: queryKeys.worlds.detail(id),
 			queryFn: () => getWorld(id),
 			enabled: !!id,
 			refetchInterval: (query: { state: { data?: World; error: Error | null } }) => {
@@ -65,8 +58,8 @@ export function useCreateWorld() {
 	return createMutation(() => ({
 		mutationFn: (data: CreateWorldRequest) => createWorld(data),
 		onSuccess: () => {
-			client.invalidateQueries({ queryKey: worldKeys.all });
-			client.invalidateQueries({ queryKey: usageKeys.all });
+			client.invalidateQueries({ queryKey: queryKeys.worlds.all });
+			client.invalidateQueries({ queryKey: queryKeys.usage.all });
 			showSuccess('World created', 'Your world is being generated');
 		},
 		onError: (error: Error) => {
@@ -76,13 +69,13 @@ export function useCreateWorld() {
 					"You're creating worlds too quickly. Please wait a moment and try again."
 				);
 			} else if (error instanceof ApiError && error.isStorageQuotaExceeded) {
-				client.invalidateQueries({ queryKey: usageKeys.all });
+				client.invalidateQueries({ queryKey: queryKeys.usage.all });
 				showError(
 					'Saved worlds limit reached',
 					'Delete an existing world or upgrade your plan to create more.'
 				);
 			} else if (error instanceof ApiError && error.isQuotaExceeded) {
-				client.invalidateQueries({ queryKey: usageKeys.all });
+				client.invalidateQueries({ queryKey: queryKeys.usage.all });
 				showError(
 					'World creation limit reached',
 					'Upgrade your plan or wait for your usage period to reset.'
@@ -102,8 +95,8 @@ export function useDeleteWorld() {
 	return createMutation(() => ({
 		mutationFn: (worldId: string) => deleteWorld(worldId),
 		onSuccess: () => {
-			client.invalidateQueries({ queryKey: worldKeys.all });
-			client.invalidateQueries({ queryKey: usageKeys.all });
+			client.invalidateQueries({ queryKey: queryKeys.worlds.all });
+			client.invalidateQueries({ queryKey: queryKeys.usage.all });
 			showSuccess('World deleted');
 		},
 		onError: (error: Error) => {
@@ -120,8 +113,8 @@ export function useUpdateWorldSharing(worldId: string) {
 	return createMutation(() => ({
 		mutationFn: (data: UpdateWorldSharingRequest) => updateWorldSharing(worldId, data),
 		onSuccess: (updatedWorld: World) => {
-			client.setQueryData(worldKeys.detail(worldId), updatedWorld);
-			client.invalidateQueries({ queryKey: worldKeys.all });
+			client.setQueryData(queryKeys.worlds.detail(worldId), updatedWorld);
+			client.invalidateQueries({ queryKey: queryKeys.worlds.all });
 		},
 		onError: (error: Error) => {
 			showError('Failed to update sharing settings', error.message);

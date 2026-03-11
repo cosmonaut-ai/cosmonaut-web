@@ -5,9 +5,6 @@ export type WorldGenerationStatus =
 	| 'completed'
 	| 'failed';
 
-/** @deprecated Use WorldGenerationStatus instead */
-export type GenerationStatus = WorldGenerationStatus;
-
 export type StoryNodeProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 export type StoryNodeGenerationStatus = 'initialized' | 'generating' | 'completed' | 'failed';
@@ -68,7 +65,7 @@ export interface World {
 	description: string | null;
 	genre: string | null;
 	score: string | null;
-	generation_status: GenerationStatus;
+	generation_status: WorldGenerationStatus;
 	author_id: string | null;
 	root_node_id: string | null;
 	visibility: WorldVisibility | null;

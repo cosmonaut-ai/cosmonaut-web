@@ -11,7 +11,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Select from '$lib/components/ui/select';
-	import SEO from '$lib/components/SEO.svelte';
+	import SEO from '$lib/components/shared/SEO.svelte';
 	import { useFeedback } from '$lib/queries/feedback';
 	import { ApiError } from '$lib/api/core';
 	import type { FeedbackCategory } from '$lib/api/feedback';

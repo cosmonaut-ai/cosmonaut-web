@@ -14,8 +14,8 @@
 	import { QueryClientProvider } from '@tanstack/svelte-query';
 	import { queryClient } from '$lib/queries/client';
 	import { LogIn } from '@lucide/svelte';
-	import UserMenu from '$lib/components/UserMenu.svelte';
-	import AppFooter from '$lib/components/AppFooter.svelte';
+	import UserMenu from '$lib/components/shared/UserMenu.svelte';
+	import AppFooter from '$lib/components/shared/AppFooter.svelte';
 
 	let { children } = $props();
 

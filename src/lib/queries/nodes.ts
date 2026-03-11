@@ -1,23 +1,9 @@
 import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
-import {
-	getNode,
-	getWorldNodes,
-	getWorldProgress,
-	chooseOption,
-	generateNodeAudio
-} from '$lib/api/client';
+import { getNode, getWorldNodes, getWorldProgress, chooseOption } from '$lib/api/nodes';
+import { generateNodeAudio } from '$lib/api/voices';
 import type { StoryNode } from '$lib/types/api';
 import { showError } from '$lib/utils/toast';
-import { usageKeys } from './subscription';
-
-/**
- * Query keys for nodes - use these for cache invalidation
- */
-export const nodeKeys = {
-	all: (worldId: string) => ['worlds', worldId, 'nodes'] as const,
-	detail: (worldId: string, nodeId: string) => ['worlds', worldId, 'nodes', nodeId] as const,
-	progress: (worldId: string) => ['worlds', worldId, 'progress'] as const
-};
+import { queryKeys } from './keys';
 
 /** Helper type for values that can be passed directly or as a getter */
 type MaybeGetter<T> = T | (() => T);
@@ -34,7 +20,7 @@ export function useWorldNodes(worldId: MaybeGetter<string>) {
 	return createQuery(() => {
 		const id = resolve(worldId);
 		return {
-			queryKey: nodeKeys.all(id),
+			queryKey: queryKeys.nodes.all(id),
 			queryFn: () => getWorldNodes(id),
 			enabled: !!id
 		};
@@ -48,7 +34,7 @@ export function useWorldProgress(worldId: MaybeGetter<string>) {
 	return createQuery(() => {
 		const id = resolve(worldId);
 		return {
-			queryKey: nodeKeys.progress(id),
+			queryKey: queryKeys.nodes.progress(id),
 			queryFn: () => getWorldProgress(id),
 			enabled: !!id
 		};
@@ -69,7 +55,7 @@ export function useNode(
 		const wId = resolve(worldId);
 		const nId = resolve(nodeId);
 		return {
-			queryKey: nodeKeys.detail(wId, nId ?? ''),
+			queryKey: queryKeys.nodes.detail(wId, nId ?? ''),
 			queryFn: () => getNode(wId, nId!),
 			enabled: !!wId && !!nId,
 			refetchInterval: (query: { state: { data?: StoryNode; error: Error | null } }) => {
@@ -100,12 +86,12 @@ export function useChooseOption(worldId: MaybeGetter<string>) {
 				chooseOption(wId, nodeId, choice),
 			onSuccess: (newNode: StoryNode, { nodeId: parentNodeId }) => {
 				// Add the new node to the cache
-				client.setQueryData(nodeKeys.detail(wId, newNode.id), newNode);
+				client.setQueryData(queryKeys.nodes.detail(wId, newNode.id), newNode);
 				// Invalidate the parent node so its choices reflect the newly explored path
-				client.invalidateQueries({ queryKey: nodeKeys.detail(wId, parentNodeId) });
+				client.invalidateQueries({ queryKey: queryKeys.nodes.detail(wId, parentNodeId) });
 				// Invalidate the nodes list to include the new node
 				// Use exact: true to prevent invalidating individual node queries (prefix matching)
-				client.invalidateQueries({ queryKey: nodeKeys.all(wId), exact: true });
+				client.invalidateQueries({ queryKey: queryKeys.nodes.all(wId), exact: true });
 			}
 			// Note: no onError here — the caller uses mutateAsync and handles all
 			// errors directly (409 retry logic + user-facing toasts) to avoid duplicates.
@@ -121,13 +107,13 @@ export function updateNodeInCache(
 	worldId: string,
 	node: StoryNode
 ) {
-	client.setQueryData(nodeKeys.detail(worldId, node.id), node);
+	client.setQueryData(queryKeys.nodes.detail(worldId, node.id), node);
 	// Invalidate the parent node so its choices reflect the explored path
 	if (node.parent_id) {
-		client.invalidateQueries({ queryKey: nodeKeys.detail(worldId, node.parent_id) });
+		client.invalidateQueries({ queryKey: queryKeys.nodes.detail(worldId, node.parent_id) });
 	}
 	// Use exact: true to prevent invalidating individual node detail queries (prefix matching)
-	client.invalidateQueries({ queryKey: nodeKeys.all(worldId), exact: true });
+	client.invalidateQueries({ queryKey: queryKeys.nodes.all(worldId), exact: true });
 }
 
 /**
@@ -142,23 +128,19 @@ export function useGenerateAudio(worldId: MaybeGetter<string>) {
 		return {
 			mutationFn: ({ nodeId, voiceId }: { nodeId: string; voiceId: string }) =>
 				generateNodeAudio(wId, nodeId, voiceId),
-			onSuccess: (
-				data: { audio_url: string },
-				{ nodeId, voiceId }: { nodeId: string; voiceId: string }
-			) => {
-				// Patch the cached node's audio dict with the new voice entry
-				const cached = client.getQueryData<StoryNode>(nodeKeys.detail(wId, nodeId));
+			onSuccess: (data: { audio_url: string }, variables: { nodeId: string; voiceId: string }) => {
+				const cached = client.getQueryData<StoryNode>(
+					queryKeys.nodes.detail(wId, variables.nodeId)
+				);
 				if (cached) {
-					client.setQueryData(nodeKeys.detail(wId, nodeId), {
+					client.setQueryData(queryKeys.nodes.detail(wId, variables.nodeId), {
 						...cached,
-						audio: { ...cached.audio, [voiceId]: data.audio_url }
+						audio: { ...cached.audio, [variables.voiceId]: data.audio_url }
 					});
 				}
-				// Invalidate usage so the audio narrations counter updates
-				client.invalidateQueries({ queryKey: usageKeys.all });
+				client.invalidateQueries({ queryKey: queryKeys.usage.all });
 			},
 			onError: (error: Error) => {
-				// Caller handles 429 (quota exceeded / rate limited) with appropriate UI.
 				if (!('status' in error && (error as { status: number }).status === 429)) {
 					showError('Audio generation failed', error.message);
 				}

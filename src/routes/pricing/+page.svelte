@@ -3,16 +3,16 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import { useUsage, useCheckout, useBillingPortal, usageKeys } from '$lib/queries';
+	import { useUsage, useCheckout, useBillingPortal, queryKeys } from '$lib/queries';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { TIER_CONFIG, tierRank } from '$lib/config/tiers';
 	import type { SubscriptionTier } from '$lib/types/subscription';
-	import PricingCard from '$lib/components/subscription/PricingCard.svelte';
-	import SubscriptionStatusBanner from '$lib/components/subscription/SubscriptionStatusBanner.svelte';
+	import PricingCard from '$lib/components/features/subscription/PricingCard.svelte';
+	import SubscriptionStatusBanner from '$lib/components/features/subscription/SubscriptionStatusBanner.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { showSuccess, showInfo } from '$lib/utils/toast';
 	import { ArrowLeft } from '@lucide/svelte';
-	import SEO from '$lib/components/SEO.svelte';
+	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
 	const auth = useAuth();
@@ -29,7 +29,7 @@
 		if (checkoutStatus === 'success') {
 			trackEvent('checkout_completed');
 			showSuccess('Subscription activated!', 'Welcome to your new plan.');
-			queryClient.invalidateQueries({ queryKey: usageKeys.all });
+			queryClient.invalidateQueries({ queryKey: queryKeys.usage.all });
 			// Clean the URL
 			const url = new URL(window.location.href);
 			url.searchParams.delete('checkout');

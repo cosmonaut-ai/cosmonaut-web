@@ -20,8 +20,17 @@ export interface UseStreamingNodeOptions {
 }
 
 /**
- * Encapsulates streaming state and logic for story node text generation.
- * Use in StoryNodeView to handle streaming text, completion, and quota prompts.
+ * Encapsulates the streaming state machine for story node text generation.
+ *
+ * State transitions:
+ *   idle → (node enters 'initialized') → streaming → done
+ *   idle → (node enters 'generating' from server) → polling (no local stream)
+ *
+ * The hook watches `effectiveNodeStatus` via `$effect` and automatically triggers
+ * streaming when a node is in 'initialized' status and not already being generated.
+ * On completion, it updates the TanStack Query cache and invalidates usage counters.
+ *
+ * Returns a getter-based reactive API compatible with Svelte 5 runes.
  */
 export function useStreamingNode(options: UseStreamingNodeOptions) {
 	const {
@@ -43,7 +52,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 	let isStreaming = $state(false);
 	let streamingText = $state('');
 	let streamingDone = $state(false);
-	let pendingNode = $state<StoryNode | null>(null);
+	let pendingNode = $state.raw<StoryNode | null>(null);
 	let generatingNodeId = $state<string | null>(null);
 	let showQuotaPrompt = $state(false);
 	let showAudioQuotaPrompt = $state(false);

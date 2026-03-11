@@ -4,17 +4,11 @@ import {
 	createCheckoutSession,
 	createBillingPortalSession,
 	updateNewsletter
-} from '$lib/api/client';
+} from '$lib/api/subscription';
 import type { CheckoutRequest } from '$lib/types/subscription';
 import { showError } from '$lib/utils/toast';
 import { useAuth } from '$lib/auth/auth.svelte';
-
-/**
- * Query keys for subscription / usage data
- */
-export const usageKeys = {
-	all: ['usage'] as const
-};
+import { queryKeys } from './keys';
 
 /**
  * Query hook to fetch the authenticated user's usage and subscription info.
@@ -23,7 +17,7 @@ export const usageKeys = {
 export function useUsage() {
 	const auth = useAuth();
 	return createQuery(() => ({
-		queryKey: usageKeys.all,
+		queryKey: queryKeys.usage.all,
 		queryFn: getUsage,
 		enabled: auth.isAuthenticated
 	}));
@@ -37,7 +31,6 @@ export function useCheckout() {
 	return createMutation(() => ({
 		mutationFn: (data: CheckoutRequest) => createCheckoutSession(data),
 		onSuccess: (result) => {
-			// Redirect to Stripe checkout
 			window.location.href = result.checkout_url;
 		},
 		onError: (error: Error) => {
@@ -54,7 +47,6 @@ export function useBillingPortal() {
 	return createMutation(() => ({
 		mutationFn: () => createBillingPortalSession(),
 		onSuccess: (result) => {
-			// Redirect to Stripe billing portal
 			window.location.href = result.portal_url;
 		},
 		onError: (error: Error) => {
@@ -72,7 +64,7 @@ export function useUpdateNewsletter() {
 	return createMutation(() => ({
 		mutationFn: (optedIn: boolean) => updateNewsletter(optedIn),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: usageKeys.all });
+			queryClient.invalidateQueries({ queryKey: queryKeys.usage.all });
 		},
 		onError: (error: Error) => {
 			showError('Failed to update newsletter preference', error.message);

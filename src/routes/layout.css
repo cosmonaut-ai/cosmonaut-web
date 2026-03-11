@@ -207,11 +207,4 @@
 		font-weight: 400 900;
 		font-style: normal;
 	}
-
-	@font-face {
-		font-family: 'Orbitron';
-		src: url('/fonts/Orbitron-VariableFont_wght.ttf') format('truetype');
-		font-weight: 400 900;
-		font-style: normal;
-	}
 }

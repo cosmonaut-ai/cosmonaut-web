@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { useWorld, useWorldProgress } from '$lib/queries';
 	import type { World } from '$lib/types/api';
-	import WorldHomePage from '$lib/components/story/WorldHomePage.svelte';
+	import WorldHomePage from '$lib/components/features/worlds/WorldHomePage.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
 
