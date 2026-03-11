@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { checkAuthState, getIsAuthenticated } from '$lib/auth/auth.svelte';
+	import { logger } from '$lib/utils/logger';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -70,7 +71,7 @@
 				}
 			}
 		} catch (err) {
-			console.error('Callback error:', err);
+			logger.error('Callback error:', err);
 			error = err instanceof Error ? err.message : 'Authentication failed';
 		} finally {
 			checking = false;

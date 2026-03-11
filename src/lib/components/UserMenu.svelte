@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { useAuth } from '$lib/auth/auth.svelte';
+	import { logger } from '$lib/utils/logger';
 	import { useUsage } from '$lib/queries';
 	import { getTierConfig } from '$lib/config/tiers';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
@@ -103,7 +104,7 @@
 					await auth.logout();
 					goto('/');
 				} catch (error) {
-					console.error('Failed to log out:', error);
+					logger.error('Failed to log out:', error);
 				}
 			}}
 			class="cursor-pointer"

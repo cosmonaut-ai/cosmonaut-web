@@ -14,6 +14,7 @@ import {
 import { amplifyConfig, isLocalEnvironment, isAuthConfigured, API_BASE_URL } from '$lib/config';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
+import { logger } from '$lib/utils/logger';
 
 // Auth state using Svelte 5 runes
 let isAuthenticated = $state(false);
@@ -52,7 +53,7 @@ export function initializeAuth(): Promise<void> {
 				// Check current auth state and wait for it
 				await checkAuthState();
 			} catch (error) {
-				console.error('Failed to initialize Amplify:', error);
+				logger.error('Failed to initialize Amplify:', error);
 				isLoading = false;
 			}
 		} else if (isLocalEnvironment) {
@@ -61,7 +62,7 @@ export function initializeAuth(): Promise<void> {
 			user = LOCAL_DEV_USER;
 			isLoading = false;
 		} else {
-			console.warn('Auth is not configured for non-local environment');
+			logger.warn('Auth is not configured for non-local environment');
 			isLoading = false;
 		}
 	})();
@@ -124,7 +125,7 @@ export async function checkAuthState(): Promise<void> {
 			'name' in error &&
 			error.name !== 'UserUnauthenticatedException'
 		) {
-			console.debug('Auth state check:', error);
+			logger.debug('Auth state check:', error);
 		}
 	} finally {
 		isLoading = false;
@@ -156,7 +157,7 @@ export async function login(): Promise<void> {
 	}
 
 	if (!isAuthConfigured) {
-		console.warn('Cannot login: Auth is not configured');
+		logger.warn('Cannot login: Auth is not configured');
 		return;
 	}
 
@@ -171,14 +172,14 @@ export async function loginWithGoogle(): Promise<void> {
 	if (isAuthenticated) return;
 
 	if (!isAuthConfigured) {
-		console.warn('Cannot login: Auth is not configured');
+		logger.warn('Cannot login: Auth is not configured');
 		return;
 	}
 
 	try {
 		await signInWithRedirect({ provider: 'Google' });
 	} catch (error) {
-		console.error('Google login failed:', error);
+		logger.error('Google login failed:', error);
 		throw error;
 	}
 }
@@ -347,7 +348,7 @@ export async function logout(): Promise<void> {
 		user = null;
 		authReadyPromise = null; // Reset promise so it can be re-initialized
 	} catch (error) {
-		console.error('Logout failed:', error);
+		logger.error('Logout failed:', error);
 		throw error;
 	}
 }
@@ -367,13 +368,13 @@ export async function getAuthToken(forceRefresh = false): Promise<string | null>
 	}
 
 	if (!isAuthConfigured) {
-		console.warn('Auth not configured, cannot get token');
+		logger.warn('Auth not configured, cannot get token');
 		return null;
 	}
 
 	// If not authenticated and not forcing refresh, return null early
 	if (!isAuthenticated && !forceRefresh) {
-		console.warn('Not authenticated, cannot get token');
+		logger.warn('Not authenticated, cannot get token');
 		return null;
 	}
 
@@ -389,17 +390,29 @@ export async function getAuthToken(forceRefresh = false): Promise<string | null>
 
 		const token = session.tokens?.idToken?.toString() ?? null;
 		if (!token) {
-			console.warn('No ID token in session');
+			logger.warn('No ID token in session');
 		}
 		return token;
 	} catch (error) {
-		console.error('Failed to get auth token:', error);
+		logger.error('Failed to get auth token:', error);
 		// If token fetching fails, we might not be authenticated anymore
 		if (isAuthenticated) {
 			await checkAuthState();
 		}
 		return null;
 	}
+}
+
+/**
+ * Handle a terminal session expiry (refresh token gone / expired).
+ * Clears local auth state and redirects to login with a message.
+ */
+export async function handleSessionExpired(): Promise<void> {
+	if (!browser) return;
+	isAuthenticated = false;
+	user = null;
+	const redirectPath = window.location.pathname + window.location.search;
+	await goto(`/login?expired=true&redirect=${encodeURIComponent(redirectPath)}`);
 }
 
 /**
@@ -447,7 +460,7 @@ export async function refreshStreamingSession(): Promise<boolean> {
 			}
 			return response.ok;
 		} catch (error) {
-			console.error('Failed to refresh streaming session:', error);
+			logger.error('Failed to refresh streaming session:', error);
 			return false;
 		} finally {
 			_streamingSessionPromise = null;

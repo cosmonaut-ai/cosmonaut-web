@@ -11,7 +11,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { ShieldAlert } from '@lucide/svelte';
+	import { AlertTriangle, ShieldAlert } from '@lucide/svelte';
 	import SEO from '$lib/components/SEO.svelte';
 
 	interface Props {
@@ -44,6 +44,8 @@
 	const isAccessDenied = $derived(
 		worldQuery.error instanceof ApiError && worldQuery.error.isForbidden
 	);
+	const isNotFound = $derived(worldQuery.error instanceof ApiError && worldQuery.error.isNotFound);
+	const isNetworkOrServerError = $derived(!!worldQuery.error && !isAccessDenied && !isNotFound);
 </script>
 
 <SEO
@@ -98,8 +100,27 @@
 			</Card>
 		</main>
 	</div>
+{:else if isNetworkOrServerError}
+	<!-- Network or server error — offer retry -->
+	<div class="min-h-full bg-background">
+		<main class="mx-auto max-w-3xl px-6 py-12">
+			<Card class="border-destructive/50">
+				<CardContent class="flex flex-col items-center py-12 text-center">
+					<AlertTriangle class="mb-4 h-8 w-8 text-destructive" />
+					<p class="mb-2 font-semibold text-foreground">Something went wrong</p>
+					<p class="mb-6 text-sm text-muted-foreground">
+						We couldn't load this world. This might be a temporary issue.
+					</p>
+					<div class="flex gap-3">
+						<Button variant="outline" onclick={() => worldQuery.refetch()}>Try Again</Button>
+						<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
+					</div>
+				</CardContent>
+			</Card>
+		</main>
+	</div>
 {:else if !world}
-	<!-- World not found -->
+	<!-- World not found (404 or no data) -->
 	<div class="min-h-full bg-background">
 		<main class="mx-auto max-w-3xl px-6 py-12">
 			<Card class="border-destructive/50">

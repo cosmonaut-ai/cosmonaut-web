@@ -324,7 +324,7 @@
 				<div class="ending-hero relative overflow-hidden rounded-xl">
 					<img
 						src="/art/ending-sunset.webp"
-						alt=""
+						alt="Story ending illustration"
 						class="h-48 w-full object-cover sm:h-56 lg:h-64"
 					/>
 					<div
