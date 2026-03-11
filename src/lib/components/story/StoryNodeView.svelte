@@ -11,6 +11,7 @@
 	import ShareModal from './ShareModal.svelte';
 	import UpgradePrompt from '$lib/components/subscription/UpgradePrompt.svelte';
 	import { useStreamingNode } from './useStreamingNode.svelte';
+	import { useAuth } from '$lib/auth/auth.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -214,6 +215,7 @@
 	const worldQuery = useWorld(() => worldId);
 	const world = $derived(worldQuery.data);
 	let shareModalOpen = $state(false);
+	const auth = useAuth();
 </script>
 
 <main class="mx-auto max-w-4xl px-6 py-8 {audioPlayerVisible ? 'pb-24' : ''}">
@@ -243,6 +245,7 @@
 				isNodeCompleted={currentNode?.generation_status === 'completed'}
 				onQuotaExceeded={() => (stream.showAudioQuotaPrompt = true)}
 				bind:playerVisible={audioPlayerVisible}
+				nodeTextLength={currentNode?.text?.length ?? 0}
 			/>
 			<Button
 				variant="ghost"
@@ -400,6 +403,7 @@
 			open={shareModalOpen}
 			onOpenChange={(open) => (shareModalOpen = open)}
 			onWorldUpdate={() => worldQuery.refetch()}
+			isOwner={world.author_id === auth.user?.sub}
 		/>
 	{/if}
 </main>

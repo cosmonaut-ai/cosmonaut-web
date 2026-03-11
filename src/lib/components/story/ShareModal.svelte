@@ -19,9 +19,10 @@
 		open: boolean;
 		onOpenChange: (open: boolean) => void;
 		onWorldUpdate?: (world: World) => void;
+		isOwner?: boolean;
 	}
 
-	let { world, open, onOpenChange, onWorldUpdate }: Props = $props();
+	let { world, open, onOpenChange, onWorldUpdate, isOwner = true }: Props = $props();
 
 	const worldId = $derived(world.id);
 
@@ -187,11 +188,12 @@
 					type="single"
 					value={visibility}
 					onValueChange={(v) => {
-						if (v) {
+						if (v && isOwner) {
 							visibility = v as WorldVisibility;
 							scheduleSave();
 						}
 					}}
+					disabled={!isOwner}
 				>
 					<Select.Trigger class="w-full">
 						<div class="flex items-center gap-2">
@@ -265,40 +267,49 @@
 				<Copy class="h-4 w-4 shrink-0 text-muted-foreground" />
 			</button>
 
-			<!-- Add people -->
-			<div class="space-y-2">
-				<Label>Invite others</Label>
-				<div class="flex gap-2">
-					<Input
-						type="email"
-						placeholder="Enter email address"
-						bind:value={newEmail}
-						onkeydown={handleKeyDown}
-						oninput={() => {
-							emailTouched = true;
-						}}
-						disabled={saving}
-						aria-invalid={emailError ? 'true' : undefined}
-						aria-describedby={emailError ? 'email-error' : undefined}
-						class="flex-1 {emailError ? 'border-destructive focus-visible:ring-destructive' : ''}"
-					/>
-					<Button
-						variant="outline"
-						size="icon"
-						onclick={addEmail}
-						disabled={saving || !newEmail.trim()}
-						aria-label="Add email"
-					>
-						<Plus class="h-4 w-4" />
-					</Button>
+			{#if isOwner}
+				<!-- Add people -->
+				<div class="space-y-2">
+					<Label>Invite others</Label>
+					<div class="flex gap-2">
+						<Input
+							type="email"
+							placeholder="Enter email address"
+							bind:value={newEmail}
+							onkeydown={handleKeyDown}
+							oninput={() => {
+								emailTouched = true;
+							}}
+							disabled={saving}
+							aria-invalid={emailError ? 'true' : undefined}
+							aria-describedby={emailError ? 'email-error' : undefined}
+							class="flex-1 {emailError ? 'border-destructive focus-visible:ring-destructive' : ''}"
+						/>
+						<Button
+							variant="outline"
+							size="icon"
+							onclick={addEmail}
+							disabled={saving || !newEmail.trim()}
+							aria-label="Add email"
+						>
+							<Plus class="h-4 w-4" />
+						</Button>
+					</div>
+					{#if emailError}
+						<p id="email-error" class="text-xs text-destructive">{emailError}</p>
+					{/if}
 				</div>
-				{#if emailError}
-					<p id="email-error" class="text-xs text-destructive">{emailError}</p>
-				{/if}
-			</div>
+			{:else}
+				<div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
+					<p class="text-sm text-muted-foreground">
+						Only the owner of this world can invite others by email. You can still share the link
+						above if the world is public.
+					</p>
+				</div>
+			{/if}
 
 			<!-- Shared users as badges -->
-			{#if sharedWith.length > 0}
+			{#if isOwner && sharedWith.length > 0}
 				<div class="space-y-2">
 					<Label class="text-muted-foreground">People with access ({sharedWith.length})</Label>
 					<div class="flex flex-wrap gap-1.5">

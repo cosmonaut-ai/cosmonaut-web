@@ -26,6 +26,7 @@
 		MessageSquareText
 	} from '@lucide/svelte';
 	import { trackEvent } from '$lib/utils/analytics';
+	import { useAuth } from '$lib/auth/auth.svelte';
 	import ConstellationDivider from '$lib/components/ConstellationDivider.svelte';
 
 	function getWorldLengthLabel(length: string | null): string | null {
@@ -53,6 +54,7 @@
 
 	let shareModalOpen = $state(false);
 	let promptCopied = $state(false);
+	const auth = useAuth();
 
 	async function copyPrompt() {
 		if (!world.world_prompt) return;
@@ -535,6 +537,7 @@
 	open={shareModalOpen}
 	onOpenChange={(open) => (shareModalOpen = open)}
 	{onWorldUpdate}
+	isOwner={world.author_id === auth.user?.sub}
 />
 
 <style>
