@@ -31,11 +31,11 @@ Story nodes can have AI-generated audio narrations via ElevenLabs TTS. Customers
 
 | Tier      | Audio narrations per period | Period  | Reset behaviour                 |
 | --------- | --------------------------- | ------- | ------------------------------- |
-| FREE      | 20                          | 7 days  | **Never resets** (lifetime cap) |
+| FREE      | 10                          | 7 days  | **Never resets** (lifetime cap) |
 | EXPLORER  | 60                          | 30 days | Resets each billing period      |
 | COSMONAUT | 200                         | 30 days | Resets each billing period      |
 
-> Free-tier audio is a one-time allowance — once the 20 narrations are used, the user must upgrade to generate more. Paid tiers get fresh quota each billing cycle.
+> Free-tier audio is a one-time allowance — once the 10 narrations are used, the user must upgrade to generate more. Paid tiers get fresh quota each billing cycle.
 
 ---
 

@@ -27,13 +27,13 @@ export const TIER_CONFIG: TierConfig[] = [
 		worldsLimit: 3,
 		nodesLimit: 30,
 		savedWorldsLimit: 5,
-		audioNarrationsLimit: 20,
+		audioNarrationsLimit: 10,
 		resetPeriod: '7 days',
 		features: [
 			'3 worlds per week',
 			'30 story nodes per week',
 			'5 saved stories',
-			'20 audio narrations (one-time)',
+			'10 audio narrations (one-time)',
 			'Full story graph visualization',
 			'Community sharing'
 		]
