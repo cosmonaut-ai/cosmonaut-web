@@ -61,13 +61,6 @@
 			}
 		}
 	}
-
-	function resetForm() {
-		submitted = false;
-		rateLimited = false;
-		message = '';
-		category = 'feedback';
-	}
 </script>
 
 <SEO
@@ -108,10 +101,6 @@
 							<CheckCircle class="h-5 w-5 shrink-0" />
 							<span class="font-medium">Thank you! Your feedback has been submitted.</span>
 						</div>
-						<Button variant="outline" onclick={resetForm} class="gap-2">
-							<MessageSquarePlus class="h-4 w-4" />
-							Submit More
-						</Button>
 					</div>
 				{:else}
 					<form
