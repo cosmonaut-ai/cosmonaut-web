@@ -449,20 +449,6 @@
 	.story-ending {
 		text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 	}
-
-	.story-star {
-		display: inline-block;
-		color: var(--primary);
-		filter: brightness(1.3);
-		animation: star-twinkle 2s ease-in-out infinite;
-	}
-	.story-star-1 {
-		animation-delay: 0s;
-	}
-	.story-star-2 {
-		animation-delay: 1s;
-	}
-
 	@keyframes star-twinkle {
 		0%,
 		100% {
@@ -487,10 +473,6 @@
 		}
 		.story-choice:hover {
 			transform: none;
-		}
-		.story-star {
-			animation: none;
-			opacity: 0.7;
 		}
 	}
 </style>
