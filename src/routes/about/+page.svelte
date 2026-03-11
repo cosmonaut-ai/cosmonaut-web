@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import SEO from '$lib/components/SEO.svelte';
-	import ConstellationDivider from '$lib/components/ConstellationDivider.svelte';
+	import SEO from '$lib/components/shared/SEO.svelte';
+	import ConstellationDivider from '$lib/components/shared/ConstellationDivider.svelte';
 	import { BookOpen, Sparkles, Users } from '@lucide/svelte';
 
 	const prefersReducedMotion = browser

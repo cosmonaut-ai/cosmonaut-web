@@ -17,7 +17,15 @@ interface NodeWithDepth {
 }
 
 /**
- * Transforms an array of StoryNodes into Svelte Flow nodes and edges
+ * Transforms a flat array of StoryNodes into a hierarchical SvelteFlow graph layout.
+ *
+ * Algorithm:
+ * 1. Find the root node (no `parent_id`) and build a tree from parent-child relationships.
+ * 2. Group tree nodes by depth, then calculate x/y positions using equal horizontal spacing
+ *    per depth layer, centered around x=0.
+ * 3. Create SvelteFlow edges for parent-child links (solid) and choice-target links (dashed).
+ *
+ * Falls back to a simple grid layout if no root node is found.
  */
 export function transformNodesToFlow(storyNodes: StoryNode[]): {
 	nodes: Node<FlowNodeData>[];
@@ -95,7 +103,7 @@ export function transformNodesToFlow(storyNodes: StoryNode[]): {
 						target: choice.target,
 						type: 'smoothstep',
 						animated: true,
-						style: 'stroke: #94a3b8; stroke-dasharray: 5;'
+						style: 'stroke: var(--muted-foreground); stroke-dasharray: 5;'
 					});
 					edgeSet.add(edgeId);
 				}

@@ -1,39 +1,30 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { SvelteFlow, Controls, Background, BackgroundVariant, MiniMap } from '@xyflow/svelte';
+	import { onMount } from 'svelte';
 	import type { NodeTypes } from '@xyflow/svelte';
-	import '@xyflow/svelte/dist/style.css';
 	import { useWorldNodes } from '$lib/queries';
 	import { transformNodesToFlow } from '$lib/utils/nodeTransform';
-	import FlowNode from '$lib/components/FlowNode.svelte';
+	import FlowNode from '$lib/components/shared/FlowNode.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { BookOpen } from '@lucide/svelte';
 
-	// Get worldId from params (guaranteed to exist in this route)
 	const worldId = page.params.worldId!;
-
-	// Use TanStack Query for nodes data
 	const nodesQuery = useWorldNodes(worldId);
 
 	const storyNodes = $derived(nodesQuery.data ?? []);
 	const isLoading = $derived(nodesQuery.isLoading);
-
-	// Get current node from URL if present
 	const currentNodeId = $derived(page.url.searchParams.get('node'));
 
-	// Handle node click - navigate to the story page with that node
 	function handleNodeClick(nodeId: string) {
 		goto(`/worlds/${worldId}/nodes/${nodeId}`);
 	}
 
-	// Transform story nodes to flow format and add click handlers
 	const { nodes: flowNodes, edges: flowEdges } = $derived.by(() => {
 		if (!storyNodes.length) return { nodes: [], edges: [] };
 		const result = transformNodesToFlow(storyNodes);
-		// Add click handler to all nodes
 		result.nodes.forEach((node) => {
 			node.data.onNodeClick = handleNodeClick;
 			node.data.isCurrent = node.id === currentNodeId;
@@ -42,17 +33,15 @@
 	});
 
 	const graphColors = {
-		start: 'oklch(0.723 0.219 142.5)', // green-500
-		end: 'oklch(0.705 0.191 47.604)', // orange-500
+		start: 'oklch(0.723 0.219 142.5)',
+		end: 'oklch(0.705 0.191 47.604)',
 		current: 'var(--chart-2)',
 		default: 'var(--secondary)'
 	};
 
-	// Use $state.raw for performance with large node arrays
 	const nodes = $derived(flowNodes);
 	const edges = $derived(flowEdges);
 
-	// Define custom node types - cast to satisfy @xyflow/svelte types
 	const nodeTypes = {
 		custom: FlowNode
 	} as NodeTypes;
@@ -61,6 +50,24 @@
 		const url = currentNodeId ? `/worlds/${worldId}/nodes/${currentNodeId}` : `/worlds/${worldId}`;
 		goto(url);
 	}
+
+	// Lazy-load the heavy @xyflow/svelte library
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let xyflowComponents = $state<Record<string, any> | null>(null);
+
+	onMount(async () => {
+		const [mod, _css] = await Promise.all([
+			import('@xyflow/svelte'),
+			import('@xyflow/svelte/dist/style.css')
+		]);
+		xyflowComponents = {
+			SvelteFlow: mod.SvelteFlow,
+			Controls: mod.Controls,
+			Background: mod.Background,
+			BackgroundVariant: mod.BackgroundVariant,
+			MiniMap: mod.MiniMap
+		};
+	});
 </script>
 
 <!-- WorldHeader is rendered by the layout -->
@@ -104,11 +111,19 @@
 				</p>
 			</div>
 		</div>
+	{:else if !xyflowComponents}
+		<div class="flex h-full items-center justify-center">
+			<p class="text-sm text-muted-foreground">Loading graph...</p>
+		</div>
 	{:else}
-		<!-- Overlay controls -->
+		{@const SvelteFlow = xyflowComponents.SvelteFlow}
+		{@const FlowControls = xyflowComponents.Controls}
+		{@const FlowBackground = xyflowComponents.Background}
+		{@const BGVariant = xyflowComponents.BackgroundVariant}
+		{@const FlowMiniMap = xyflowComponents.MiniMap}
+
 		<div class="pointer-events-none absolute inset-x-0 top-0 z-10 px-6 py-8">
 			<div class="mx-auto flex max-w-4xl items-center justify-between gap-4">
-				<!-- Legend badges -->
 				<div class="pointer-events-auto flex items-center gap-2">
 					<Badge class="legend-badge legend-badge-start shadow-lg">Start</Badge>
 					<Badge class="legend-badge legend-badge-end shadow-lg">End</Badge>
@@ -117,7 +132,6 @@
 					{/if}
 				</div>
 
-				<!-- Back button -->
 				<Button
 					variant="outline"
 					size="sm"
@@ -144,10 +158,10 @@
 				style: 'stroke: oklch(0.9536 0.0872 97.9082); stroke-width: 2px;'
 			}}
 		>
-			<Controls />
-			<Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-			<MiniMap
-				nodeColor={(node) => {
+			<FlowControls />
+			<FlowBackground variant={BGVariant.Dots} gap={16} size={1} />
+			<FlowMiniMap
+				nodeColor={(node: { id: string; data?: { isRoot?: boolean; isLeaf?: boolean } }) => {
 					if (node.id === currentNodeId) return graphColors.current;
 					if (node.data?.isRoot) return graphColors.start;
 					if (node.data?.isLeaf) return graphColors.end;

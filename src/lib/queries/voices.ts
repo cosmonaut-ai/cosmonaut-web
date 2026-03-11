@@ -1,12 +1,6 @@
 import { createQuery } from '@tanstack/svelte-query';
-import { listVoices } from '$lib/api/client';
-
-/**
- * Query keys for voices
- */
-export const voiceKeys = {
-	all: ['voices'] as const
-};
+import { listVoices } from '$lib/api/voices';
+import { queryKeys } from './keys';
 
 /**
  * Query hook to fetch the list of available TTS voices.
@@ -14,7 +8,7 @@ export const voiceKeys = {
  */
 export function useVoices() {
 	return createQuery(() => ({
-		queryKey: voiceKeys.all,
+		queryKey: queryKeys.voices.all,
 		queryFn: listVoices,
 		staleTime: Infinity
 	}));

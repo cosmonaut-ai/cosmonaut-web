@@ -20,7 +20,7 @@
 	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import * as Select from '$lib/components/ui/select';
 	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Info } from '@lucide/svelte';
-	import SEO from '$lib/components/SEO.svelte';
+	import SEO from '$lib/components/shared/SEO.svelte';
 	import { logger } from '$lib/utils/logger';
 	import { formatResetDate } from '$lib/utils/date';
 	import { trackEvent } from '$lib/utils/analytics';

@@ -7,7 +7,16 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Volume2 } from '@lucide/svelte';
 	import { untrack } from 'svelte';
-	import AudioPlayerBar from './AudioPlayerBar.svelte';
+	import type { Component } from 'svelte';
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let AudioPlayerBar = $state<Component<any> | null>(null);
+
+	async function loadPlayerBar() {
+		if (AudioPlayerBar) return;
+		const mod = await import('./AudioPlayerBar.svelte');
+		AudioPlayerBar = mod.default;
+	}
 
 	interface Props {
 		worldId: string;
@@ -94,13 +103,8 @@
 
 	let playbackRate = $state(loadSpeed());
 
-	// Sync playbackRate to the audio element
 	$effect(() => {
 		if (audioElement) audioElement.playbackRate = playbackRate;
-	});
-
-	// Persist speed on change
-	$effect(() => {
 		if (browser) localStorage.setItem(SPEED_KEY, String(playbackRate));
 	});
 
@@ -120,13 +124,8 @@
 	let volume = $state(loadVolume());
 	let previousVolume = $state(1); // for mute/unmute toggle
 
-	// Sync volume to the audio element
 	$effect(() => {
 		if (audioElement) audioElement.volume = volume;
-	});
-
-	// Persist volume on change
-	$effect(() => {
 		if (browser) localStorage.setItem(VOLUME_KEY, String(volume));
 	});
 
@@ -161,6 +160,7 @@
 
 	async function handleActivate() {
 		if (isGenerating || playerVisible) return;
+		await loadPlayerBar();
 
 		const voiceId = effectiveVoiceId;
 		if (!voiceId) return; // Voices haven't loaded yet
@@ -390,8 +390,7 @@
 	</Button>
 {/if}
 
-<!-- Fixed bottom media bar -->
-{#if playerVisible}
+{#if playerVisible && AudioPlayerBar}
 	<AudioPlayerBar
 		{currentTime}
 		{duration}
@@ -406,7 +405,7 @@
 		onSeek={handleSeek}
 		onVolumeChange={handleVolumeChange}
 		onToggleMute={toggleMute}
-		onPlaybackRateChange={(rate) => (playbackRate = rate)}
+		onPlaybackRateChange={(rate: number) => (playbackRate = rate)}
 		onVoiceSelect={handleVoiceSelect}
 		onVoicePickerOpenChange={handleVoicePickerOpenChange}
 		onClose={handleClose}

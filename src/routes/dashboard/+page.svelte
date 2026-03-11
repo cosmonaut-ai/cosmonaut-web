@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { useWorlds, useDeleteWorld, useUsage } from '$lib/queries';
-	import WorldCard from '$lib/components/dashboard/WorldCard.svelte';
-	import WorldCardSkeleton from '$lib/components/dashboard/WorldCardSkeleton.svelte';
-	import UsageLimitTooltip from '$lib/components/subscription/UsageLimitTooltip.svelte';
-	import UpgradePrompt from '$lib/components/subscription/UpgradePrompt.svelte';
-	import SubscriptionStatusBanner from '$lib/components/subscription/SubscriptionStatusBanner.svelte';
+	import WorldCard from '$lib/components/features/worlds/WorldCard.svelte';
+	import WorldCardSkeleton from '$lib/components/features/worlds/WorldCardSkeleton.svelte';
+	import UsageLimitTooltip from '$lib/components/features/subscription/UsageLimitTooltip.svelte';
+	import UpgradePrompt from '$lib/components/features/subscription/UpgradePrompt.svelte';
+	import SubscriptionStatusBanner from '$lib/components/features/subscription/SubscriptionStatusBanner.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Tooltip, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import { Plus } from '@lucide/svelte';
-	import SEO from '$lib/components/SEO.svelte';
+	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
 	const worldsQuery = useWorlds();
@@ -116,6 +116,7 @@
 						<img
 							src="/art/no-worlds-astronaut.webp"
 							alt=""
+							loading="lazy"
 							class="empty-icon relative mb-6 h-40 w-auto object-contain sm:h-48"
 						/>
 						<h3 class="mb-2 text-xl font-semibold text-foreground">No worlds yet</h3>

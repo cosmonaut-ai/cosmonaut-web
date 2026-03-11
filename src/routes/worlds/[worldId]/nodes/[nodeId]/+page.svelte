@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { useWorld } from '$lib/queries';
-	import StoryNodeView from '$lib/components/story/StoryNodeView.svelte';
+	import StoryNodeView from '$lib/components/features/stories/StoryNodeView.svelte';
 
 	// Get worldId and nodeId from params (guaranteed to exist in this route)
 	const worldId = page.params.worldId!;
