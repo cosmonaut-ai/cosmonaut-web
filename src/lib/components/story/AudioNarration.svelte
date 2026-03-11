@@ -4,6 +4,7 @@
 	import { ApiError } from '$lib/types/api';
 	import { showWarning } from '$lib/utils/toast';
 	import { Button } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Volume2 } from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import AudioPlayerBar from './AudioPlayerBar.svelte';
@@ -16,6 +17,7 @@
 		isNodeCompleted: boolean;
 		onQuotaExceeded: () => void;
 		playerVisible?: boolean;
+		nodeTextLength?: number;
 	}
 
 	let {
@@ -24,8 +26,12 @@
 		audio,
 		isNodeCompleted,
 		onQuotaExceeded,
-		playerVisible = $bindable(false)
+		playerVisible = $bindable(false),
+		nodeTextLength = 0
 	}: Props = $props();
+
+	const MAX_NARRATION_CHARS = 3000;
+	const isTooLong = $derived(nodeTextLength > MAX_NARRATION_CHARS);
 
 	// ── Voice selection (persisted) ──
 	const VOICE_KEY = 'cosmonaut-audio-voice';
@@ -327,16 +333,40 @@
 {/if}
 
 <!-- Speaker icon toggle (always visible, disabled until node text is ready) -->
-<Button
-	variant="ghost"
-	size="icon-sm"
-	onclick={handleToggle}
-	disabled={!isNodeCompleted || !effectiveVoiceId}
-	aria-label={playerVisible ? 'Close narration' : 'Play narration'}
-	class="shrink-0"
->
-	<Volume2 class="h-4 w-4" />
-</Button>
+{#if isTooLong}
+	<Tooltip.Provider>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						variant="ghost"
+						size="icon-sm"
+						disabled
+						aria-label="Narration unavailable"
+						class="shrink-0"
+					>
+						<Volume2 class="h-4 w-4" />
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>
+				<p>Too long for audio narration ({nodeTextLength.toLocaleString()} / {MAX_NARRATION_CHARS.toLocaleString()} chars)</p>
+			</Tooltip.Content>
+		</Tooltip.Root>
+	</Tooltip.Provider>
+{:else}
+	<Button
+		variant="ghost"
+		size="icon-sm"
+		onclick={handleToggle}
+		disabled={!isNodeCompleted || !effectiveVoiceId}
+		aria-label={playerVisible ? 'Close narration' : 'Play narration'}
+		class="shrink-0"
+	>
+		<Volume2 class="h-4 w-4" />
+	</Button>
+{/if}
 
 <!-- Fixed bottom media bar -->
 {#if playerVisible}
