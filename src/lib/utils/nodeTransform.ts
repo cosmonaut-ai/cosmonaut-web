@@ -1,5 +1,6 @@
 import type { StoryNode } from '$lib/types/api';
 import type { Node, Edge } from '@xyflow/svelte';
+import { logger } from '$lib/utils/logger';
 
 export interface FlowNodeData extends Record<string, unknown> {
 	storyNode: StoryNode;
@@ -34,7 +35,7 @@ export function transformNodesToFlow(storyNodes: StoryNode[]): {
 	const rootNode = storyNodes.find((node) => !node.parent_id);
 	if (!rootNode) {
 		// If no root found, use the first node
-		console.warn('No root node found, using first node as root');
+		logger.warn('No root node found, using first node as root');
 		return transformNodesWithoutRoot(storyNodes);
 	}
 

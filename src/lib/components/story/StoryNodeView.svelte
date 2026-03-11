@@ -195,6 +195,12 @@
 		});
 	}
 
+	async function handleRetryGeneration() {
+		if (!currentNode || stream.isStreaming) return;
+		stream.setGeneratingNodeId(currentNode.id);
+		await stream.startGeneration(worldId, currentNode.id, { setLoading: true });
+	}
+
 	const isEnding = $derived(
 		currentNode?.generation_status === 'completed' &&
 			(!currentNode?.choices || currentNode.choices.length === 0)
@@ -285,16 +291,24 @@
 						showCustomChoice={false}
 					/>
 				{:else if isNodeFailed}
-					<!-- Node generation failed - show error page -->
+					<!-- Node generation failed - show error page with retry -->
 					<Card class="border-destructive bg-destructive/5">
 						<CardContent class="flex flex-col items-center justify-center py-16">
 							<AlertTriangle class="mb-4 h-12 w-12 text-destructive" />
 							<h2 class="mb-2 text-xl font-semibold text-destructive">Generation Failed</h2>
 							<p class="mb-6 max-w-md text-center text-muted-foreground">
-								Something went wrong while generating this part of the story. You can go back and
-								try a different choice.
+								Something went wrong while generating this part of the story.
 							</p>
 							<div class="flex gap-3">
+								<Button
+									variant="default"
+									onclick={handleRetryGeneration}
+									disabled={stream.isStreaming}
+									class="gap-2"
+								>
+									<RotateCcw class="h-4 w-4" />
+									Retry
+								</Button>
 								{#if canGoBack}
 									<Button variant="outline" onclick={handleBack}>
 										<ChevronLeft class="mr-2 h-4 w-4" />

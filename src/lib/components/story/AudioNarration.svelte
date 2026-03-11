@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import { useGenerateAudio, useVoices } from '$lib/queries';
 	import { ApiError } from '$lib/types/api';
-	import { showWarning } from '$lib/utils/toast';
+	import { showError, showWarning } from '$lib/utils/toast';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Volume2 } from '@lucide/svelte';
@@ -194,6 +194,10 @@
 				onQuotaExceeded();
 			} else {
 				playerVisible = false;
+				showError(
+					'Audio generation failed',
+					err instanceof Error ? err.message : 'Please try again later.'
+				);
 			}
 		}
 	}
@@ -215,7 +219,11 @@
 			if (!ready) return;
 		}
 
-		audioElement.play();
+		try {
+			await audioElement.play();
+		} catch {
+			// Autoplay blocked or element invalidated — silently ignore
+		}
 	}
 
 	function togglePlayPause() {
@@ -308,6 +316,16 @@
 		});
 	});
 
+	function handleAudioError() {
+		audioElement?.pause();
+		playerVisible = false;
+		if (effectiveVoiceId && localAudio[effectiveVoiceId]) {
+			const { [effectiveVoiceId]: _, ...rest } = localAudio;
+			localAudio = rest;
+		}
+		showError('Playback failed', 'The audio file could not be loaded. Please try again.');
+	}
+
 	// Stop audio and clean up when the component is destroyed.
 	// No reactive reads in the body → runs once on mount, cleanup runs on destroy only.
 	$effect(() => {
@@ -329,6 +347,7 @@
 		bind:ended
 		src={effectiveAudioUrl}
 		preload="auto"
+		onerror={handleAudioError}
 	></audio>
 {/if}
 
@@ -351,7 +370,10 @@
 				{/snippet}
 			</Tooltip.Trigger>
 			<Tooltip.Content>
-				<p>Too long for audio narration ({nodeTextLength.toLocaleString()} / {MAX_NARRATION_CHARS.toLocaleString()} chars)</p>
+				<p>
+					Too long for audio narration ({nodeTextLength.toLocaleString()} / {MAX_NARRATION_CHARS.toLocaleString()}
+					chars)
+				</p>
 			</Tooltip.Content>
 		</Tooltip.Root>
 	</Tooltip.Provider>

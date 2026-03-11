@@ -1,6 +1,7 @@
 import { ApiError } from '$lib/types/api';
 import { isLocalEnvironment } from '$lib/config';
-import { getAuthToken, refreshStreamingSession } from '$lib/auth/auth.svelte';
+import { logger } from '$lib/utils/logger';
+import { getAuthToken, refreshStreamingSession, handleSessionExpired } from '$lib/auth/auth.svelte';
 
 /** Delay after streaming completes to ensure server-side persistence before re-fetching */
 export const POST_STREAM_DELAY_MS = 500;
@@ -26,7 +27,7 @@ export async function getAuthHeaders(forceRefresh = false): Promise<HeadersInit>
 	if (token) {
 		headers['Authorization'] = `Bearer ${token}`;
 	} else if (!isLocalEnvironment) {
-		console.warn('No auth token available for API request');
+		logger.warn('No auth token available for API request');
 	}
 
 	return headers;
@@ -84,6 +85,10 @@ export async function apiRequest<T>(
 				...(options.headers as Record<string, string>)
 			}
 		});
+
+		if (retryResponse.status === 401) {
+			await handleSessionExpired();
+		}
 
 		return handleResponse<T>(retryResponse);
 	}
