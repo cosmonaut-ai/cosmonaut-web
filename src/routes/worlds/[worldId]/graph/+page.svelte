@@ -2,17 +2,19 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { NodeTypes } from '@xyflow/svelte';
-	import { useWorldNodes } from '$lib/queries';
+	import { useWorld, useWorldNodes } from '$lib/queries';
 	import { transformNodesToFlow } from '$lib/utils/nodeTransform';
 	import FlowNode from '$lib/components/shared/FlowNode.svelte';
 	import StoryGraph from '$lib/components/shared/StoryGraph.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { BookOpen } from '@lucide/svelte';
+	import { BookOpen, Rocket } from '@lucide/svelte';
 
 	const worldId = page.params.worldId!;
+	const worldQuery = useWorld(worldId);
 	const nodesQuery = useWorldNodes(worldId);
+	const rootNodeId = $derived(worldQuery.data?.root_node_id ?? null);
 
 	const storyNodes = $derived(
 		(nodesQuery.data ?? []).filter((n) => n.generation_status === 'completed')
@@ -88,11 +90,22 @@
 		</div>
 	{:else if nodes.length === 0}
 		<div class="flex h-full items-center justify-center">
-			<div class="text-center">
-				<p class="text-lg text-muted-foreground">No story nodes found</p>
-				<p class="mt-2 text-sm text-muted-foreground/70">
-					Start creating your story to see the map
-				</p>
+			<div class="flex flex-col items-center gap-4 text-center">
+				<div class="rounded-full border border-dashed border-muted-foreground/40 bg-muted/20 p-3">
+					<Rocket class="h-8 w-8 text-muted-foreground" />
+				</div>
+				<div class="space-y-2">
+					<p class="text-lg text-muted-foreground">No story nodes yet</p>
+					<p class="text-sm text-muted-foreground/70">
+						Start your adventure to build out the story map
+					</p>
+				</div>
+				{#if rootNodeId}
+					<Button onclick={() => goto(`/worlds/${worldId}/nodes/${rootNodeId}`)} class="gap-2">
+						<BookOpen class="h-4 w-4" />
+						Enter the Story
+					</Button>
+				{/if}
 			</div>
 		</div>
 	{:else}
