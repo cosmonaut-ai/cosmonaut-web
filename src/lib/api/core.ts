@@ -39,10 +39,13 @@ export async function getAuthHeaders(forceRefresh = false): Promise<HeadersInit>
  */
 async function handleResponse<T>(response: Response): Promise<T> {
 	if (!response.ok) {
-		const errorBody: { detail?: string } = await response.json().catch(() => ({
-			detail: `HTTP ${response.status}: ${response.statusText}`
-		}));
-		throw new ApiError(response.status, errorBody.detail || response.statusText);
+		const errorBody = await response.json().catch(() => ({}));
+		const message =
+			errorBody.error?.message ??
+			errorBody.detail ??
+			`HTTP ${response.status}: ${response.statusText}`;
+		const code: string | undefined = errorBody.error?.code;
+		throw new ApiError(response.status, message, code);
 	}
 	// Handle empty responses (204 No Content or zero-length body)
 	if (response.status === 204 || response.headers.get('content-length') === '0') {

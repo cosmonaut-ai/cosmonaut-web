@@ -29,7 +29,7 @@ export async function getNode(worldId: string, nodeId: string): Promise<StoryNod
 
 /** Paginated response from the nodes list endpoint */
 interface PaginatedNodesResponse {
-	nodes: StoryNode[];
+	items: StoryNode[];
 	next_cursor: string | null;
 }
 
@@ -48,7 +48,7 @@ export async function getWorldNodes(
 		if (cursor) url.searchParams.set('cursor', cursor);
 
 		const page = await apiRequest<PaginatedNodesResponse>(url.toString(), {}, true, fetchFn);
-		allNodes.push(...page.nodes);
+		allNodes.push(...page.items);
 		cursor = page.next_cursor;
 	} while (cursor);
 
@@ -131,10 +131,13 @@ export async function generateNodeText(
 	}
 
 	if (!response.ok) {
-		const errorBody: { detail?: string } = await response.json().catch(() => ({
-			detail: `HTTP ${response.status}: ${response.statusText}`
-		}));
-		throw new ApiError(response.status, errorBody.detail || response.statusText);
+		const errorBody = await response.json().catch(() => ({}));
+		const message =
+			errorBody.error?.message ??
+			errorBody.detail ??
+			`HTTP ${response.status}: ${response.statusText}`;
+		const code: string | undefined = errorBody.error?.code;
+		throw new ApiError(response.status, message, code);
 	}
 
 	// Check if this is a streaming response

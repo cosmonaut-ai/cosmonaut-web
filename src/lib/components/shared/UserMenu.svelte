@@ -73,11 +73,6 @@
 			Dashboard
 		</DropdownMenu.Item>
 
-		<DropdownMenu.Item onclick={() => goto('/settings')} class="cursor-pointer">
-			<Settings class="h-4 w-4" />
-			Settings
-		</DropdownMenu.Item>
-
 		<DropdownMenu.Item onclick={() => goto('/pricing')} class="cursor-pointer">
 			<CreditCard class="h-4 w-4" />
 			Plans & Pricing
@@ -88,12 +83,9 @@
 			Send Feedback
 		</DropdownMenu.Item>
 
-		<DropdownMenu.Item
-			onclick={() => window.open('mailto:support@cosmonaut-ai.com', '_self')}
-			class="cursor-pointer"
-		>
-			<HelpCircle class="h-4 w-4" />
-			Help & Support
+		<DropdownMenu.Item onclick={() => goto('/settings')} class="cursor-pointer">
+			<Settings class="h-4 w-4" />
+			Settings
 		</DropdownMenu.Item>
 
 		<DropdownMenu.Separator />

@@ -103,36 +103,46 @@ export interface UpdateWorldSharingRequest {
 }
 
 /**
- * Typed API error that carries the HTTP status code.
+ * Typed API error that carries the HTTP status code and optional error code.
  * Thrown by `handleResponse` and the SSE parser so callers can branch
- * on status (e.g. `err.isQuotaExceeded`) instead of string-matching.
+ * on `code` (e.g. `err.isQuotaExceeded`) instead of string-matching.
+ *
+ * The backend uses a standardized envelope: `{ error: { code, message } }`.
+ * A handful of legacy endpoints still return `{ detail }` — the parser
+ * normalises both into `detail` (human-readable message) + `code`.
  */
 export class ApiError extends Error {
 	constructor(
 		public readonly status: number,
-		public readonly detail: string
+		public readonly detail: string,
+		public readonly code?: string
 	) {
 		super(detail);
 		this.name = 'ApiError';
 	}
 
 	get isQuotaExceeded(): boolean {
+		if (this.code) return this.code === 'QUOTA_EXCEEDED';
 		return this.status === 429 && !/rate limit/i.test(this.detail);
 	}
 
 	get isRateLimited(): boolean {
+		if (this.code) return this.code === 'RATE_LIMITED';
 		return this.status === 429 && /rate limit/i.test(this.detail);
 	}
 
 	get isStorageQuotaExceeded(): boolean {
+		if (this.code) return this.code === 'STORAGE_QUOTA_EXCEEDED';
 		return this.status === 403 && /storage quota exceeded/i.test(this.detail);
 	}
 
 	get isForbidden(): boolean {
+		if (this.code) return this.code === 'FORBIDDEN';
 		return this.status === 403 && !/storage quota exceeded/i.test(this.detail);
 	}
 
 	get isNotFound(): boolean {
+		if (this.code) return this.code === 'NOT_FOUND';
 		return this.status === 404;
 	}
 
@@ -158,6 +168,7 @@ export class ApiError extends Error {
 	 * (e.g. failed fact extraction). The node can be recovered via /retry-processing.
 	 */
 	get isNodeProcessingConflict(): boolean {
+		if (this.code) return this.code === 'CONFLICT';
 		return this.status === 409;
 	}
 }

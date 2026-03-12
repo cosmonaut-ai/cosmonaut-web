@@ -1,5 +1,12 @@
-import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
+import {
+	createQuery,
+	createMutation,
+	createInfiniteQuery,
+	useQueryClient,
+	type InfiniteData
+} from '@tanstack/svelte-query';
 import { getWorlds, getWorld, createWorld, deleteWorld, updateWorldSharing } from '$lib/api/worlds';
+import type { PaginatedWorldsResponse } from '$lib/api/worlds';
 import {
 	ApiError,
 	type CreateWorldRequest,
@@ -10,12 +17,21 @@ import { showError, showSuccess, showWarning } from '$lib/utils/toast';
 import { queryKeys } from './keys';
 
 /**
- * Query hook to fetch all worlds for the current user
+ * Infinite query hook to fetch worlds for the current user with cursor pagination.
+ * Pages are accumulated; call `fetchNextPage()` to load more when `hasNextPage` is true.
  */
 export function useWorlds() {
-	return createQuery(() => ({
+	return createInfiniteQuery<
+		PaginatedWorldsResponse,
+		Error,
+		InfiniteData<PaginatedWorldsResponse>,
+		typeof queryKeys.worlds.all,
+		string | null
+	>(() => ({
 		queryKey: queryKeys.worlds.all,
-		queryFn: getWorlds,
+		queryFn: ({ pageParam }) => getWorlds(pageParam),
+		initialPageParam: null,
+		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
 		staleTime: 5 * 60_000
 	}));
 }
