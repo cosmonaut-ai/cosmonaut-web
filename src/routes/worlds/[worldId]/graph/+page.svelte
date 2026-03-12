@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
 	import type { NodeTypes } from '@xyflow/svelte';
 	import { useWorldNodes } from '$lib/queries';
 	import { transformNodesToFlow } from '$lib/utils/nodeTransform';
 	import FlowNode from '$lib/components/shared/FlowNode.svelte';
+	import StoryGraph from '$lib/components/shared/StoryGraph.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -14,13 +14,22 @@
 	const worldId = page.params.worldId!;
 	const nodesQuery = useWorldNodes(worldId);
 
-	const storyNodes = $derived(nodesQuery.data ?? []);
+	const storyNodes = $derived(
+		(nodesQuery.data ?? []).filter((n) => n.generation_status === 'completed')
+	);
 	const isLoading = $derived(nodesQuery.isLoading);
 	const currentNodeId = $derived(page.url.searchParams.get('node'));
 
 	function handleNodeClick(nodeId: string) {
 		goto(`/worlds/${worldId}/nodes/${nodeId}`);
 	}
+
+	const graphColors = {
+		start: 'oklch(0.723 0.219 142.5)',
+		end: 'oklch(0.705 0.191 47.604)',
+		current: 'var(--chart-2)',
+		default: 'var(--secondary)'
+	};
 
 	const { nodes: flowNodes, edges: flowEdges } = $derived.by(() => {
 		if (!storyNodes.length) return { nodes: [], edges: [] };
@@ -31,13 +40,6 @@
 		});
 		return result;
 	});
-
-	const graphColors = {
-		start: 'oklch(0.723 0.219 142.5)',
-		end: 'oklch(0.705 0.191 47.604)',
-		current: 'var(--chart-2)',
-		default: 'var(--secondary)'
-	};
 
 	const nodes = $derived(flowNodes);
 	const edges = $derived(flowEdges);
@@ -50,24 +52,6 @@
 		const url = currentNodeId ? `/worlds/${worldId}/nodes/${currentNodeId}` : `/worlds/${worldId}`;
 		goto(url);
 	}
-
-	// Lazy-load the heavy @xyflow/svelte library
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let xyflowComponents = $state<Record<string, any> | null>(null);
-
-	onMount(async () => {
-		const [mod, _css] = await Promise.all([
-			import('@xyflow/svelte'),
-			import('@xyflow/svelte/dist/style.css')
-		]);
-		xyflowComponents = {
-			SvelteFlow: mod.SvelteFlow,
-			Controls: mod.Controls,
-			Background: mod.Background,
-			BackgroundVariant: mod.BackgroundVariant,
-			MiniMap: mod.MiniMap
-		};
-	});
 </script>
 
 <!-- WorldHeader is rendered by the layout -->
@@ -111,17 +95,7 @@
 				</p>
 			</div>
 		</div>
-	{:else if !xyflowComponents}
-		<div class="flex h-full items-center justify-center">
-			<p class="text-sm text-muted-foreground">Loading graph...</p>
-		</div>
 	{:else}
-		{@const SvelteFlow = xyflowComponents.SvelteFlow}
-		{@const FlowControls = xyflowComponents.Controls}
-		{@const FlowBackground = xyflowComponents.Background}
-		{@const BGVariant = xyflowComponents.BackgroundVariant}
-		{@const FlowMiniMap = xyflowComponents.MiniMap}
-
 		<div class="pointer-events-none absolute inset-x-0 top-0 z-10 px-6 py-8">
 			<div class="mx-auto flex max-w-4xl items-center justify-between gap-4">
 				<div class="pointer-events-auto flex items-center gap-2">
@@ -136,7 +110,7 @@
 					variant="outline"
 					size="sm"
 					onclick={handleBackToStory}
-					class="pointer-events-auto gap-1.5 shadow-lg"
+					class="pointer-events-auto gap-1.5"
 				>
 					<BookOpen class="h-4 w-4" />
 					Story
@@ -144,35 +118,7 @@
 			</div>
 		</div>
 
-		<SvelteFlow
-			{nodes}
-			{edges}
-			{nodeTypes}
-			fitView
-			fitViewOptions={{ padding: 0.2 }}
-			minZoom={0.1}
-			maxZoom={2}
-			defaultEdgeOptions={{
-				type: 'smoothstep',
-				animated: false,
-				style: 'stroke: oklch(0.9536 0.0872 97.9082); stroke-width: 2px;'
-			}}
-		>
-			<FlowControls />
-			<FlowBackground variant={BGVariant.Dots} gap={16} size={1} />
-			<FlowMiniMap
-				nodeColor={(node: { id: string; data?: { isRoot?: boolean; isLeaf?: boolean } }) => {
-					if (node.id === currentNodeId) return graphColors.current;
-					if (node.data?.isRoot) return graphColors.start;
-					if (node.data?.isLeaf) return graphColors.end;
-					return graphColors.default;
-				}}
-				nodeStrokeWidth={3}
-				pannable
-				zoomable
-				maskColor="oklch(0.2132 0.0183 245.2123 / 0.8)"
-			/>
-		</SvelteFlow>
+		<StoryGraph {nodes} {edges} {nodeTypes} {currentNodeId} {graphColors} />
 	{/if}
 </div>
 

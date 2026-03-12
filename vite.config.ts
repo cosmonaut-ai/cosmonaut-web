@@ -11,5 +11,8 @@ export default defineConfig({
 		}),
 		sveltekit()
 	],
-	envPrefix: ['VITE_', 'PUBLIC_']
+	envPrefix: ['VITE_', 'PUBLIC_'],
+	resolve: {
+		dedupe: ['svelte']
+	}
 });

@@ -97,8 +97,8 @@
 			>
 				<Button
 					size="lg"
-					class="group gap-2 px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
-					onclick={onGetStarted}
+				class="group gap-2 px-8"
+				onclick={onGetStarted}
 					disabled={isLoading}
 				>
 					{#if isLoading}

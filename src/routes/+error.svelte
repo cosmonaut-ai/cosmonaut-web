@@ -50,7 +50,7 @@
 			</p>
 		{/if}
 		<div class="flex flex-col justify-center gap-3 sm:flex-row">
-			<Button href="/" variant="default" class="gap-2 shadow-lg shadow-primary/25">
+			<Button href="/" variant="default" class="gap-2">
 				<Home class="h-4 w-4" />
 				Return Home
 			</Button>

@@ -4,7 +4,6 @@
 	import { checkAuthState, getIsAuthenticated } from '$lib/auth/auth.svelte';
 	import { logger } from '$lib/utils/logger';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { AlertTriangle } from '@lucide/svelte';
 
@@ -30,11 +29,8 @@
 
 	onMount(async () => {
 		try {
-			// Amplify automatically handles the code exchange when configured
-			// We just need to wait for it to complete and check auth state
 			await checkAuthState();
 
-			// Give Amplify a moment to finish processing
 			await new Promise((resolve) => setTimeout(resolve, 500));
 
 			if (getIsAuthenticated()) {
@@ -50,7 +46,6 @@
 				}
 				goto(consumeRedirectUrl());
 			} else {
-				// Check again after a delay
 				await new Promise((resolve) => setTimeout(resolve, 1000));
 				await checkAuthState();
 
@@ -79,26 +74,69 @@
 	});
 </script>
 
-<div class="flex h-full items-center justify-center bg-background">
-	<Card class="w-full max-w-md">
-		<CardContent class="py-12">
-			{#if checking}
-				<div class="flex flex-col items-center gap-4">
-					<Spinner class="h-8 w-8 text-primary" />
-					<p class="text-muted-foreground">Completing sign in...</p>
+<div class="callback-page flex h-full flex-col items-center justify-center bg-background px-4">
+	<!-- Ambient glow -->
+	<div class="callback-glow" aria-hidden="true"></div>
+
+	<div class="relative z-10 flex w-full max-w-xs flex-col items-center">
+		<!-- Branding -->
+		<a href="/" class="mb-10 flex items-center gap-2.5">
+			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+				<img src="/logo.png" alt="Cosmonaut logo" class="h-7 w-7" />
+			</div>
+			<span class="font-orbitron text-xl font-semibold text-foreground">Cosmonaut</span>
+		</a>
+
+		{#if checking}
+			<div class="flex flex-col items-center gap-5">
+				<div
+					class="flex h-14 w-14 items-center justify-center rounded-full border border-border/50 bg-card/80 shadow-sm backdrop-blur-sm"
+				>
+					<Spinner class="h-6 w-6 text-primary" />
 				</div>
-			{:else if error}
-				<div class="flex flex-col items-center text-center">
-					<div
-						class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10"
-					>
-						<AlertTriangle class="h-6 w-6 text-destructive" />
-					</div>
-					<h2 class="mb-2 text-xl font-semibold text-foreground">Authentication Failed</h2>
-					<p class="mb-6 text-muted-foreground">{error}</p>
+				<div class="flex flex-col items-center gap-1.5">
+					<p class="text-sm font-medium text-foreground">Completing sign in</p>
+					<p class="text-xs text-muted-foreground">Just a moment&hellip;</p>
+				</div>
+			</div>
+		{:else if error}
+			<div class="flex w-full flex-col items-center">
+				<div
+					class="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-destructive/20 bg-destructive/10"
+				>
+					<AlertTriangle class="h-6 w-6 text-destructive" />
+				</div>
+				<h2 class="mb-1.5 text-base font-semibold text-foreground">Authentication Failed</h2>
+				<p class="mb-6 text-center text-sm text-muted-foreground">{error}</p>
+				<div class="flex gap-3">
+					<Button variant="outline" onclick={() => goto('/login')}>Try Again</Button>
 					<Button onclick={() => goto('/')}>Return Home</Button>
 				</div>
-			{/if}
-		</CardContent>
-	</Card>
+			</div>
+		{/if}
+	</div>
 </div>
+
+<style>
+	.callback-page {
+		position: relative;
+		overflow: hidden;
+	}
+
+	.callback-glow {
+		position: absolute;
+		top: 40%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 420px;
+		height: 420px;
+		border-radius: 50%;
+		background: radial-gradient(
+			circle,
+			oklch(from var(--primary) l c h / 0.06) 0%,
+			transparent 70%
+		);
+		filter: blur(50px);
+		pointer-events: none;
+	}
+</style>

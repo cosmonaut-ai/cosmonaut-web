@@ -141,7 +141,7 @@
 			</div>
 
 			<Button
-				variant="ghost"
+				variant="secondary"
 				size="sm"
 				onclick={handleDeleteClick}
 				disabled={isDeleting}

@@ -31,8 +31,8 @@
 		{#if world.root_node_id}
 			<Button
 				size="lg"
-				class="group gap-2 px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
-				onclick={handleEnterStory}
+			class="group gap-2 px-8"
+			onclick={handleEnterStory}
 			>
 				{#if hasProgress}
 					<Play class="h-5 w-5 transition-transform group-hover:scale-110" />

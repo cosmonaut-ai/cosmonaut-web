@@ -314,12 +314,6 @@
 										Go Back
 									</Button>
 								{/if}
-								{#if pathLength > 1}
-									<Button variant="outline" onclick={handleRestart}>
-										<RotateCcw class="mr-2 h-4 w-4" />
-										Restart Story
-									</Button>
-								{/if}
 								<Button variant="outline" onclick={() => goto('/dashboard')}>
 									Return to Dashboard
 								</Button>
