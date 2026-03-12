@@ -40,7 +40,11 @@
 	let rateLimited = $state(false);
 
 	const feedbackMutation = useFeedback();
-	const canSubmit = $derived(message.trim().length >= 10);
+	const MIN_MESSAGE_LENGTH = 10;
+	const MAX_MESSAGE_LENGTH = 10_000;
+	const messageTooShort = $derived(message.trim().length < MIN_MESSAGE_LENGTH);
+	const messageTooLong = $derived(message.length > MAX_MESSAGE_LENGTH);
+	const canSubmit = $derived(!messageTooShort && !messageTooLong);
 	const isPending = $derived(feedbackMutation.isPending);
 
 	const selectedOption = $derived(
@@ -146,11 +150,27 @@
 								placeholder="Share your feedback, describe a bug, or suggest a feature..."
 								rows={5}
 								required
-								minlength={10}
+								minlength={MIN_MESSAGE_LENGTH}
+								maxlength={MAX_MESSAGE_LENGTH}
 								disabled={isPending}
 								class="min-h-24"
 							/>
-							<p class="text-xs text-muted-foreground">Minimum 10 characters required</p>
+							<div class="flex items-start justify-between gap-4">
+								<p class="text-xs text-muted-foreground">
+									{#if messageTooShort}
+										Please provide at least {MIN_MESSAGE_LENGTH} characters
+									{:else}
+										Minimum {MIN_MESSAGE_LENGTH} characters required
+									{/if}
+								</p>
+								<span
+									class="shrink-0 text-xs tabular-nums {messageTooLong
+										? 'font-medium text-destructive'
+										: 'text-muted-foreground'}"
+								>
+									{message.length}/{MAX_MESSAGE_LENGTH}
+								</span>
+							</div>
 						</div>
 
 						{#if rateLimited}

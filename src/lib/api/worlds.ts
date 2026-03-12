@@ -2,11 +2,20 @@ import type { World, CreateWorldRequest, UpdateWorldSharingRequest } from '$lib/
 import { API_BASE_URL } from '$lib/config';
 import { apiRequest, MAX_POLL_ATTEMPTS, POLL_INTERVAL_MS } from './core';
 
+/** Paginated response from the worlds list endpoint */
+export interface PaginatedWorldsResponse {
+	items: World[];
+	next_cursor: string | null;
+}
+
 /**
- * List all worlds for the authenticated user
+ * Fetch a single page of worlds for the authenticated user.
+ * Pass a cursor from a previous response to fetch subsequent pages.
  */
-export async function getWorlds(): Promise<World[]> {
-	return apiRequest<World[]>(`${API_BASE_URL}/worlds/`);
+export async function getWorlds(cursor?: string | null): Promise<PaginatedWorldsResponse> {
+	const url = new URL(`${API_BASE_URL}/worlds/`);
+	if (cursor) url.searchParams.set('cursor', cursor);
+	return apiRequest<PaginatedWorldsResponse>(url.toString());
 }
 
 /**

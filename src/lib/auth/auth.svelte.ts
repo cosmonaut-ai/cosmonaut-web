@@ -311,8 +311,9 @@ export async function deleteAccount(): Promise<void> {
 	});
 
 	if (!response.ok) {
-		const body = await response.json().catch(() => ({ detail: 'Account deletion failed' }));
-		throw new Error(body.detail || 'Account deletion failed');
+		const body = await response.json().catch(() => ({}));
+		const message = body.error?.message ?? body.detail ?? 'Account deletion failed';
+		throw new Error(message);
 	}
 
 	// Sign out locally after server-side deletion

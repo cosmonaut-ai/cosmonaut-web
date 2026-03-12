@@ -9,6 +9,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Tooltip, TooltipTrigger } from '$lib/components/ui/tooltip';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { Plus } from '@lucide/svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
@@ -16,6 +17,8 @@
 	const worldsQuery = useWorlds();
 	const deleteMutation = useDeleteWorld();
 	const usageQuery = useUsage();
+
+	const allWorlds = $derived(worldsQuery.data?.pages.flatMap((p) => p.items) ?? []);
 
 	let deletingWorldId = $state<string | null>(null);
 	let showUpgradePrompt = $state(false);
@@ -57,9 +60,7 @@
 	<main class="mx-auto max-w-7xl px-6 py-12">
 		<!-- Subscription status warnings (payment issues, cancellation, paused) -->
 		{#if usage}
-			<div class="mb-8">
-				<SubscriptionStatusBanner {usage} />
-			</div>
+			<SubscriptionStatusBanner class="mb-8" {usage} />
 		{/if}
 
 		<!-- Your Worlds Section -->
@@ -105,7 +106,7 @@
 						</Button>
 					</CardContent>
 				</Card>
-			{:else if worldsQuery.data?.length === 0}
+			{:else if allWorlds.length === 0}
 				<!-- Empty state — polished -->
 				<Card class="empty-card border-dashed">
 					<CardContent
@@ -132,7 +133,7 @@
 			{:else}
 				<!-- Worlds grid -->
 				<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-					{#each worldsQuery.data ?? [] as world, i (world.id)}
+					{#each allWorlds as world, i (world.id)}
 						<WorldCard
 							{world}
 							onDelete={handleDeleteWorld}
@@ -141,6 +142,24 @@
 						/>
 					{/each}
 				</div>
+
+				{#if worldsQuery.hasNextPage}
+					<div class="mt-8 flex justify-center">
+						<Button
+							variant="outline"
+							disabled={worldsQuery.isFetchingNextPage}
+							onclick={() => worldsQuery.fetchNextPage()}
+							class="gap-2"
+						>
+							{#if worldsQuery.isFetchingNextPage}
+								<Spinner class="h-4 w-4" />
+								Loading...
+							{:else}
+								Load More
+							{/if}
+						</Button>
+					</div>
+				{/if}
 			{/if}
 		</section>
 	</main>
