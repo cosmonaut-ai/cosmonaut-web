@@ -298,7 +298,7 @@
 							<p class="mb-6 max-w-md text-center text-muted-foreground">
 								Something went wrong while generating this part of the story.
 							</p>
-							<div class="flex gap-3">
+							<div class="flex flex-wrap justify-center gap-3">
 								<Button
 									variant="default"
 									onclick={handleRetryGeneration}
