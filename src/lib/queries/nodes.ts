@@ -108,11 +108,25 @@ export function updateNodeInCache(
 	node: StoryNode
 ) {
 	client.setQueryData(queryKeys.nodes.detail(worldId, node.id), node);
-	// Invalidate the parent node so its choices reflect the explored path
+
+	// Optimistically update the node within the all-nodes list cache so the
+	// graph page (and any other consumer) sees fresh data immediately without
+	// waiting for a background refetch.
+	client.setQueryData<StoryNode[]>(queryKeys.nodes.all(worldId), (prev) => {
+		if (!prev) return prev;
+		const idx = prev.findIndex((n) => n.id === node.id);
+		if (idx >= 0) {
+			const updated = [...prev];
+			updated[idx] = node;
+			return updated;
+		}
+		return [...prev, node];
+	});
+
 	if (node.parent_id) {
 		client.invalidateQueries({ queryKey: queryKeys.nodes.detail(worldId, node.parent_id) });
 	}
-	// Use exact: true to prevent invalidating individual node detail queries (prefix matching)
+	// Still invalidate to ensure eventual consistency with the server
 	client.invalidateQueries({ queryKey: queryKeys.nodes.all(worldId), exact: true });
 }
 

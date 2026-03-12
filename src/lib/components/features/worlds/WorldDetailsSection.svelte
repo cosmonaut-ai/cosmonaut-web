@@ -89,7 +89,7 @@
 			</p>
 		</div>
 
-		<Card class="mb-6 border-border/50 bg-card/50">
+		<Card class="mb-6">
 			<CardContent class="p-6">
 				<div class="flex items-start gap-4">
 					<div
@@ -144,7 +144,7 @@
 			</p>
 		</div>
 
-		<Card class="mb-6 border-border/50 bg-card/50">
+		<Card class="mb-6">
 			<CardContent class="flex items-start gap-4 p-6">
 				<div
 					class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10"
@@ -239,7 +239,7 @@
 		<div class="mx-auto max-w-2xl space-y-3">
 			{#each world.potential_endings ?? [] as ending, i (i)}
 				<div
-					class="ending-card group rounded-lg border border-border/50 bg-card/50 p-4 transition-all duration-300 hover:border-primary/30 hover:bg-card"
+					class="ending-card group rounded-lg border border-border bg-card p-4 transition-all duration-300 hover:border-primary/30"
 					style="--entrance-delay: {i * 80}ms"
 				>
 					<p

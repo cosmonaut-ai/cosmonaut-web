@@ -98,7 +98,7 @@
 			</ul>
 
 			<Button
-				class="w-full {tier.highlighted && !isCurrent ? 'shadow-md shadow-primary/20' : ''}"
+				class="w-full"
 				variant={tier.highlighted && !isCurrent ? 'default' : 'outline'}
 				disabled={buttonDisabled}
 				onclick={() => {

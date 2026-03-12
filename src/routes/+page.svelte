@@ -161,8 +161,8 @@
 			</p>
 			<Button
 				size="lg"
-				class="gap-2 px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
-				onclick={() => handleGetStarted('bottom_cta')}
+			class="gap-2 px-8"
+			onclick={() => handleGetStarted('bottom_cta')}
 			>
 				<Rocket class="h-5 w-5" />
 				Start Your Journey
