@@ -83,7 +83,7 @@
 				<span class="text-sm text-muted-foreground">/{tier.priceDetail}</span>
 			</div>
 			<CardDescription class="mt-1">
-				{tier.resetPeriod} usage period
+				{tier.resetPeriod.endsWith('s') ? tier.resetPeriod.slice(0, -1) : tier.resetPeriod} usage period
 			</CardDescription>
 		</CardHeader>
 
