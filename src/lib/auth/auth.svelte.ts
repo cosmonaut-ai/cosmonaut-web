@@ -11,6 +11,7 @@ import {
 	confirmResetPassword,
 	resendSignUpCode
 } from 'aws-amplify/auth';
+import * as Sentry from '@sentry/sveltekit';
 import { amplifyConfig, isLocalEnvironment, isAuthConfigured, API_BASE_URL } from '$lib/config';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
@@ -109,15 +110,18 @@ export async function checkAuthState(): Promise<void> {
 			}
 
 			isAuthenticated = true;
+			Sentry.setUser({ id: user.sub, email: user.email, username: user.name });
 		} else {
 			// No valid tokens
 			isAuthenticated = false;
 			user = null;
+			Sentry.setUser(null);
 		}
 	} catch (error) {
 		// User is not authenticated
 		isAuthenticated = false;
 		user = null;
+		Sentry.setUser(null);
 		// Don't log expected "no user" errors as errors
 		if (
 			error &&
@@ -348,6 +352,7 @@ export async function logout(): Promise<void> {
 		isAuthenticated = false;
 		user = null;
 		authReadyPromise = null; // Reset promise so it can be re-initialized
+		Sentry.setUser(null);
 	} catch (error) {
 		logger.error('Logout failed:', error);
 		throw error;

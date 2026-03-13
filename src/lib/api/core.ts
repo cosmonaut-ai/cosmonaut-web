@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/sveltekit';
 import { ApiError } from '$lib/types/api';
 import { isLocalEnvironment } from '$lib/config';
 import { logger } from '$lib/utils/logger';
@@ -45,7 +46,14 @@ async function handleResponse<T>(response: Response): Promise<T> {
 			errorBody.detail ??
 			`HTTP ${response.status}: ${response.statusText}`;
 		const code: string | undefined = errorBody.error?.code;
-		throw new ApiError(response.status, message, code);
+		const error = new ApiError(response.status, message, code);
+		if (response.status >= 500) {
+			Sentry.captureException(error, {
+				tags: { api_status: response.status, api_code: code },
+				contexts: { api: { url: response.url, method: 'unknown' } }
+			});
+		}
+		throw error;
 	}
 	// Handle empty responses (204 No Content or zero-length body)
 	if (response.status === 204 || response.headers.get('content-length') === '0') {
