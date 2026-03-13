@@ -12,9 +12,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { Trash2, ShieldCheck } from '@lucide/svelte';
+	import { Trash2, ShieldCheck, Play } from '@lucide/svelte';
 	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import { getStatusBadgeVariant, getStatusText } from '$lib/utils/worldStatus';
+	import { getWorldProgress } from '$lib/api/nodes';
+	import { logger } from '$lib/utils/logger';
 
 	function getWorldLengthLabel(length: string | null): string | null {
 		switch (length) {
@@ -40,14 +42,37 @@
 	let { world, onDelete, isDeleting = false, index = 0 }: Props = $props();
 
 	let showDeleteDialog = $state(false);
+	let isPlayLoading = $state(false);
 
 	const isGenerating = $derived(
 		world.generation_status !== 'completed' && world.generation_status !== 'failed'
 	);
 
+	const canPlay = $derived(world.generation_status === 'completed' && !!world.root_node_id);
+
 	function handleClick() {
 		if (isDeleting) return;
 		goto(`/worlds/${world.id}`);
+	}
+
+	async function handlePlayClick(e: Event) {
+		e.stopPropagation();
+		if (isDeleting || isPlayLoading || !world.root_node_id) return;
+
+		isPlayLoading = true;
+		let targetNodeId = world.root_node_id;
+
+		try {
+			const progress = await getWorldProgress(world.id);
+			if (progress.current_node_id) {
+				targetNodeId = progress.current_node_id;
+			}
+		} catch (err) {
+			logger.error('Failed to fetch world progress, falling back to root node:', err);
+		}
+
+		goto(`/worlds/${world.id}/nodes/${targetNodeId}`);
+		isPlayLoading = false;
 	}
 
 	function handleDeleteClick(e: Event) {
@@ -58,8 +83,6 @@
 
 	function handleConfirmDelete() {
 		onDelete(world.id);
-		// Don't close the dialog - it will close when deletion is complete
-		// as the card will be removed from the list
 	}
 
 	function handleCancelDelete() {
@@ -69,7 +92,7 @@
 </script>
 
 <Card
-	class="world-card group cursor-pointer overflow-hidden"
+	class="world-card group cursor-pointer"
 	style="--entrance-delay: {index * 60}ms"
 	onclick={handleClick}
 	role="button"
@@ -84,7 +107,7 @@
 >
 	<!-- Image or Animated Gradient Header -->
 	{#if world.world_image_url}
-		<div class="h-40 w-full overflow-hidden bg-card">
+		<div class="h-40 w-full overflow-hidden rounded-t-xl bg-card">
 			<img
 				src={world.world_image_url}
 				alt={world.world_image_alt_text || world.title || 'World image'}
@@ -93,7 +116,7 @@
 			/>
 		</div>
 	{:else}
-		<div class="world-card-gradient h-40 w-full"></div>
+		<div class="world-card-gradient h-40 w-full rounded-t-xl"></div>
 	{/if}
 
 	<CardHeader class="pb-3">
@@ -140,20 +163,48 @@
 				{/if}
 			</div>
 
-			<Button
-				variant="secondary"
-				size="sm"
-				onclick={handleDeleteClick}
-				disabled={isDeleting}
-				class="h-9 w-9 p-0 text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
-				aria-label="Delete world: {world.title || 'Untitled World'}"
-			>
-				{#if isDeleting}
-					<Spinner class="h-4 w-4" />
-				{:else}
-					<Trash2 class="h-4 w-4" />
+			<div class="flex items-center gap-1.5">
+				<Tooltip>
+					<TooltipTrigger>
+						<Button
+							variant="secondary"
+							size="sm"
+							onclick={handleDeleteClick}
+							disabled={isDeleting}
+							class="h-9 w-9 p-0 text-muted-foreground hover:text-destructive disabled:opacity-50"
+							aria-label="Delete world: {world.title || 'Untitled World'}"
+						>
+							{#if isDeleting}
+								<Spinner class="h-4 w-4" />
+							{:else}
+								<Trash2 class="h-4 w-4" />
+							{/if}
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Delete World</TooltipContent>
+				</Tooltip>
+				{#if canPlay}
+					<Tooltip>
+						<TooltipTrigger>
+							<Button
+								variant="secondary"
+								size="sm"
+								onclick={handlePlayClick}
+								disabled={isPlayLoading || isDeleting}
+								class="h-9 w-9 p-0 text-muted-foreground hover:text-primary disabled:opacity-50"
+								aria-label="Continue story: {world.title || 'Untitled World'}"
+							>
+								{#if isPlayLoading}
+									<Spinner class="h-4 w-4" />
+								{:else}
+									<Play class="h-4 w-4" />
+								{/if}
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>Continue Story</TooltipContent>
+					</Tooltip>
 				{/if}
-			</Button>
+			</div>
 		</div>
 	</CardContent>
 </Card>
