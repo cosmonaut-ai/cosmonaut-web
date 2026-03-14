@@ -95,12 +95,7 @@
 			<div
 				class="hero-enter hero-enter-4 flex flex-col items-center justify-center gap-3 sm:flex-row md:justify-start md:gap-4"
 			>
-				<Button
-					size="lg"
-				class="group gap-2 px-8"
-				onclick={onGetStarted}
-					disabled={isLoading}
-				>
+				<Button size="lg" class="group gap-2 px-8" onclick={onGetStarted} disabled={isLoading}>
 					{#if isLoading}
 						<Spinner class="h-5 w-5" />
 					{:else}

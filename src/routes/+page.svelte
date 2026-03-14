@@ -159,11 +159,7 @@
 			<p class="mx-auto mb-8 max-w-2xl text-muted-foreground">
 				Your universe is one prompt away. Describe a world, step inside, and let the story unfold.
 			</p>
-			<Button
-				size="lg"
-			class="gap-2 px-8"
-			onclick={() => handleGetStarted('bottom_cta')}
-			>
+			<Button size="lg" class="gap-2 px-8" onclick={() => handleGetStarted('bottom_cta')}>
 				<Rocket class="h-5 w-5" />
 				Start Your Journey
 			</Button>

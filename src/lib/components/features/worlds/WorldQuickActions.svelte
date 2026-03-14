@@ -29,11 +29,7 @@
 <section class="hero-enter hero-enter-5 mx-auto max-w-4xl px-6 py-8">
 	<div class="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
 		{#if world.root_node_id}
-			<Button
-				size="lg"
-			class="group gap-2 px-8"
-			onclick={handleEnterStory}
-			>
+			<Button size="lg" class="group gap-2 px-8" onclick={handleEnterStory}>
 				{#if hasProgress}
 					<Play class="h-5 w-5 transition-transform group-hover:scale-110" />
 					Continue Story

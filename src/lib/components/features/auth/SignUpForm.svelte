@@ -25,6 +25,7 @@
 		passwordsMatch: boolean;
 		isSubmitting: boolean;
 		newsletterOptIn?: boolean;
+		isInAppBrowser?: boolean;
 		onEmailChange: (value: string) => void;
 		onPasswordChange: (value: string) => void;
 		onConfirmPasswordChange: (value: string) => void;
@@ -47,6 +48,7 @@
 		passwordsMatch,
 		isSubmitting,
 		newsletterOptIn = true,
+		isInAppBrowser = false,
 		onEmailChange,
 		onPasswordChange,
 		onConfirmPasswordChange,
@@ -174,7 +176,12 @@
 	<Separator class="flex-1" />
 </div>
 
-<Button variant="outline" class="w-full" onclick={onGoogleSignIn} disabled={isSubmitting}>
+<Button
+	variant="outline"
+	class="w-full {isInAppBrowser ? 'opacity-50' : ''}"
+	onclick={onGoogleSignIn}
+	disabled={isSubmitting || isInAppBrowser}
+>
 	{#if isSubmitting}
 		<Spinner class="mr-2" />
 	{:else}
@@ -199,6 +206,13 @@
 	{/if}
 	Continue with Google
 </Button>
+
+{#if isInAppBrowser}
+	<p class="mt-2 text-center text-xs text-muted-foreground">
+		Google sign-in is not available in this browser. Open this page in Safari or Chrome to use
+		Google, or sign up with email.
+	</p>
+{/if}
 
 <p class="mt-6 text-center text-sm text-muted-foreground">
 	Already have an account?

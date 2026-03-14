@@ -7,6 +7,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
+	import { detectInAppBrowser } from '$lib/utils/in-app-browser';
 	import { showInfo } from '$lib/utils/toast';
 	import SignInForm from '$lib/components/features/auth/SignInForm.svelte';
 	import SignUpForm from '$lib/components/features/auth/SignUpForm.svelte';
@@ -32,6 +33,7 @@
 	let isSubmitting = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
+	let isInAppBrowser = $state(false);
 
 	// Redirect URL from query params (set by the auth guard in the root layout)
 	const redirectParam = $derived(page.url.searchParams.get('redirect'));
@@ -39,6 +41,9 @@
 
 	// Persist redirect URL to localStorage so it survives Google OAuth leaving the page
 	onMount(() => {
+		const { isInApp } = detectInAppBrowser();
+		isInAppBrowser = isInApp;
+
 		if (redirectParam) {
 			try {
 				localStorage.setItem(REDIRECT_STORAGE_KEY, redirectParam);
@@ -265,7 +270,7 @@
 	}
 
 	async function handleGoogleSignIn() {
-		if (isSubmitting) return;
+		if (isSubmitting || isInAppBrowser) return;
 		clearMessages();
 		isSubmitting = true;
 		try {
@@ -382,6 +387,7 @@
 								{password}
 								{showPassword}
 								{isSubmitting}
+								{isInAppBrowser}
 								onEmailChange={(v) => (email = v)}
 								onPasswordChange={(v) => (password = v)}
 								onShowPasswordChange={(v) => (showPassword = v)}
@@ -402,6 +408,7 @@
 								{passwordsMatch}
 								{isSubmitting}
 								{newsletterOptIn}
+								{isInAppBrowser}
 								onEmailChange={(v) => (email = v)}
 								onPasswordChange={(v) => (password = v)}
 								onConfirmPasswordChange={(v) => (confirmPassword = v)}
