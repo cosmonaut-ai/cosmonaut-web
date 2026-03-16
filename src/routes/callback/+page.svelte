@@ -75,9 +75,6 @@
 </script>
 
 <div class="callback-page flex h-full flex-col items-center justify-center bg-background px-4">
-	<!-- Ambient glow -->
-	<div class="callback-glow" aria-hidden="true"></div>
-
 	<div class="relative z-10 flex w-full max-w-xs flex-col items-center">
 		<!-- Branding -->
 		<a href="/" class="mb-10 flex items-center gap-2.5">
@@ -121,22 +118,5 @@
 	.callback-page {
 		position: relative;
 		overflow: hidden;
-	}
-
-	.callback-glow {
-		position: absolute;
-		top: 40%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 420px;
-		height: 420px;
-		border-radius: 50%;
-		background: radial-gradient(
-			circle,
-			oklch(from var(--primary) l c h / 0.06) 0%,
-			transparent 70%
-		);
-		filter: blur(50px);
-		pointer-events: none;
 	}
 </style>
