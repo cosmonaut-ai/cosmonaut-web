@@ -76,14 +76,6 @@
 
 <div class="callback-page flex h-full flex-col items-center justify-center bg-background px-4">
 	<div class="relative z-10 flex w-full max-w-xs flex-col items-center">
-		<!-- Branding -->
-		<a href="/" class="mb-10 flex items-center gap-2.5">
-			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-				<img src="/logo.png" alt="Cosmonaut logo" class="h-7 w-7" />
-			</div>
-			<span class="font-orbitron text-xl font-semibold text-foreground">Cosmonaut</span>
-		</a>
-
 		{#if checking}
 			<div class="flex flex-col items-center gap-5">
 				<div
