@@ -133,7 +133,7 @@
 
 	function getWorldLink() {
 		if (!browser) return '';
-		return `${window.location.origin}/worlds/${world.id}`;
+		return `${window.location.origin}/worlds/${world.shareable_id ?? world.id}`;
 	}
 
 	async function copyWorldLink() {

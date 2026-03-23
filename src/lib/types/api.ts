@@ -63,6 +63,7 @@ export interface StoryNode {
 
 export interface World {
 	id: string;
+	shareable_id: string | null;
 	title: string | null;
 	description: string | null;
 	genre: string | null;
