@@ -16,9 +16,7 @@
 	const nodesQuery = useWorldNodes(worldId);
 	const rootNodeId = $derived(worldQuery.data?.root_node_id ?? null);
 
-	const storyNodes = $derived(
-		(nodesQuery.data ?? []).filter((n) => n.generation_status === 'completed')
-	);
+	const storyNodes = $derived(nodesQuery.data ?? []);
 	const isLoading = $derived(nodesQuery.isLoading);
 	const currentNodeId = $derived(page.url.searchParams.get('node'));
 
