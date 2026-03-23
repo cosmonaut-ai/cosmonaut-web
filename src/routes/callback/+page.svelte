@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { updateNewsletter } from '$lib/api/subscription';
 	import { checkAuthState, getIsAuthenticated } from '$lib/auth/auth.svelte';
 	import { logger } from '$lib/utils/logger';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -12,10 +13,6 @@
 	let error = $state<string | null>(null);
 	let checking = $state(true);
 
-	/**
-	 * Read and clear the stored post-auth redirect URL.
-	 * Falls back to /dashboard when no redirect was stored.
-	 */
 	function consumeRedirectUrl(): string {
 		let destination: string | null = null;
 		try {
@@ -27,6 +24,18 @@
 		return destination || '/dashboard';
 	}
 
+	async function syncNewsletterOptIn() {
+		try {
+			const optedIn = localStorage.getItem('cosmonaut-newsletter-opt-in');
+			if (optedIn === 'true') {
+				await updateNewsletter(true);
+			}
+			localStorage.removeItem('cosmonaut-newsletter-opt-in');
+		} catch {
+			// Newsletter sync is non-critical
+		}
+	}
+
 	onMount(async () => {
 		try {
 			await checkAuthState();
@@ -34,32 +43,14 @@
 			await new Promise((resolve) => setTimeout(resolve, 500));
 
 			if (getIsAuthenticated()) {
-				try {
-					const optedIn = localStorage.getItem('cosmonaut-newsletter-opt-in');
-					if (optedIn === 'true') {
-						const { updateNewsletter } = await import('$lib/api/subscription');
-						await updateNewsletter(true);
-					}
-					localStorage.removeItem('cosmonaut-newsletter-opt-in');
-				} catch {
-					// Newsletter sync is non-critical
-				}
+				await syncNewsletterOptIn();
 				goto(consumeRedirectUrl());
 			} else {
 				await new Promise((resolve) => setTimeout(resolve, 1000));
 				await checkAuthState();
 
 				if (getIsAuthenticated()) {
-					try {
-						const optedIn = localStorage.getItem('cosmonaut-newsletter-opt-in');
-						if (optedIn === 'true') {
-							const { updateNewsletter } = await import('$lib/api/subscription');
-							await updateNewsletter(true);
-						}
-						localStorage.removeItem('cosmonaut-newsletter-opt-in');
-					} catch {
-						// Newsletter sync is non-critical
-					}
+					await syncNewsletterOptIn();
 					goto(consumeRedirectUrl());
 				} else {
 					error = 'Authentication failed. Please try again.';
@@ -74,7 +65,9 @@
 	});
 </script>
 
-<div class="callback-page flex h-full flex-col items-center justify-center bg-background px-4">
+<div
+	class="callback-page flex h-full flex-col items-center justify-center bg-background px-4 py-10"
+>
 	<div class="relative z-10 flex w-full max-w-xs flex-col items-center">
 		{#if checking}
 			<div class="flex flex-col items-center gap-5">
