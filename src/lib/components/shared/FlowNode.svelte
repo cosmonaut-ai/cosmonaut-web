@@ -7,6 +7,7 @@
 		TooltipProvider,
 		TooltipTrigger
 	} from '$lib/components/ui/tooltip';
+	import { getNode } from '$lib/api/nodes';
 
 	interface Props {
 		data: FlowNodeData;
@@ -14,6 +15,25 @@
 	}
 
 	let { data, selected = false }: Props = $props();
+
+	let tooltipData: import('$lib/types/api').StoryNode | null = $state(null);
+	let isHovering = $state(false);
+
+	async function handleMouseEnter() {
+		isHovering = true;
+		if (!tooltipData && data.storyNode.world_id) {
+			try {
+				const fullNode = await getNode(data.storyNode.world_id, data.storyNode.id);
+				if (isHovering) tooltipData = fullNode;
+			} catch {
+				// Non-critical: tooltip just won't show details
+			}
+		}
+	}
+
+	function handleMouseLeave() {
+		isHovering = false;
+	}
 
 	function handleClick() {
 		if (data.onNodeClick) {
@@ -53,6 +73,8 @@
 			class={nodeClasses}
 			onclick={handleClick}
 			onkeydown={handleKeydown}
+			onmouseenter={handleMouseEnter}
+			onmouseleave={handleMouseLeave}
 		>
 			<!-- Input handle (top) -->
 			{#if !data.isRoot}
@@ -89,18 +111,23 @@
 			sideOffset={8}
 			class="pointer-events-none w-80 rounded-lg border-border bg-popover p-4 text-sm shadow-xl"
 		>
+			{@const displayNode = tooltipData ?? data.storyNode}
 			<div class="space-y-2">
 				<h4 class="font-semibold text-popover-foreground">
-					{data.storyNode.title || 'Untitled Node'}
+					{displayNode.title || 'Untitled Node'}
 				</h4>
-				<p class="line-clamp-4 text-sm text-muted-foreground">
-					{data.storyNode.text}
-				</p>
-				{#if data.storyNode.choices.length > 0}
+				{#if displayNode.text}
+					<p class="line-clamp-4 text-sm text-muted-foreground">
+						{displayNode.text}
+					</p>
+				{:else if !tooltipData}
+					<p class="text-xs text-muted-foreground/60 italic">Hover to load details...</p>
+				{/if}
+				{#if displayNode.choices.length > 0 && displayNode.choices.some((c) => c.label)}
 					<div class="border-t border-border pt-2">
 						<p class="mb-1 text-xs font-medium text-muted-foreground">Choices:</p>
 						<ul class="space-y-1">
-							{#each data.storyNode.choices as choice, index (index)}
+							{#each displayNode.choices.filter((c) => c.label) as choice, index (index)}
 								<li class="flex items-start gap-1 text-xs text-muted-foreground">
 									<span class="text-primary">•</span>
 									<span class="line-clamp-1">{choice.label}</span>

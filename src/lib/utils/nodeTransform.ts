@@ -53,10 +53,15 @@ export function transformNodesToFlow(storyNodes: StoryNode[]): {
 	// Calculate positions using hierarchical layout
 	const positions = calculateHierarchicalLayout(tree);
 
+	// Compute which nodes are parents (have children in the set) for tree-based isLeaf
+	const parentIds = new Set(
+		storyNodes.map((n) => n.parent_id).filter((pid): pid is string => pid !== null)
+	);
+
 	// Create Flow nodes
 	const flowNodes: Node<FlowNodeData>[] = storyNodes.map((storyNode) => {
 		const isRoot = !storyNode.parent_id;
-		const isLeaf = !storyNode.choices.some((choice) => choice.target !== null);
+		const isLeaf = !parentIds.has(storyNode.id);
 		const position = positions.get(storyNode.id) || { x: 0, y: 0 };
 
 		return {
@@ -188,9 +193,12 @@ function transformNodesWithoutRoot(storyNodes: StoryNode[]): {
 	const HORIZONTAL_SPACING = 300;
 	const VERTICAL_SPACING = 250;
 
+	const parentIdsSet = new Set(
+		storyNodes.map((n) => n.parent_id).filter((pid): pid is string => pid !== null)
+	);
 	const flowNodes: Node<FlowNodeData>[] = storyNodes.map((storyNode, index) => {
 		const isRoot = !storyNode.parent_id;
-		const isLeaf = !storyNode.choices.some((choice) => choice.target !== null);
+		const isLeaf = !parentIdsSet.has(storyNode.id);
 
 		return {
 			id: storyNode.id,

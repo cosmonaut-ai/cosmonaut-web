@@ -20,6 +20,8 @@ export interface Choice {
 	is_created?: boolean;
 	is_custom?: boolean;
 	creator?: string | null;
+	creator_email?: string | null;
+	creator_display_name?: string | null;
 }
 
 export interface Character {
@@ -170,6 +172,16 @@ export class ApiError extends Error {
 	get isNodeProcessingConflict(): boolean {
 		if (this.code) return this.code === 'CONFLICT';
 		return this.status === 409;
+	}
+
+	get isSessionNotFound(): boolean {
+		if (this.code) return this.code === 'SESSION_NOT_FOUND';
+		return false;
+	}
+
+	get isWrongSession(): boolean {
+		if (this.code) return this.code === 'WRONG_SESSION_FOR_NODE';
+		return false;
 	}
 }
 

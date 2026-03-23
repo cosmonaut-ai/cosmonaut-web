@@ -103,6 +103,11 @@
 						Custom
 					</span>
 				{/if}
+				{#if choice.is_custom && choice.creator_display_name}
+					<span class="shrink-0 text-xs text-muted-foreground">
+						by {choice.creator_display_name}
+					</span>
+				{/if}
 			</div>
 			<ChevronRight
 				class="ml-auto h-5 w-5 transition-transform group-hover:translate-x-1 {choice.is_created
