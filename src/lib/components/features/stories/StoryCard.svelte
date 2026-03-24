@@ -18,7 +18,7 @@
 		isLoading?: boolean;
 		isAtQuotaLimit?: boolean;
 		showCustomChoice?: boolean;
-		onChoiceSelect?: (choiceIndex: number) => void;
+		onChoiceSelect?: (targetId: string) => void;
 		onCustomChoice?: (text: string) => void;
 		onRestart?: () => void;
 	}

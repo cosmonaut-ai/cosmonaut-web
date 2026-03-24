@@ -58,21 +58,20 @@ export async function getWorldNodes(
 /**
  * Choose an option and initialize a new story node (without generated text)
  * This is step 1 of the two-step generation flow.
- * @param choice - Either { choiceIndex: number } for predefined choices or { customChoice: string } for custom text (max 200 chars)
+ * @param choice - Either { targetId: string } for existing choices or { customChoice: string } for custom text (max 200 chars)
  * @returns The initialized StoryNode with generation_status: 'initialized' (no text yet)
  */
 export async function chooseOption(
 	worldId: string,
 	nodeId: string,
-	choice: { choiceIndex: number } | { customChoice: string }
+	choice: { targetId: string } | { customChoice: string }
 ): Promise<StoryNode> {
 	const url = `${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/choose`;
 
-	// Build request body based on choice type
 	const requestBody: ChooseRequest =
-		'choiceIndex' in choice
-			? { choice_index: choice.choiceIndex, custom_choice: null }
-			: { choice_index: null, custom_choice: choice.customChoice };
+		'targetId' in choice
+			? { target_id: choice.targetId, custom_choice: null }
+			: { target_id: null, custom_choice: choice.customChoice };
 
 	return apiRequest<StoryNode>(url, {
 		method: 'POST',

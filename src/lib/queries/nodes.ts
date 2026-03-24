@@ -72,7 +72,7 @@ export function useNode(
 /**
  * Type for choice option - either predefined or custom
  */
-export type ChoiceOption = { choiceIndex: number } | { customChoice: string };
+export type ChoiceOption = { targetId: string } | { customChoice: string };
 
 /**
  * Mutation hook to choose an option and navigate to the next node

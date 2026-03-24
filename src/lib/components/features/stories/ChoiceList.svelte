@@ -12,7 +12,7 @@
 		isLoading?: boolean;
 		isAtQuotaLimit?: boolean;
 		showCustomChoice?: boolean;
-		onChoiceSelect?: (choiceIndex: number) => void;
+		onChoiceSelect?: (targetId: string) => void;
 		onCustomChoice?: (text: string) => void;
 	}
 
@@ -60,10 +60,10 @@
 	<p class="mb-4 text-sm font-medium tracking-wider text-muted-foreground uppercase">
 		What do you do?
 	</p>
-	{#each choices as choice, i (i)}
+	{#each choices as choice, i (choice.target)}
 		{@const choiceDisabled = isLoading || (isAtQuotaLimit && !choice.is_created)}
 		<button
-			onclick={() => onChoiceSelect?.(i)}
+			onclick={() => onChoiceSelect?.(choice.target!)}
 			disabled={choiceDisabled}
 			aria-label="Choose: {choice.label}{choice.is_explored
 				? ' (already explored)'
