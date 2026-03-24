@@ -175,6 +175,7 @@
 
 	async function handleBack() {
 		if (!currentNode?.parent_id) return;
+		stream.abortStream();
 		slideDirection = 'back';
 		currentNodeOverride = null;
 		goto(`/worlds/${worldId}/nodes/${currentNode.parent_id}`, {
@@ -186,6 +187,7 @@
 	async function handleRestart() {
 		if (!rootNodeId) return;
 		trackEvent('story_restarted', { world_id: worldId });
+		stream.abortStream();
 		slideDirection = 'back';
 		currentNodeOverride = null;
 		goto(`/worlds/${worldId}/nodes/${rootNodeId}`, {

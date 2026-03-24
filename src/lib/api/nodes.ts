@@ -92,7 +92,8 @@ export async function chooseOption(
 export async function generateNodeText(
 	worldId: string,
 	nodeId: string,
-	onTextUpdate: StreamingCallback
+	onTextUpdate: StreamingCallback,
+	signal?: AbortSignal
 ): Promise<StoryNode> {
 	const baseUrl = isLocalEnvironment ? API_BASE_URL : STREAMING_BASE_URL;
 	const url = `${baseUrl}/worlds/${worldId}/nodes/${nodeId}/generate-text`;
@@ -110,7 +111,8 @@ export async function generateNodeText(
 	let response = await fetch(url, {
 		method: 'POST',
 		headers,
-		credentials: 'include' // Include signed cookies
+		credentials: 'include',
+		signal
 	});
 
 	// Retry on auth errors
@@ -125,7 +127,8 @@ export async function generateNodeText(
 			response = await fetch(url, {
 				method: 'POST',
 				headers: retryHeaders,
-				credentials: 'include'
+				credentials: 'include',
+				signal
 			});
 		}
 	}
