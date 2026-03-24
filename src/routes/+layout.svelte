@@ -16,6 +16,7 @@
 	import { LogIn } from '@lucide/svelte';
 	import UserMenu from '$lib/components/shared/UserMenu.svelte';
 	import AppFooter from '$lib/components/shared/AppFooter.svelte';
+	import OnboardingGuard from '$lib/components/shared/OnboardingGuard.svelte';
 
 	let { children } = $props();
 
@@ -33,12 +34,15 @@
 	// Check if we're on the landing page - it has its own header
 	const isLandingPage = $derived(page.url.pathname === '/');
 
-	// Show header on non-landing pages (works in both local and production)
-	const showGlobalHeader = $derived(!isLandingPage);
+	const isOnboardingPage = $derived(page.url.pathname.startsWith('/onboarding'));
+
+	// Show header on non-landing, non-onboarding pages
+	const showGlobalHeader = $derived(!isLandingPage && !isOnboardingPage);
 
 	const showFooter = $derived(
 		!page.url.pathname.startsWith('/login') &&
 			!page.url.pathname.startsWith('/callback') &&
+			!page.url.pathname.startsWith('/onboarding') &&
 			!page.url.pathname.includes('/graph') &&
 			!page.url.pathname.includes('/map')
 	);
@@ -132,6 +136,10 @@
 						</div>
 					</div>
 				</header>
+			{/if}
+
+			{#if !isOnboardingPage}
+				<OnboardingGuard />
 			{/if}
 
 			<div id="main-content" class="relative flex-1">

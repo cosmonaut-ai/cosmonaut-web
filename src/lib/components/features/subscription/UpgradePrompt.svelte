@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useUsage, useBillingPortal } from '$lib/queries';
+	import { useUser, useBillingPortal } from '$lib/queries';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Sparkles, ExternalLink } from '@lucide/svelte';
@@ -16,7 +16,7 @@
 
 	let { open, onOpenChange, resource = 'nodes' }: Props = $props();
 
-	const usageQuery = useUsage();
+	const usageQuery = useUser();
 	const billingPortalMutation = useBillingPortal();
 
 	const usage = $derived(usageQuery.data);

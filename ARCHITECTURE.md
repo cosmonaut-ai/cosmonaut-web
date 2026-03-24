@@ -40,7 +40,7 @@ src/
 │   │   ├── worlds.ts                 # useWorlds, useWorld, useCreateWorld, etc.
 │   │   ├── nodes.ts                  # useNode, useWorldNodes, useChooseOption, etc.
 │   │   ├── voices.ts                 # useVoices
-│   │   ├── subscription.ts           # useUsage, useCheckout, useBillingPortal
+│   │   ├── subscription.ts           # useUser, useCheckout, useBillingPortal
 │   │   ├── feedback.ts               # useFeedback
 │   │   └── index.ts                  # Barrel re-export for queries + queryKeys
 │   ├── types/

@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { useAuth } from '$lib/auth/auth.svelte';
+	import { useUser } from '$lib/queries/subscription';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { User } from '@lucide/svelte';
 
 	const auth = useAuth();
+	const usageQuery = useUser();
 </script>
 
 <Card>
@@ -31,6 +33,9 @@
 			<div>
 				{#if auth.user?.name}
 					<p class="text-lg font-medium text-foreground">{auth.user.name}</p>
+				{/if}
+				{#if usageQuery.data?.username}
+					<p class="text-sm font-medium text-muted-foreground">@{usageQuery.data.username}</p>
 				{/if}
 				{#if auth.user?.email}
 					<p class="text-sm text-muted-foreground">{auth.user.email}</p>

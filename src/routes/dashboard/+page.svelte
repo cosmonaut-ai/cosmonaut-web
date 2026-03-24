@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useWorlds, useDeleteWorld, useUsage } from '$lib/queries';
+	import { useWorlds, useDeleteWorld, useUser } from '$lib/queries';
 	import WorldCard from '$lib/components/features/worlds/WorldCard.svelte';
 	import WorldCardSkeleton from '$lib/components/features/worlds/WorldCardSkeleton.svelte';
 	import UsageLimitTooltip from '$lib/components/features/subscription/UsageLimitTooltip.svelte';
@@ -16,7 +16,7 @@
 
 	const worldsQuery = useWorlds();
 	const deleteMutation = useDeleteWorld();
-	const usageQuery = useUsage();
+	const usageQuery = useUser();
 
 	const allWorlds = $derived(worldsQuery.data?.pages.flatMap((p) => p.items) ?? []);
 

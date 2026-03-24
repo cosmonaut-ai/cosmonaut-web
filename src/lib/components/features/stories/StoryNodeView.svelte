@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { retryNodeProcessing } from '$lib/api/nodes';
-	import { useNode, useChooseOption, useUsage, useWorld, type ChoiceOption } from '$lib/queries';
+	import { useNode, useChooseOption, useUser, useWorld, type ChoiceOption } from '$lib/queries';
 	import { showError } from '$lib/utils/toast';
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
@@ -82,7 +82,7 @@
 	const chooseMutation = useChooseOption(() => worldId);
 
 	// Proactive quota check
-	const usageQuery = useUsage();
+	const usageQuery = useUser();
 	const usage = $derived(usageQuery.data);
 	const isAtNodeLimit = $derived(usage ? usage.nodes_used >= usage.nodes_limit : false);
 

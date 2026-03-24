@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useUsage } from '$lib/queries';
+	import { useUser } from '$lib/queries';
 	import { getTierConfig } from '$lib/config/tiers';
 	import { TooltipContent } from '$lib/components/ui/tooltip';
 	import { Button } from '$lib/components/ui/button';
@@ -14,7 +14,7 @@
 
 	let { resource }: Props = $props();
 
-	const usageQuery = useUsage();
+	const usageQuery = useUser();
 	const usage = $derived(usageQuery.data);
 	const tierConfig = $derived(usage ? getTierConfig(usage.tier) : null);
 

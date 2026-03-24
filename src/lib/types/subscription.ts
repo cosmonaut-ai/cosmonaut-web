@@ -3,6 +3,8 @@ export type SubscriptionTier = 'FREE' | 'EXPLORER' | 'COSMONAUT';
 export type SubscriptionStatus = 'active' | 'past_due' | 'unpaid' | 'paused' | null;
 
 export interface UsageInfo {
+	username: string | null;
+	is_onboarded: boolean;
 	tier: SubscriptionTier;
 	nodes_used: number;
 	nodes_limit: number;

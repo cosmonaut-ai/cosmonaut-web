@@ -70,7 +70,7 @@ export function useCreateWorld() {
 		mutationFn: (data: CreateWorldRequest) => createWorld(data),
 		onSuccess: () => {
 			client.invalidateQueries({ queryKey: queryKeys.worlds.all });
-			client.invalidateQueries({ queryKey: queryKeys.usage.all });
+			client.invalidateQueries({ queryKey: queryKeys.user.all });
 			showSuccess('World created', 'Your world is being generated');
 		},
 		onError: (error: Error) => {
@@ -80,7 +80,7 @@ export function useCreateWorld() {
 					"You're creating worlds too quickly. Please wait a moment and try again."
 				);
 			} else if (error instanceof ApiError && error.isQuotaExceeded) {
-				client.invalidateQueries({ queryKey: queryKeys.usage.all });
+				client.invalidateQueries({ queryKey: queryKeys.user.all });
 				showError(
 					'World creation limit reached',
 					'Upgrade your plan or wait for your usage period to reset.'
@@ -101,7 +101,7 @@ export function useDeleteWorld() {
 		mutationFn: (worldId: string) => deleteWorld(worldId),
 		onSuccess: () => {
 			client.invalidateQueries({ queryKey: queryKeys.worlds.all });
-			client.invalidateQueries({ queryKey: queryKeys.usage.all });
+			client.invalidateQueries({ queryKey: queryKeys.user.all });
 			showSuccess('World deleted');
 		},
 		onError: (error: Error) => {

@@ -3,7 +3,8 @@ import {
 	getUsage,
 	createCheckoutSession,
 	createBillingPortalSession,
-	updateNewsletter
+	updateNewsletter,
+	setUsername
 } from '$lib/api/subscription';
 import type { CheckoutRequest } from '$lib/types/subscription';
 import { showError } from '$lib/utils/toast';
@@ -11,13 +12,13 @@ import { useAuth } from '$lib/auth/auth.svelte';
 import { queryKeys } from './keys';
 
 /**
- * Query hook to fetch the authenticated user's usage and subscription info.
+ * Query hook to fetch the authenticated user's profile, usage, and subscription info.
  * Automatically enabled only when the user is authenticated.
  */
-export function useUsage() {
+export function useUser() {
 	const auth = useAuth();
 	return createQuery(() => ({
-		queryKey: queryKeys.usage.all,
+		queryKey: queryKeys.user.all,
 		queryFn: getUsage,
 		enabled: auth.isAuthenticated
 	}));
@@ -56,15 +57,32 @@ export function useBillingPortal() {
 }
 
 /**
+ * Mutation hook to set the user's username (one-time).
+ * Invalidates the usage query on success so is_onboarded updates.
+ */
+export function useSetUsername() {
+	const queryClient = useQueryClient();
+	return createMutation(() => ({
+		mutationFn: (username: string) => setUsername(username),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
+		},
+		onError: (error: Error) => {
+			showError('Failed to set username', error.message);
+		}
+	}));
+}
+
+/**
  * Mutation hook to update the user's newsletter preference.
- * Invalidates the usage query on success to reflect the change.
+ * Invalidates the user query on success to reflect the change.
  */
 export function useUpdateNewsletter() {
 	const queryClient = useQueryClient();
 	return createMutation(() => ({
 		mutationFn: (optedIn: boolean) => updateNewsletter(optedIn),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.usage.all });
+			queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
 		},
 		onError: (error: Error) => {
 			showError('Failed to update newsletter preference', error.message);

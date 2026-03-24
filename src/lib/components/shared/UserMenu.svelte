@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import { logger } from '$lib/utils/logger';
-	import { useUsage } from '$lib/queries';
+	import { useUser } from '$lib/queries';
 	import { getTierConfig } from '$lib/config/tiers';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Badge } from '$lib/components/ui/badge';
@@ -17,7 +17,7 @@
 	} from '@lucide/svelte';
 
 	const auth = useAuth();
-	const usageQuery = useUsage();
+	const usageQuery = useUser();
 
 	const tierConfig = $derived(usageQuery.data ? getTierConfig(usageQuery.data.tier) : null);
 
