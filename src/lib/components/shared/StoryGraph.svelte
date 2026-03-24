@@ -31,10 +31,14 @@
 	<Controls />
 	<Background variant={BackgroundVariant.Dots} gap={16} size={1} />
 	<MiniMap
-		nodeColor={(node: { id: string; data?: { isRoot?: boolean; isLeaf?: boolean } }) => {
+		nodeColor={(node: {
+			id: string;
+			data?: { isRoot?: boolean; isLeaf?: boolean; storyNode?: { choices: unknown[] } };
+		}) => {
 			if (node.id === currentNodeId) return graphColors.current;
 			if (node.data?.isRoot) return graphColors.start;
-			if (node.data?.isLeaf) return graphColors.end;
+			if (node.data?.isLeaf && node.data.storyNode?.choices.length === 0)
+				return graphColors.end;
 			return graphColors.default;
 		}}
 		nodeStrokeWidth={3}

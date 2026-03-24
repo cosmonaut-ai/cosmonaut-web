@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Handle, Position } from '@xyflow/svelte';
+	import { Tooltip as TooltipPrimitive } from 'bits-ui';
 	import type { FlowNodeData } from '$lib/utils/nodeTransform';
 	import {
 		Tooltip,
@@ -7,6 +8,7 @@
 		TooltipProvider,
 		TooltipTrigger
 	} from '$lib/components/ui/tooltip';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { getNode } from '$lib/api/nodes';
 
 	interface Props {
@@ -18,15 +20,19 @@
 
 	let tooltipData: import('$lib/types/api').StoryNode | null = $state(null);
 	let isHovering = $state(false);
+	let isLoadingTooltip = $state(false);
 
 	async function handleMouseEnter() {
 		isHovering = true;
 		if (!tooltipData && data.storyNode.world_id) {
+			isLoadingTooltip = true;
 			try {
 				const fullNode = await getNode(data.storyNode.world_id, data.storyNode.id);
 				if (isHovering) tooltipData = fullNode;
 			} catch {
 				// Non-critical: tooltip just won't show details
+			} finally {
+				isLoadingTooltip = false;
 			}
 		}
 	}
@@ -107,38 +113,58 @@
 				<Handle type="source" position={Position.Bottom} class="border-primary/50! bg-primary!" />
 			{/if}
 		</TooltipTrigger>
-		<TooltipContent
-			side="bottom"
-			sideOffset={8}
-			class="pointer-events-none w-80 rounded-lg border-border bg-popover p-4 text-sm shadow-xl"
-		>
-			{@const displayNode = tooltipData ?? data.storyNode}
-			<div class="space-y-2">
-				<h4 class="font-semibold text-popover-foreground">
-					{displayNode.title || 'Untitled Node'}
-				</h4>
-				{#if displayNode.text}
-					<p class="line-clamp-4 text-sm text-muted-foreground">
-						{displayNode.text}
-					</p>
-				{:else if !tooltipData}
-					<p class="text-xs text-muted-foreground/60 italic">Hover to load details...</p>
-				{/if}
-				{#if displayNode.choices.length > 0 && displayNode.choices.some((c) => c.label)}
-					<div class="border-t border-border pt-2">
-						<p class="mb-1 text-xs font-medium text-muted-foreground">Choices:</p>
-						<ul class="space-y-1">
-							{#each displayNode.choices.filter((c) => c.label) as choice, index (index)}
-								<li class="flex items-start gap-1 text-xs text-muted-foreground">
-									<span class="text-primary">•</span>
-									<span class="line-clamp-1">{choice.label}</span>
-								</li>
-							{/each}
-						</ul>
-					</div>
-				{/if}
-			</div>
-		</TooltipContent>
+		<TooltipPrimitive.Portal>
+			<TooltipContent
+				side="bottom"
+				sideOffset={8}
+				class="pointer-events-none w-80 rounded-lg border-border bg-popover p-4 text-sm shadow-xl"
+			>
+				{@const displayNode = tooltipData ?? data.storyNode}
+				<div class="space-y-2">
+					<h4 class="font-semibold text-popover-foreground">
+						{displayNode.title || 'Untitled Node'}
+					</h4>
+					{#if displayNode.text}
+						<p class="line-clamp-4 text-sm text-muted-foreground">
+							{displayNode.text}
+						</p>
+					{:else if isLoadingTooltip}
+						<div class="space-y-1.5">
+							<Skeleton class="h-3 w-full" />
+							<Skeleton class="h-3 w-full" />
+							<Skeleton class="h-3 w-4/5" />
+						</div>
+					{/if}
+					{#if displayNode.choices.length > 0 && displayNode.choices.some((c) => c.label)}
+						<div class="border-t border-border pt-2">
+							<p class="mb-1 text-xs font-medium text-muted-foreground">Choices:</p>
+							<ul class="space-y-1">
+								{#each displayNode.choices.filter((c) => c.label) as choice, index (index)}
+									<li class="flex items-start gap-1 text-xs text-muted-foreground">
+										<span class="text-primary">•</span>
+										<span class="line-clamp-1">{choice.label}</span>
+									</li>
+								{/each}
+							</ul>
+						</div>
+					{:else if isLoadingTooltip && data.storyNode.choices.length > 0}
+						<div class="border-t border-border pt-2">
+							<p class="mb-1 text-xs font-medium text-muted-foreground">Choices:</p>
+							<div class="space-y-1.5">
+								<div class="flex items-start gap-1">
+									<span class="text-xs text-primary">•</span>
+									<Skeleton class="h-3 w-3/4" />
+								</div>
+								<div class="flex items-start gap-1">
+									<span class="text-xs text-primary">•</span>
+									<Skeleton class="h-3 w-2/3" />
+								</div>
+							</div>
+						</div>
+					{/if}
+				</div>
+			</TooltipContent>
+		</TooltipPrimitive.Portal>
 	</Tooltip>
 </TooltipProvider>
 
