@@ -93,16 +93,9 @@
 				<span class={choice.is_explored ? 'text-muted-foreground' : 'text-foreground'}
 					>{choice.label}</span
 				>
-				{#if choice.is_explored}
-					<span
-						class="shrink-0 rounded-full border border-muted-foreground/30 bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-					>
-						Explored
-					</span>
-				{/if}
 				{#if choice.is_created && !choice.is_explored}
 					<span
-						class="flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+						class="flex shrink-0 items-center gap-1 rounded-full border border-muted-foreground/30 bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
 					>
 						<Rabbit class="h-3 w-3" />
 						Quick
