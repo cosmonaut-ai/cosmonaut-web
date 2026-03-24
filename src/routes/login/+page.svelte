@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { useAuth, SignUpNotConfirmedError } from '$lib/auth/auth.svelte';
-	import { updateNewsletter } from '$lib/api/subscription';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
@@ -29,7 +28,6 @@
 	let confirmNewPassword = $state('');
 	let showPassword = $state(false);
 	let showConfirmPassword = $state(false);
-	let newsletterOptIn = $state(true);
 	let isSubmitting = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
@@ -93,18 +91,6 @@
 			passwordChecks.symbol
 	);
 	const passwordsMatch = $derived(password === confirmPassword && confirmPassword.length > 0);
-
-	$effect(() => {
-		try {
-			if (newsletterOptIn) {
-				localStorage.setItem('cosmonaut-newsletter-opt-in', 'true');
-			} else {
-				localStorage.removeItem('cosmonaut-newsletter-opt-in');
-			}
-		} catch {
-			/* localStorage might not be available */
-		}
-	});
 
 	// Redirect if already authenticated
 	$effect(() => {
@@ -202,15 +188,6 @@
 			await auth.confirmSignUpWithCode(email, verificationCode);
 			trackEvent('email_verified');
 			await auth.signInWithEmail(email, password);
-			try {
-				const optedIn = localStorage.getItem('cosmonaut-newsletter-opt-in') === 'true';
-				if (optedIn) {
-					await updateNewsletter(true);
-				}
-				localStorage.removeItem('cosmonaut-newsletter-opt-in');
-			} catch {
-				// Newsletter sync is non-critical
-			}
 			goto(consumeRedirectUrl());
 		} catch (error) {
 			errorMessage = formatError(error);
@@ -407,14 +384,12 @@
 								{passwordValid}
 								{passwordsMatch}
 								{isSubmitting}
-								{newsletterOptIn}
 								{isInAppBrowser}
 								onEmailChange={(v) => (email = v)}
 								onPasswordChange={(v) => (password = v)}
 								onConfirmPasswordChange={(v) => (confirmPassword = v)}
 								onShowPasswordChange={(v) => (showPassword = v)}
 								onShowConfirmPasswordChange={(v) => (showConfirmPassword = v)}
-								onNewsletterChange={(v) => (newsletterOptIn = v)}
 								onSignUp={handleSignUp}
 								onGoogleSignIn={handleGoogleSignIn}
 								onSwitchToSignIn={() => switchView('signin')}

@@ -69,7 +69,7 @@
 									usage.pending_tier_date
 								)}
 							{:else}
-								Renews on {formatDate(usage.period_end)}
+								{isFree ? 'Quotas refresh' : 'Renews'} on {formatDate(usage.period_end)}
 							{/if}
 						</p>
 					{/if}

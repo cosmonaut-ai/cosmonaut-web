@@ -6,7 +6,7 @@ import {
 	updateNewsletter,
 	setUsername
 } from '$lib/api/subscription';
-import type { CheckoutRequest } from '$lib/types/subscription';
+import type { CheckoutRequest, UsageInfo } from '$lib/types/subscription';
 import { showError } from '$lib/utils/toast';
 import { useAuth } from '$lib/auth/auth.svelte';
 import { queryKeys } from './keys';
@@ -58,13 +58,17 @@ export function useBillingPortal() {
 
 /**
  * Mutation hook to set the user's username (one-time).
- * Invalidates the usage query on success so is_onboarded updates.
+ * Optimistically patches the cached user data so guards immediately
+ * see is_onboarded=true, avoiding a redirect race on navigation.
  */
 export function useSetUsername() {
 	const queryClient = useQueryClient();
 	return createMutation(() => ({
 		mutationFn: (username: string) => setUsername(username),
-		onSuccess: () => {
+		onSuccess: (data) => {
+			queryClient.setQueryData<UsageInfo>(queryKeys.user.all, (old) =>
+				old ? { ...old, username: data.username, is_onboarded: true } : old
+			);
 			queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
 		},
 		onError: (error: Error) => {
