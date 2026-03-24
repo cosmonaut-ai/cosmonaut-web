@@ -35,19 +35,19 @@
 		{#if auth.user?.picture}
 			<img
 				src={auth.user.picture}
-				alt={auth.user.name || 'User'}
+				alt={usageQuery.data?.display_name || 'User'}
 				class="h-8 w-8 rounded-full ring-2 ring-primary/20"
 			/>
 		{:else}
 			<div
 				class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground"
 			>
-				{(auth.user?.name || auth.user?.email || 'U').charAt(0).toUpperCase()}
+				{(usageQuery.data?.display_name || auth.user?.email || 'U').charAt(0).toUpperCase()}
 			</div>
 		{/if}
-		{#if auth.user?.name}
+		{#if usageQuery.data?.display_name}
 			<span class="hidden text-sm font-medium text-foreground sm:block">
-				{auth.user.name}
+				{usageQuery.data.display_name}
 			</span>
 		{/if}
 		<ChevronDown class="hidden h-3.5 w-3.5 text-muted-foreground sm:block" />
@@ -57,7 +57,7 @@
 		<!-- Tier badge header -->
 		<div class="px-2 py-2">
 			<p class="text-sm font-medium text-foreground">
-				{auth.user?.name || auth.user?.email || 'User'}
+				{usageQuery.data?.display_name || auth.user?.email || 'User'}
 			</p>
 			{#if usageQuery.data && tierConfig}
 				<Badge class="mt-1 {tierBadgeClass[usageQuery.data.tier] ?? ''}">

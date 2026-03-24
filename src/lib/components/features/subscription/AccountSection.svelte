@@ -20,22 +20,19 @@
 			{#if auth.user?.picture}
 				<img
 					src={auth.user.picture}
-					alt={auth.user.name || 'User'}
+					alt={usageQuery.data?.display_name || 'User'}
 					class="h-16 w-16 rounded-full ring-2 ring-primary/20"
 				/>
 			{:else}
 				<div
 					class="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-xl font-medium text-primary-foreground"
 				>
-					{(auth.user?.name || auth.user?.email || 'U').charAt(0).toUpperCase()}
+					{(usageQuery.data?.display_name || auth.user?.email || 'U').charAt(0).toUpperCase()}
 				</div>
 			{/if}
 			<div>
-				{#if auth.user?.name}
-					<p class="text-lg font-medium text-foreground">{auth.user.name}</p>
-				{/if}
-				{#if usageQuery.data?.username}
-					<p class="text-sm font-medium text-muted-foreground">@{usageQuery.data.username}</p>
+				{#if usageQuery.data?.display_name}
+					<p class="text-lg font-medium text-foreground">{usageQuery.data.display_name}</p>
 				{/if}
 				{#if auth.user?.email}
 					<p class="text-sm text-muted-foreground">{auth.user.email}</p>

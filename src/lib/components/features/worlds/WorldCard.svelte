@@ -173,9 +173,7 @@
 							onclick={handleDeleteClick}
 							disabled={isDeleting}
 							class="h-9 w-9 p-0 text-muted-foreground hover:text-destructive disabled:opacity-50"
-							aria-label={isOwner
-								? `Delete world: ${world.title || 'Untitled World'}`
-								: `Remove world: ${world.title || 'Untitled World'}`}
+							aria-label="Remove world '{world.title || 'Untitled World'}' from library"
 						>
 							{#if isDeleting}
 								<Spinner class="h-4 w-4" />
@@ -184,7 +182,7 @@
 							{/if}
 						</Button>
 					</TooltipTrigger>
-					<TooltipContent>{isOwner ? 'Delete World' : 'Remove from Library'}</TooltipContent>
+					<TooltipContent>Remove from Library</TooltipContent>
 				</Tooltip>
 				{#if canPlay}
 					<Tooltip>
@@ -218,7 +216,7 @@
 >
 	<Dialog.Content showCloseButton={!isDeleting} onclick={(e: Event) => e.stopPropagation()}>
 		<Dialog.Header>
-			<Dialog.Title>{isOwner ? 'Delete World' : 'Remove from Library'}</Dialog.Title>
+			<Dialog.Title>Remove from Library</Dialog.Title>
 			<Dialog.Description>
 				{#if isOwner}
 					This will remove the world from your library. If no other users have saved it, the world
@@ -234,9 +232,9 @@
 			<Button variant="destructive" onclick={handleConfirmDelete} disabled={isDeleting}>
 				{#if isDeleting}
 					<Spinner class="mr-2 h-4 w-4" />
-					{isOwner ? 'Deleting...' : 'Removing...'}
+					Removing...
 				{:else}
-					{isOwner ? 'Delete' : 'Remove'}
+					Remove
 				{/if}
 			</Button>
 		</Dialog.Footer>
