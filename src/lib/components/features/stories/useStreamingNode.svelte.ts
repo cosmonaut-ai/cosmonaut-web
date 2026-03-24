@@ -132,7 +132,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 
 				if (err instanceof ApiError && err.isNodeAlreadyProcessed) {
 					nodeQuery.refetch();
-					throw err;
+					return;
 				}
 
 				// Stream may have been interrupted (network stutter) while the backend
