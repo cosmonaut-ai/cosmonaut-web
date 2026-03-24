@@ -135,14 +135,9 @@ export class ApiError extends Error {
 		return this.status === 429 && /rate limit/i.test(this.detail);
 	}
 
-	get isStorageQuotaExceeded(): boolean {
-		if (this.code) return this.code === 'STORAGE_QUOTA_EXCEEDED';
-		return this.status === 403 && /storage quota exceeded/i.test(this.detail);
-	}
-
 	get isForbidden(): boolean {
 		if (this.code) return this.code === 'FORBIDDEN';
-		return this.status === 403 && !/storage quota exceeded/i.test(this.detail);
+		return this.status === 403;
 	}
 
 	get isNotFound(): boolean {

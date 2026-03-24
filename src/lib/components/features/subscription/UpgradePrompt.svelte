@@ -10,8 +10,8 @@
 	interface Props {
 		open: boolean;
 		onOpenChange: (open: boolean) => void;
-		/** Which resource hit the quota: "worlds", "worlds_storage", "nodes", or "audio" */
-		resource?: 'worlds' | 'worlds_storage' | 'nodes' | 'audio';
+		/** Which resource hit the quota: "worlds", "nodes", or "audio" */
+		resource?: 'worlds' | 'nodes' | 'audio';
 	}
 
 	let { open, onOpenChange, resource = 'nodes' }: Props = $props();
@@ -28,10 +28,8 @@
 		}
 	});
 
-	const isStorageResource = $derived(resource === 'worlds_storage');
 	const isAudioResource = $derived(resource === 'audio');
 	const resourceLabel = $derived.by(() => {
-		if (isStorageResource) return 'saved worlds';
 		if (resource === 'worlds') return 'world creation';
 		if (isAudioResource) return 'audio narration';
 		return 'story generation';
@@ -43,9 +41,7 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<Sparkles class="h-5 w-5 text-primary" />
-				{#if isStorageResource}
-					Saved Worlds Limit Reached
-				{:else if resource === 'worlds'}
+				{#if resource === 'worlds'}
 					World Creation Limit Reached
 				{:else if isAudioResource}
 					Audio Narration Limit Reached
@@ -54,9 +50,7 @@
 				{/if}
 			</Dialog.Title>
 			<Dialog.Description>
-				{#if isStorageResource}
-					You've reached the maximum number of saved worlds for your plan.
-				{:else if isAudioResource && isFree}
+				{#if isAudioResource && isFree}
 					You've used all your free audio narrations. Upgrade to generate more.
 				{:else if isAudioResource}
 					You've reached your audio narration limit for this period.
@@ -69,12 +63,7 @@
 		<div class="space-y-4 py-2">
 			{#if usage}
 				<div class="rounded-lg border border-border bg-muted/50 p-4 text-sm">
-					{#if isStorageResource}
-						<p class="text-muted-foreground">
-							<strong class="text-foreground">{usage.worlds_stored}</strong> of
-							<strong class="text-foreground">{usage.worlds_stored_limit}</strong> saved worlds
-						</p>
-					{:else if resource === 'worlds'}
+					{#if resource === 'worlds'}
 						<p class="text-muted-foreground">
 							<strong class="text-foreground">{usage.worlds_created}</strong> of
 							<strong class="text-foreground">{usage.worlds_limit}</strong> worlds created this period
@@ -112,9 +101,7 @@
 			{/if}
 
 			<p class="text-sm text-muted-foreground">
-				{#if isStorageResource}
-					Delete an existing world or upgrade your plan to create more.
-				{:else if isAudioResource && isFree}
+				{#if isAudioResource && isFree}
 					Upgrade your plan to unlock more audio narrations.
 				{:else}
 					Upgrade your plan for higher limits, or wait for your usage period to reset.

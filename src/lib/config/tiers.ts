@@ -7,7 +7,6 @@ export interface TierConfig {
 	priceDetail: string;
 	worldsLimit: number;
 	nodesLimit: number;
-	savedWorldsLimit: number;
 	audioNarrationsLimit: number;
 	resetPeriod: string;
 	features: string[];
@@ -26,13 +25,12 @@ export const TIER_CONFIG: TierConfig[] = [
 		priceDetail: 'forever',
 		worldsLimit: 3,
 		nodesLimit: 30,
-		savedWorldsLimit: 5,
 		audioNarrationsLimit: 10,
 		resetPeriod: '7 days',
 		features: [
 			'3 worlds per week',
 			'30 story nodes per week',
-			'5 saved stories',
+			'Unlimited saved stories',
 			'10 audio narrations (one-time)',
 			'Full story graph visualization',
 			'Community sharing'
@@ -45,14 +43,13 @@ export const TIER_CONFIG: TierConfig[] = [
 		priceDetail: 'per month',
 		worldsLimit: 20,
 		nodesLimit: 500,
-		savedWorldsLimit: 50,
 		audioNarrationsLimit: 30,
 		resetPeriod: '30 days',
 		highlighted: true,
 		features: [
 			'20 worlds per month',
 			'500 story nodes per month',
-			'50 saved stories',
+			'Unlimited saved stories',
 			'30 audio narrations / month',
 			'Full story graph visualization',
 			'Community sharing'
@@ -65,13 +62,12 @@ export const TIER_CONFIG: TierConfig[] = [
 		priceDetail: 'per month',
 		worldsLimit: 100,
 		nodesLimit: 2000,
-		savedWorldsLimit: 100,
 		audioNarrationsLimit: 150,
 		resetPeriod: '30 days',
 		features: [
 			'100 worlds per month',
 			'2,000 story nodes per month',
-			'100 saved stories',
+			'Unlimited saved stories',
 			'150 audio narrations / month',
 			'Full story graph visualization',
 			'Community sharing',

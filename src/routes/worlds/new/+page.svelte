@@ -97,11 +97,7 @@
 	// Quota check
 	const usageQuery = useUsage();
 	const usage = $derived(usageQuery.data);
-	const isAtStorageLimit = $derived(
-		usage ? usage.worlds_stored >= usage.worlds_stored_limit : false
-	);
-	const isAtPeriodLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
-	const isAtWorldLimit = $derived(isAtStorageLimit || isAtPeriodLimit);
+	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
 
 	// Inline validation
 	const MAX_PROMPT_LENGTH = 2000;
@@ -215,21 +211,7 @@
 	</header>
 
 	<main class="mx-auto max-w-3xl px-6 py-12">
-		{#if isAtStorageLimit}
-			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
-				<AlertTriangle class="h-4 w-4 text-destructive" />
-				<AlertDescription>
-					<p>
-						You've reached your saved worlds limit ({usage?.worlds_stored}/{usage?.worlds_stored_limit}).
-						Delete an existing world or
-						<a href="/pricing" class="text-yellow-400 underline hover:text-yellow-300">
-							upgrade your plan
-						</a>
-						to create more.
-					</p>
-				</AlertDescription>
-			</Alert>
-		{:else if isAtPeriodLimit}
+		{#if isAtWorldLimit}
 			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
 				<AlertTriangle class="h-4 w-4 text-destructive" />
 				<AlertDescription>
