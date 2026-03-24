@@ -27,17 +27,3 @@ export function showInfo(message: string, description?: string) {
 export function showWarning(message: string, description?: string) {
 	toast.warning(message, { description });
 }
-
-/**
- * Show a loading toast and return a function to update it
- */
-export function showLoading(message: string) {
-	return toast.loading(message);
-}
-
-/**
- * Dismiss a specific toast or all toasts
- */
-export function dismissToast(toastId?: string | number) {
-	toast.dismiss(toastId);
-}

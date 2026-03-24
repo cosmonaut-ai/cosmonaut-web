@@ -1,3 +1,5 @@
+// NOTE: Tier limits are also defined in cosmonaut-api (app/core/config.py)
+// and cosmonaut-admin (src/lib/config.ts). Keep all three in sync.
 import type { SubscriptionTier } from '$lib/types/subscription';
 
 export interface TierConfig {

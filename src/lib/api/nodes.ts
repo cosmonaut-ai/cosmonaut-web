@@ -1,12 +1,11 @@
 import type { StoryNode, ChooseRequest, StreamingCallback } from '$lib/types/api';
-import { ApiError } from '$lib/types/api';
 import { API_BASE_URL, STREAMING_BASE_URL, isLocalEnvironment } from '$lib/config';
 import {
 	getAuthToken,
 	refreshStreamingSession,
 	invalidateStreamingSession
 } from '$lib/auth/auth.svelte';
-import { apiRequest, getAuthHeaders, POST_STREAM_DELAY_MS } from './core';
+import { apiRequest, getAuthHeaders, parseApiError, ApiError, POST_STREAM_DELAY_MS } from './core';
 
 /** Response from the progress endpoint */
 export interface WorldProgressResponse {
@@ -133,13 +132,7 @@ export async function generateNodeText(
 	}
 
 	if (!response.ok) {
-		const errorBody = await response.json().catch(() => ({}));
-		const message =
-			errorBody.error?.message ??
-			errorBody.detail ??
-			`HTTP ${response.status}: ${response.statusText}`;
-		const code: string | undefined = errorBody.error?.code;
-		throw new ApiError(response.status, message, code);
+		throw await parseApiError(response);
 	}
 
 	// Check if this is a streaming response

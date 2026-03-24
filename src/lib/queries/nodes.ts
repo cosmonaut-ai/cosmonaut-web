@@ -1,17 +1,11 @@
 import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { getNode, getWorldNodes, getWorldProgress, chooseOption } from '$lib/api/nodes';
 import { generateNodeAudio } from '$lib/api/voices';
+import { POLL_INTERVAL_MS, ApiError } from '$lib/api/core';
 import type { StoryNode } from '$lib/types/api';
 import { showError } from '$lib/utils/toast';
 import { queryKeys } from './keys';
-
-/** Helper type for values that can be passed directly or as a getter */
-type MaybeGetter<T> = T | (() => T);
-
-/** Resolve a value that might be a getter */
-function resolve<T>(value: MaybeGetter<T>): T {
-	return typeof value === 'function' ? (value as () => T)() : value;
-}
+import { type MaybeGetter, resolve } from './utils';
 
 /**
  * Query hook to fetch all nodes in a world
@@ -62,7 +56,7 @@ export function useNode(
 				if (!options?.enablePolling) return false;
 				if (query.state.error) return false;
 				const status = query.state.data?.generation_status;
-				return status === 'generating' ? 2000 : false;
+				return status === 'generating' ? POLL_INTERVAL_MS : false;
 			},
 			refetchIntervalInBackground: false
 		};
@@ -155,7 +149,7 @@ export function useGenerateAudio(worldId: MaybeGetter<string>) {
 				client.invalidateQueries({ queryKey: queryKeys.usage.all });
 			},
 			onError: (error: Error) => {
-				if (!('status' in error && (error as { status: number }).status === 429)) {
+				if (!(error instanceof ApiError && error.isQuotaExceeded)) {
 					showError('Audio generation failed', error.message);
 				}
 			}
