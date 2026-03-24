@@ -13,6 +13,7 @@ import {
 } from 'aws-amplify/auth';
 import * as Sentry from '@sentry/sveltekit';
 import { amplifyConfig, isLocalEnvironment, isAuthConfigured, API_BASE_URL } from '$lib/config';
+import { apiRequest } from '$lib/api/core';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { logger } from '$lib/utils/logger';
@@ -304,23 +305,7 @@ export async function confirmForgotPassword(
  * Delete the current user's account via the API, then sign out
  */
 export async function deleteAccount(): Promise<void> {
-	const token = await getAuthToken();
-	if (!token && !isLocalEnvironment) {
-		throw new Error('Not authenticated');
-	}
-
-	const response = await fetch(`${API_BASE_URL}/auth/account`, {
-		method: 'DELETE',
-		headers: token ? { Authorization: `Bearer ${token}` } : {}
-	});
-
-	if (!response.ok) {
-		const body = await response.json().catch(() => ({}));
-		const message = body.error?.message ?? body.detail ?? 'Account deletion failed';
-		throw new Error(message);
-	}
-
-	// Sign out locally after server-side deletion
+	await apiRequest(`${API_BASE_URL}/auth/account`, { method: 'DELETE' });
 	await logout();
 }
 
@@ -481,17 +466,9 @@ export function invalidateStreamingSession(): void {
 	_streamingSessionValidUntil = 0;
 }
 
-// Export reactive getters
+// Export reactive getter
 export function getIsAuthenticated(): boolean {
 	return isAuthenticated;
-}
-
-export function getIsLoading(): boolean {
-	return isLoading;
-}
-
-export function getUser(): UserInfo | null {
-	return user;
 }
 
 /**

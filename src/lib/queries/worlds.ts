@@ -13,8 +13,10 @@ import {
 	type UpdateWorldSharingRequest,
 	type World
 } from '$lib/types/api';
+import { POLL_INTERVAL_MS } from '$lib/api/core';
 import { showError, showSuccess, showWarning } from '$lib/utils/toast';
 import { queryKeys } from './keys';
+import { type MaybeGetter, resolve } from './utils';
 
 /**
  * Infinite query hook to fetch worlds for the current user with cursor pagination.
@@ -36,13 +38,6 @@ export function useWorlds() {
 	}));
 }
 
-type MaybeGetter<T> = T | (() => T);
-
-/** Resolve a value that might be a getter */
-function resolve<T>(value: MaybeGetter<T>): T {
-	return typeof value === 'function' ? (value as () => T)() : value;
-}
-
 /**
  * Query hook to fetch a specific world by ID
  * Pass a getter function to ensure reactivity with $derived values
@@ -59,7 +54,7 @@ export function useWorld(worldId: MaybeGetter<string>, options?: { enablePolling
 				if (!options?.enablePolling) return false;
 				if (query.state.error) return false;
 				const status = query.state.data?.generation_status;
-				return status === 'completed' || status === 'failed' ? false : 2000;
+				return status === 'completed' || status === 'failed' ? false : POLL_INTERVAL_MS;
 			},
 			refetchIntervalInBackground: false
 		};
