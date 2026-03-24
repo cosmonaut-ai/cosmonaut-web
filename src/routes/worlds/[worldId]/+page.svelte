@@ -7,19 +7,16 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
 
-	// Get worldId from params (guaranteed to exist in this route)
-	const worldId = page.params.worldId!;
+	const worldId = $derived(page.params.worldId!);
 
 	// Check for node query parameter (from graph page navigation)
 	const nodeIdFromUrl = $derived(page.url.searchParams.get('node'));
 
-	// Use TanStack Query for world data
-	const worldQuery = useWorld(worldId, {
+	const worldQuery = useWorld(() => worldId, {
 		enablePolling: true
 	});
 
-	// Fetch the user's last-visited node in this world
-	const progressQuery = useWorldProgress(worldId);
+	const progressQuery = useWorldProgress(() => worldId);
 	const lastNodeId = $derived(progressQuery.data?.current_node_id ?? null);
 
 	// Derived world data
