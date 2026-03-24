@@ -109,13 +109,13 @@
 		}
 	});
 
-	async function handleChoiceSelect(choiceIndex: number) {
+	async function handleChoiceSelect(targetId: string) {
 		if (!currentNode || loading || isProcessingChoice) return;
 		if (!currentNode.parent_id) {
 			trackEvent('story_started', { world_id: worldId });
 		}
 		trackEvent('choice_made', { world_id: worldId, choice_type: 'preset' });
-		await executeChoice({ choiceIndex });
+		await executeChoice({ targetId });
 	}
 
 	async function handleCustomChoice(text: string) {

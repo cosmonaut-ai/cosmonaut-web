@@ -183,11 +183,11 @@ export class ApiError extends Error {
 }
 
 /**
- * Request body for the choose endpoint
- * Exactly one of choice_index or custom_choice must be set
+ * Request body for the choose endpoint.
+ * Exactly one of target_id or custom_choice must be set.
  */
 export interface ChooseRequest {
-	choice_index: number | null;
+	target_id: string | null;
 	custom_choice: string | null;
 }
 
