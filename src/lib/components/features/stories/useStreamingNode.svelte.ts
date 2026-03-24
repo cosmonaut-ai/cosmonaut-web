@@ -56,6 +56,21 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 	let generatingNodeId = $state<string | null>(null);
 	let showQuotaPrompt = $state(false);
 	let showAudioQuotaPrompt = $state(false);
+	let abortController: AbortController | null = null;
+
+	/** Cancel any in-flight streaming request and reset streaming state. */
+	function abortStream() {
+		if (abortController) {
+			abortController.abort();
+			abortController = null;
+		}
+		isStreaming = false;
+		streamingText = '';
+		streamingDone = false;
+		pendingNode = null;
+		generatingNodeId = null;
+		setLoading(false);
+	}
 
 	/** Start text generation for a node. Updates streaming state via callback. */
 	function startGeneration(
@@ -63,23 +78,37 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 		nodeIdVal: string,
 		opts?: { setLoading?: boolean }
 	): Promise<StoryNode | void> {
+		abortController?.abort();
+		const controller = new AbortController();
+		abortController = controller;
+		const { signal } = controller;
+
 		generatingNodeId = nodeIdVal;
 		isStreaming = true;
 		streamingText = '';
 		streamingDone = false;
 		if (opts?.setLoading) setLoading(true);
 
-		return generateNodeText(worldIdVal, nodeIdVal, (text, done) => {
-			streamingText = text;
-			if (done) streamingDone = true;
-		})
+		return generateNodeText(
+			worldIdVal,
+			nodeIdVal,
+			(text, done) => {
+				if (signal.aborted) return;
+				streamingText = text;
+				if (done) streamingDone = true;
+			},
+			signal
+		)
 			.then((completedNode) => {
+				if (signal.aborted) return;
 				updateNodeInCache(queryClient, worldIdVal, completedNode);
 				pendingNode = completedNode;
 				isStreaming = false;
 				return completedNode;
 			})
 			.catch(async (err) => {
+				if (signal.aborted) return;
+
 				isStreaming = false;
 				streamingText = '';
 				streamingDone = false;
@@ -135,6 +164,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 				}
 			})
 			.finally(() => {
+				if (signal.aborted) return;
 				if (opts?.setLoading) setLoading(false);
 			});
 	}
@@ -216,6 +246,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 			showAudioQuotaPrompt = value;
 		},
 		startGeneration,
+		abortStream,
 		setGeneratingNodeId: (id: string | null) => {
 			generatingNodeId = id;
 		}
