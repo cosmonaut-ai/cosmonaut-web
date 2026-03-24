@@ -4,6 +4,7 @@ export type SubscriptionStatus = 'active' | 'past_due' | 'unpaid' | 'paused' | n
 
 export interface UsageInfo {
 	username: string | null;
+	display_name: string;
 	is_onboarded: boolean;
 	tier: SubscriptionTier;
 	nodes_used: number;
