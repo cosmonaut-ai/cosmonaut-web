@@ -53,7 +53,8 @@
 			<div>
 				<p class="text-sm font-medium text-foreground">Delete account</p>
 				<p class="text-sm text-muted-foreground">
-					Permanently delete your account, worlds, and all data. This cannot be undone.
+					Permanently delete your account and all data. Your worlds will be permanently deleted,
+					even if other users have saved them. This cannot be undone.
 				</p>
 			</div>
 			<Dialog.Root bind:open={deleteDialogOpen}>
@@ -68,11 +69,10 @@
 							<Trash2 class="h-5 w-5" />
 							Delete Account
 						</Dialog.Title>
-						<Dialog.Description>
-							This will permanently delete your account, all your worlds, story nodes, and all
-							associated data. Any active subscriptions will be cancelled. This action cannot be
-							undone.
-						</Dialog.Description>
+					<Dialog.Description>
+						This will permanently delete your account and all your worlds, even if other users have
+						saved them. Any active subscriptions will be cancelled. This action cannot be undone.
+					</Dialog.Description>
 					</Dialog.Header>
 					<div class="space-y-4 py-4">
 						{#if deleteError}

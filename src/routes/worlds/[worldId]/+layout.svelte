@@ -22,6 +22,7 @@
 
 	// Get worldId from params (guaranteed to exist in this route)
 	const worldId = $derived(page.params.worldId!);
+	const inviteToken = $derived(page.url.searchParams.get('invite'));
 
 	// Determine if we're on the graph page (which has its own full-screen layout)
 	const isGraphPage = $derived(page.url.pathname.includes('/graph'));
@@ -32,7 +33,8 @@
 
 	// Use TanStack Query for world data with polling for generation status
 	const worldQuery = useWorld(() => page.params.worldId!, {
-		enablePolling: true
+		enablePolling: true,
+		invite: () => inviteToken
 	});
 
 	// Derived world data
@@ -88,13 +90,22 @@
 					>
 						<ShieldAlert class="h-6 w-6 text-primary" />
 					</div>
-					<h2 class="mb-2 text-lg font-semibold text-foreground">
-						You don't have access to this world
-					</h2>
-					<p class="mb-6 max-w-md text-sm text-muted-foreground">
-						It looks like you don't have permission to view this world. Ask the owner to share it
-						with you.
-					</p>
+					{#if inviteToken}
+						<h2 class="mb-2 text-lg font-semibold text-foreground">
+							Invalid or expired invite link
+						</h2>
+						<p class="mb-6 max-w-md text-sm text-muted-foreground">
+							This invite link is no longer valid. Ask the owner for a new invite link.
+						</p>
+					{:else}
+						<h2 class="mb-2 text-lg font-semibold text-foreground">
+							You don't have access to this world
+						</h2>
+						<p class="mb-6 max-w-md text-sm text-muted-foreground">
+							It looks like you don't have permission to view this world. Ask the owner to share it
+							with you.
+						</p>
+					{/if}
 					<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
 				</CardContent>
 			</Card>

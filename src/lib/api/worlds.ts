@@ -1,4 +1,9 @@
-import type { World, CreateWorldRequest, UpdateWorldSharingRequest } from '$lib/types/api';
+import type {
+	World,
+	CreateWorldRequest,
+	UpdateWorldSharingRequest,
+	InviteToken
+} from '$lib/types/api';
 import { API_BASE_URL } from '$lib/config';
 import { apiRequest } from './core';
 
@@ -6,6 +11,12 @@ import { apiRequest } from './core';
 export interface PaginatedWorldsResponse {
 	items: World[];
 	next_cursor: string | null;
+}
+
+/** Display info returned by the user batch-lookup endpoint */
+export interface UserInfo {
+	id: string;
+	display_name: string;
 }
 
 /**
@@ -19,10 +30,12 @@ export async function getWorlds(cursor?: string | null): Promise<PaginatedWorlds
 }
 
 /**
- * Get a specific world by ID
+ * Get a specific world by ID, optionally with an invite token.
  */
-export async function getWorld(worldId: string): Promise<World> {
-	return apiRequest<World>(`${API_BASE_URL}/worlds/${worldId}`);
+export async function getWorld(worldId: string, invite?: string | null): Promise<World> {
+	const url = new URL(`${API_BASE_URL}/worlds/${worldId}`);
+	if (invite) url.searchParams.set('invite', invite);
+	return apiRequest<World>(url.toString());
 }
 
 /**
@@ -50,8 +63,35 @@ export async function updateWorldSharing(
 }
 
 /**
- * Delete a world and all associated data
+ * Remove a world from the user's library (deletes their session).
  */
 export async function deleteWorld(worldId: string): Promise<void> {
 	await apiRequest<void>(`${API_BASE_URL}/worlds/${worldId}`, { method: 'DELETE' });
+}
+
+// ---------------------------------------------------------------------------
+// Invite tokens
+// ---------------------------------------------------------------------------
+
+export async function createInviteToken(worldId: string): Promise<InviteToken> {
+	return apiRequest<InviteToken>(`${API_BASE_URL}/worlds/${worldId}/invite-token`, {
+		method: 'POST'
+	});
+}
+
+export async function getInviteToken(worldId: string): Promise<InviteToken | null> {
+	return apiRequest<InviteToken | null>(`${API_BASE_URL}/worlds/${worldId}/invite-token`);
+}
+
+export async function deleteInviteToken(worldId: string): Promise<void> {
+	await apiRequest<void>(`${API_BASE_URL}/worlds/${worldId}/invite-token`, { method: 'DELETE' });
+}
+
+// ---------------------------------------------------------------------------
+// User lookup
+// ---------------------------------------------------------------------------
+
+export async function batchLookupUsers(ids: string[]): Promise<UserInfo[]> {
+	if (ids.length === 0) return [];
+	return apiRequest<UserInfo[]>(`${API_BASE_URL}/auth/users/batch?ids=${ids.join(',')}`);
 }

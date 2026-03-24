@@ -9,7 +9,7 @@ export type StoryNodeProcessingStatus = 'pending' | 'processing' | 'completed' |
 
 export type StoryNodeGenerationStatus = 'initialized' | 'generating' | 'completed' | 'failed';
 
-export type WorldVisibility = 'private' | 'public';
+export type WorldVisibility = 'private' | 'unlisted' | 'public';
 
 export type WorldLength = 'short' | 'medium' | 'long';
 
@@ -62,6 +62,15 @@ export interface StoryNode {
 	updated_at?: string;
 }
 
+export interface InviteToken {
+	token: string;
+	root_world_id: string;
+	created_at: string;
+	expires_at: string;
+	use_count: number;
+	invite_url: string;
+}
+
 export interface World {
 	id: string;
 	shareable_id: string | null;
@@ -90,6 +99,7 @@ export interface World {
 	world_image_width: string | null;
 	world_image_height: string | null;
 	world_image_size: string | null;
+	invite_token?: InviteToken | null;
 	created_at: string;
 	updated_at: string;
 }
