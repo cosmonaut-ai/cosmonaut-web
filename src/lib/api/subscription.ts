@@ -45,3 +45,24 @@ export async function updateNewsletter(optedIn: boolean): Promise<{ status: stri
 		body: JSON.stringify({ opted_in: optedIn })
 	});
 }
+
+/**
+ * Check whether a username is available (case-insensitive).
+ */
+export async function checkUsernameAvailability(
+	username: string
+): Promise<{ available: boolean; username: string }> {
+	return apiRequest<{ available: boolean; username: string }>(
+		`${API_BASE_URL}/auth/username/check?username=${encodeURIComponent(username)}`
+	);
+}
+
+/**
+ * Permanently set the authenticated user's username (one-time, not changeable).
+ */
+export async function setUsername(username: string): Promise<{ username: string }> {
+	return apiRequest<{ username: string }>(`${API_BASE_URL}/auth/username`, {
+		method: 'POST',
+		body: JSON.stringify({ username })
+	});
+}

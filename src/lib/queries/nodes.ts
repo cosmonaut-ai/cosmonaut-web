@@ -146,7 +146,7 @@ export function useGenerateAudio(worldId: MaybeGetter<string>) {
 						audio: { ...cached.audio, [variables.voiceId]: data.audio_url }
 					});
 				}
-				client.invalidateQueries({ queryKey: queryKeys.usage.all });
+				client.invalidateQueries({ queryKey: queryKeys.user.all });
 			},
 			onError: (error: Error) => {
 				if (!(error instanceof ApiError && error.isQuotaExceeded)) {

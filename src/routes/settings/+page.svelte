@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useUsage, useUpdateNewsletter } from '$lib/queries';
+	import { useUser, useUpdateNewsletter } from '$lib/queries';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Switch } from '$lib/components/ui/switch';
@@ -10,7 +10,7 @@
 	import SubscriptionSection from '$lib/components/features/subscription/SubscriptionSection.svelte';
 	import DangerZone from '$lib/components/features/subscription/DangerZone.svelte';
 
-	const usageQuery = useUsage();
+	const usageQuery = useUser();
 	const newsletterMutation = useUpdateNewsletter();
 	const usage = $derived(usageQuery.data);
 </script>

@@ -22,7 +22,7 @@ export const queryKeys = {
 	voices: {
 		all: ['voices'] as const
 	},
-	usage: {
-		all: ['usage'] as const
+	user: {
+		all: ['user'] as const
 	}
 } as const;

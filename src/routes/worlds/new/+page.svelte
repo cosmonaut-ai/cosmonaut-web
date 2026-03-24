@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
-	import { useCreateWorld, useUsage } from '$lib/queries';
+	import { useCreateWorld, useUser } from '$lib/queries';
 	import type { WorldVisibility, WorldLength } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -95,7 +95,7 @@
 	const loading = $derived(createMutation.isPending);
 
 	// Quota check
-	const usageQuery = useUsage();
+	const usageQuery = useUser();
 	const usage = $derived(usageQuery.data);
 	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
 

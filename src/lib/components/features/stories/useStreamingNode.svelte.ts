@@ -126,7 +126,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 
 				if (err instanceof ApiError && err.isQuotaExceeded) {
 					showQuotaPrompt = true;
-					queryClient.invalidateQueries({ queryKey: queryKeys.usage.all });
+					queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
 					throw err;
 				}
 

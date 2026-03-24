@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import { useUsage, useCheckout, useBillingPortal, queryKeys } from '$lib/queries';
+	import { useUser, useCheckout, useBillingPortal, queryKeys } from '$lib/queries';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { TIER_CONFIG, tierRank } from '$lib/config/tiers';
 	import type { SubscriptionTier } from '$lib/types/subscription';
@@ -16,7 +16,7 @@
 	import { trackEvent } from '$lib/utils/analytics';
 
 	const auth = useAuth();
-	const usageQuery = useUsage();
+	const usageQuery = useUser();
 	const checkoutMutation = useCheckout();
 	const billingPortalMutation = useBillingPortal();
 	const queryClient = useQueryClient();
@@ -29,7 +29,7 @@
 		if (checkoutStatus === 'success') {
 			trackEvent('checkout_completed');
 			showSuccess('Subscription activated!', 'Welcome to your new plan.');
-			queryClient.invalidateQueries({ queryKey: queryKeys.usage.all });
+			queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
 			// Clean the URL
 			const url = new URL(window.location.href);
 			url.searchParams.delete('checkout');
