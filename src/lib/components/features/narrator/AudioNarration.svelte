@@ -230,7 +230,7 @@
 		if (!audioElement) return;
 		if (paused) {
 			if (ended) audioElement.currentTime = 0;
-			audioElement.play();
+			audioElement.play().catch(() => {});
 		} else {
 			audioElement.pause();
 		}
@@ -264,9 +264,8 @@
 				wasPlayingBeforePickerOpen = false;
 			}
 		} else {
-			// Resume main audio if it was playing before picker opened
 			if (wasPlayingBeforePickerOpen && audioElement) {
-				audioElement.play();
+				audioElement.play().catch(() => {});
 				wasPlayingBeforePickerOpen = false;
 			}
 		}

@@ -57,7 +57,8 @@
 		const rootClasses = data.isRoot
 			? 'ring-2 ring-green-500 ring-offset-2 ring-offset-background'
 			: '';
-		const leafClasses = data.isLeaf
+		const isEnding = data.isLeaf && data.storyNode.choices.length === 0;
+		const leafClasses = isEnding
 			? 'ring-2 ring-orange-500 ring-offset-2 ring-offset-background'
 			: '';
 		const currentClasses = data.isCurrent ? 'current-node' : '';
@@ -89,7 +90,7 @@
 					</h3>
 					{#if data.isRoot}
 						<span class="text-xs font-medium text-green-500">START</span>
-					{:else if data.isLeaf}
+					{:else if data.isLeaf && data.storyNode.choices.length === 0}
 						<span class="text-xs font-medium text-orange-500">END</span>
 					{/if}
 				</div>
@@ -101,8 +102,8 @@
 				{/if}
 			</div>
 
-			<!-- Output handle (bottom) -->
-			{#if !data.isLeaf}
+			<!-- Output handle (bottom) - show unless this is a true story ending -->
+			{#if !(data.isLeaf && data.storyNode.choices.length === 0)}
 				<Handle type="source" position={Position.Bottom} class="border-primary/50! bg-primary!" />
 			{/if}
 		</TooltipTrigger>

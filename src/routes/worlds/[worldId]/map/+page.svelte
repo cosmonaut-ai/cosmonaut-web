@@ -3,8 +3,8 @@
 	import { page } from '$app/state';
 
 	// Redirect to new graph route
-	const worldId = page.params.worldId;
-	const nodeParam = page.url.searchParams.get('node');
+	const worldId = $derived(page.params.worldId);
+	const nodeParam = $derived(page.url.searchParams.get('node'));
 
 	$effect(() => {
 		const url = nodeParam

@@ -11,9 +11,9 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { BookOpen, Rocket } from '@lucide/svelte';
 
-	const worldId = page.params.worldId!;
-	const worldQuery = useWorld(worldId);
-	const nodesQuery = useWorldNodes(worldId);
+	const worldId = $derived(page.params.worldId!);
+	const worldQuery = useWorld(() => worldId);
+	const nodesQuery = useWorldNodes(() => worldId);
 	const rootNodeId = $derived(worldQuery.data?.root_node_id ?? null);
 
 	const storyNodes = $derived(nodesQuery.data ?? []);

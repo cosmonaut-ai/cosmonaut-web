@@ -60,7 +60,7 @@
 	<p class="mb-4 text-sm font-medium tracking-wider text-muted-foreground uppercase">
 		What do you do?
 	</p>
-	{#each choices as choice, i (choice.label)}
+	{#each choices as choice, i (i)}
 		{@const choiceDisabled = isLoading || (isAtQuotaLimit && !choice.is_created)}
 		<button
 			onclick={() => onChoiceSelect?.(i)}
