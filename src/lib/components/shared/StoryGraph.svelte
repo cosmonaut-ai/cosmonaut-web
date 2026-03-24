@@ -37,8 +37,7 @@
 		}) => {
 			if (node.id === currentNodeId) return graphColors.current;
 			if (node.data?.isRoot) return graphColors.start;
-			if (node.data?.isLeaf && node.data.storyNode?.choices.length === 0)
-				return graphColors.end;
+			if (node.data?.isLeaf && node.data.storyNode?.choices.length === 0) return graphColors.end;
 			return graphColors.default;
 		}}
 		nodeStrokeWidth={3}
