@@ -18,6 +18,7 @@ export interface Choice {
 	outcome?: string | null;
 	target: string | null;
 	is_created?: boolean;
+	is_explored?: boolean;
 	is_custom?: boolean;
 	creator?: string | null;
 	creator_email?: string | null;
