@@ -69,10 +69,11 @@
 							<Trash2 class="h-5 w-5" />
 							Delete Account
 						</Dialog.Title>
-					<Dialog.Description>
-						This will permanently delete your account and all your worlds, even if other users have
-						saved them. Any active subscriptions will be cancelled. This action cannot be undone.
-					</Dialog.Description>
+						<Dialog.Description>
+							This will permanently delete your account and all your worlds, even if other users
+							have saved them. Any active subscriptions will be cancelled. This action cannot be
+							undone.
+						</Dialog.Description>
 					</Dialog.Header>
 					<div class="space-y-4 py-4">
 						{#if deleteError}
