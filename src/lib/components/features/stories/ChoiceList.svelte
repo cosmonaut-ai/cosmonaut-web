@@ -65,7 +65,11 @@
 		<button
 			onclick={() => onChoiceSelect?.(i)}
 			disabled={choiceDisabled}
-			aria-label="Choose: {choice.label}{choice.is_explored ? ' (already explored)' : choice.is_created ? ' (pre-generated)' : ''}"
+			aria-label="Choose: {choice.label}{choice.is_explored
+				? ' (already explored)'
+				: choice.is_created
+					? ' (pre-generated)'
+					: ''}"
 			class="story-choice group flex w-full items-center gap-4 rounded-lg border p-4 text-left
 		{choiceDisabled
 				? 'cursor-not-allowed opacity-50'
