@@ -4,7 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { ChevronRight, Check, Sparkles } from '@lucide/svelte';
+	import { ChevronRight, Check, Rabbit, Sparkles } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 
 	interface Props {
@@ -65,35 +65,43 @@
 		<button
 			onclick={() => onChoiceSelect?.(i)}
 			disabled={choiceDisabled}
-			aria-label="Choose: {choice.label}{choice.is_created ? ' (already explored)' : ''}"
+			aria-label="Choose: {choice.label}{choice.is_explored ? ' (already explored)' : choice.is_created ? ' (pre-generated)' : ''}"
 			class="story-choice group flex w-full items-center gap-4 rounded-lg border p-4 text-left
 		{choiceDisabled
 				? 'cursor-not-allowed opacity-50'
-				: choice.is_created
+				: choice.is_explored
 					? 'border-muted bg-muted/30 opacity-60 hover:border-muted-foreground/30 hover:bg-muted/50 hover:opacity-80'
 					: 'border-border bg-background/50 hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/5'}"
 			style="--choice-delay: {i * 70}ms"
 		>
 			<span
-				class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-medium transition-colors {choice.is_created
+				class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-medium transition-colors {choice.is_explored
 					? 'border-muted-foreground/30 bg-muted text-muted-foreground group-hover:border-muted-foreground/50'
 					: 'border-primary/30 text-primary group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground'}"
 			>
-				{#if choice.is_created}
+				{#if choice.is_explored}
 					<Check class="h-4 w-4" />
 				{:else}
 					{i + 1}
 				{/if}
 			</span>
 			<div class="flex flex-1 flex-wrap items-center gap-2">
-				<span class={choice.is_created ? 'text-muted-foreground' : 'text-foreground'}
+				<span class={choice.is_explored ? 'text-muted-foreground' : 'text-foreground'}
 					>{choice.label}</span
 				>
-				{#if choice.is_created}
+				{#if choice.is_explored}
 					<span
 						class="shrink-0 rounded-full border border-muted-foreground/30 bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
 					>
 						Explored
+					</span>
+				{/if}
+				{#if choice.is_created && !choice.is_explored}
+					<span
+						class="flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+					>
+						<Rabbit class="h-3 w-3" />
+						Quick
 					</span>
 				{/if}
 				{#if choice.is_custom}
@@ -110,7 +118,7 @@
 				{/if}
 			</div>
 			<ChevronRight
-				class="ml-auto h-5 w-5 transition-transform group-hover:translate-x-1 {choice.is_created
+				class="ml-auto h-5 w-5 transition-transform group-hover:translate-x-1 {choice.is_explored
 					? 'text-muted-foreground/50 group-hover:text-muted-foreground'
 					: 'text-muted-foreground group-hover:text-primary'}"
 			/>
