@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { useAuth } from '$lib/auth/auth.svelte';
 	import { useWorlds, useDeleteWorld, useUser } from '$lib/queries';
 	import WorldCard from '$lib/components/features/worlds/WorldCard.svelte';
 	import WorldCardSkeleton from '$lib/components/features/worlds/WorldCardSkeleton.svelte';
@@ -14,6 +15,7 @@
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
+	const auth = useAuth();
 	const worldsQuery = useWorlds();
 	const deleteMutation = useDeleteWorld();
 	const usageQuery = useUser();
@@ -134,6 +136,7 @@
 							{world}
 							onDelete={handleDeleteWorld}
 							isDeleting={deletingWorldId === world.id}
+							isOwner={world.author_id === auth.user?.sub}
 							index={i}
 						/>
 					{/each}

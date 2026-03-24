@@ -5,11 +5,21 @@ import {
 	useQueryClient,
 	type InfiniteData
 } from '@tanstack/svelte-query';
-import { getWorlds, getWorld, createWorld, deleteWorld, updateWorldSharing } from '$lib/api/worlds';
+import {
+	getWorlds,
+	getWorld,
+	createWorld,
+	deleteWorld,
+	updateWorldSharing,
+	createInviteToken,
+	getInviteToken,
+	deleteInviteToken
+} from '$lib/api/worlds';
 import type { PaginatedWorldsResponse } from '$lib/api/worlds';
 import {
 	ApiError,
 	type CreateWorldRequest,
+	type InviteToken,
 	type UpdateWorldSharingRequest,
 	type World
 } from '$lib/types/api';
@@ -43,12 +53,19 @@ export function useWorlds() {
  * Pass a getter function to ensure reactivity with $derived values
  * Supports polling for world generation status
  */
-export function useWorld(worldId: MaybeGetter<string>, options?: { enablePolling?: boolean }) {
+export function useWorld(
+	worldId: MaybeGetter<string>,
+	options?: { enablePolling?: boolean; invite?: MaybeGetter<string | null> }
+) {
 	return createQuery(() => {
 		const id = resolve(worldId);
 		return {
 			queryKey: queryKeys.worlds.detail(id),
-			queryFn: () => getWorld(id),
+			queryFn: () =>
+				getWorld(
+					resolve(worldId),
+					options?.invite !== undefined ? resolve(options.invite) : undefined
+				),
 			enabled: !!id,
 			refetchInterval: (query: { state: { data?: World; error: Error | null } }) => {
 				if (!options?.enablePolling) return false;
@@ -123,6 +140,53 @@ export function useUpdateWorldSharing(worldId: string) {
 		},
 		onError: (error: Error) => {
 			showError('Failed to update sharing settings', error.message);
+		}
+	}));
+}
+
+// ---------------------------------------------------------------------------
+// Invite token queries
+// ---------------------------------------------------------------------------
+
+/**
+ * Query hook to fetch the active invite token for a world (owner-only).
+ * Only enabled when explicitly requested (e.g. when the share modal opens
+ * for a private world).
+ */
+export function useInviteToken(worldId: MaybeGetter<string>, enabled: MaybeGetter<boolean> = true) {
+	return createQuery(() => {
+		const id = resolve(worldId);
+		return {
+			queryKey: queryKeys.worlds.inviteToken(id),
+			queryFn: () => getInviteToken(id),
+			enabled: !!id && resolve(enabled)
+		};
+	});
+}
+
+export function useCreateInviteToken(worldId: string) {
+	const client = useQueryClient();
+	return createMutation(() => ({
+		mutationFn: () => createInviteToken(worldId),
+		onSuccess: (token: InviteToken) => {
+			client.setQueryData(queryKeys.worlds.inviteToken(worldId), token);
+		},
+		onError: (error: Error) => {
+			showError('Failed to create invite link', error.message);
+		}
+	}));
+}
+
+export function useDeleteInviteToken(worldId: string) {
+	const client = useQueryClient();
+	return createMutation(() => ({
+		mutationFn: () => deleteInviteToken(worldId),
+		onSuccess: () => {
+			client.setQueryData(queryKeys.worlds.inviteToken(worldId), null);
+			showSuccess('Invite link deleted');
+		},
+		onError: (error: Error) => {
+			showError('Failed to delete invite link', error.message);
 		}
 	}));
 }

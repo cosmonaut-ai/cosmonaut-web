@@ -1,6 +1,12 @@
 <script lang="ts">
-	import type { World, WorldVisibility } from '$lib/types/api';
-	import { useUpdateWorldSharing } from '$lib/queries';
+	import type { World, WorldVisibility, InviteToken } from '$lib/types/api';
+	import {
+		useUpdateWorldSharing,
+		useInviteToken,
+		useCreateInviteToken,
+		useDeleteInviteToken
+	} from '$lib/queries';
+	import { batchLookupUsers, type UserInfo } from '$lib/api/worlds';
 	import { showError, showSuccess } from '$lib/utils/toast';
 	import { browser } from '$app/environment';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -9,9 +15,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Share2, X, Plus, Globe, Lock, Link, Copy, Check } from '@lucide/svelte';
+	import { Share2, X, Globe, Lock, EyeOff, Link, Copy, Check, Plus, Trash2 } from '@lucide/svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
 	interface Props {
@@ -25,17 +30,18 @@
 	let { world, open, onOpenChange, onWorldUpdate, isOwner = true }: Props = $props();
 
 	const worldId = $derived(world.id);
+	const shareableId = $derived(world.shareable_id ?? world.id);
 
 	let visibility = $state<WorldVisibility>('private');
 	let sharedWith = $state<string[]>([]);
-	let newEmail = $state('');
-	let emailTouched = $state(false);
-	let emailToRemove = $state<string | null>(null);
 	let justSaved = $state(false);
 	let saveTimeout: ReturnType<typeof setTimeout> | undefined;
 	let savedTimeout: ReturnType<typeof setTimeout> | undefined;
+	let showPrivateConfirm = $state(false);
+	let pendingVisibility = $state<WorldVisibility | null>(null);
+	let userToRemove = $state<string | null>(null);
+	let resolvedUsers = $state<UserInfo[]>([]);
 
-	// Re-initialize local state when dialog opens
 	$effect(() => {
 		if (open) {
 			visibility = world.visibility || 'private';
@@ -43,33 +49,44 @@
 			justSaved = false;
 			clearTimeout(saveTimeout);
 			clearTimeout(savedTimeout);
+			resolveUsers();
 		}
 	});
+
+	async function resolveUsers() {
+		const ids = world.shared_with || [];
+		if (ids.length === 0) {
+			resolvedUsers = [];
+			return;
+		}
+		try {
+			resolvedUsers = await batchLookupUsers(ids);
+		} catch {
+			resolvedUsers = ids.map((id) => ({ id, display_name: id.slice(0, 8) }));
+		}
+	}
 
 	const updateMutation = $derived.by(() => useUpdateWorldSharing(worldId));
 	const saving = $derived(updateMutation.isPending);
 
-	function isValidEmail(email: string): boolean {
-		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-	}
+	const isPrivate = $derived(visibility === 'private');
 
-	const emailError = $derived.by(() => {
-		const trimmed = newEmail.trim();
-		if (!emailTouched || !trimmed) return '';
-		if (!isValidEmail(trimmed)) return 'Please enter a valid email address.';
-		if (sharedWith.includes(trimmed.toLowerCase())) return 'This email is already added.';
-		return '';
-	});
-
-	function areEmailListsEqual(a: string[], b: string[]) {
-		if (a.length !== b.length) return false;
-		return a.every((value, index) => value === b[index]);
-	}
+	const inviteTokenQuery = $derived.by(() =>
+		useInviteToken(
+			() => shareableId,
+			() => open && isOwner && isPrivate
+		)
+	);
+	const createTokenMutation = $derived.by(() => useCreateInviteToken(shareableId));
+	const deleteTokenMutation = $derived.by(() => useDeleteInviteToken(shareableId));
+	const activeToken = $derived(inviteTokenQuery.data as InviteToken | null | undefined);
 
 	function hasUnsavedChanges(): boolean {
 		const currentVisibility = world.visibility || 'private';
 		const currentSharedWith = world.shared_with || [];
-		return visibility !== currentVisibility || !areEmailListsEqual(sharedWith, currentSharedWith);
+		if (visibility !== currentVisibility) return true;
+		if (sharedWith.length !== currentSharedWith.length) return true;
+		return !sharedWith.every((v, i) => v === currentSharedWith[i]);
 	}
 
 	function scheduleSave() {
@@ -100,59 +117,71 @@
 		);
 	}
 
-	function addEmail() {
-		emailTouched = true;
-		const email = newEmail.trim().toLowerCase();
-		if (!email) return;
-		if (!isValidEmail(email)) return;
-		if (sharedWith.includes(email)) return;
-
-		sharedWith = [...sharedWith, email];
-		newEmail = '';
-		emailTouched = false;
-		scheduleSave();
-	}
-
-	function confirmRemove(email: string) {
-		emailToRemove = email;
-	}
-
-	function executeRemove() {
-		if (!emailToRemove) return;
-		sharedWith = sharedWith.filter((e) => e !== emailToRemove);
-		emailToRemove = null;
-		scheduleSave();
-	}
-
-	function handleKeyDown(e: KeyboardEvent) {
-		if (e.key === 'Enter') {
-			e.preventDefault();
-			addEmail();
+	function handleVisibilityChange(v: string | undefined) {
+		if (!v || !isOwner) return;
+		const newVis = v as WorldVisibility;
+		if (newVis === 'private' && visibility !== 'private') {
+			pendingVisibility = newVis;
+			showPrivateConfirm = true;
+		} else {
+			visibility = newVis;
+			scheduleSave();
 		}
+	}
+
+	function confirmPrivateSwitch() {
+		if (pendingVisibility) {
+			visibility = pendingVisibility;
+			pendingVisibility = null;
+			showPrivateConfirm = false;
+			scheduleSave();
+		}
+	}
+
+	function cancelPrivateSwitch() {
+		pendingVisibility = null;
+		showPrivateConfirm = false;
+	}
+
+	function confirmRemoveUser(userId: string) {
+		userToRemove = userId;
+	}
+
+	function executeRemoveUser() {
+		if (!userToRemove) return;
+		sharedWith = sharedWith.filter((id) => id !== userToRemove);
+		resolvedUsers = resolvedUsers.filter((u) => u.id !== userToRemove);
+		userToRemove = null;
+		scheduleSave();
 	}
 
 	function getWorldLink() {
 		if (!browser) return '';
-		return `${window.location.origin}/worlds/${world.shareable_id ?? world.id}`;
+		return `${window.location.origin}/worlds/${shareableId}`;
 	}
 
-	async function copyWorldLink() {
-		const link = getWorldLink();
-		if (!link) {
-			showError('Link not available');
-			return;
-		}
-
+	async function copyLink(link: string) {
 		try {
-			if (!navigator.clipboard?.writeText) {
-				throw new Error('Clipboard unavailable');
-			}
+			if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
 			await navigator.clipboard.writeText(link);
 			trackEvent('share_link_copied');
 			showSuccess('Link copied');
 		} catch {
 			showError('Failed to copy link');
 		}
+	}
+
+	function getExpiryText(token: InviteToken): string {
+		const expires = new Date(token.expires_at);
+		const now = new Date();
+		const hoursLeft = Math.max(0, Math.round((expires.getTime() - now.getTime()) / 3_600_000));
+		if (hoursLeft <= 1) return 'Expires in less than an hour';
+		return `Expires in ${hoursLeft} hours`;
+	}
+
+	function getUserDisplayName(userId: string): string {
+		const user = resolvedUsers.find((u) => u.id === userId);
+		return user?.display_name || userId.slice(0, 8);
 	}
 </script>
 
@@ -181,18 +210,13 @@
 		</Dialog.Header>
 
 		<div class="min-w-0 space-y-6 py-4">
-			<!-- General access -->
+			<!-- Visibility selector -->
 			<div class="space-y-3">
 				<Label class="text-sm font-medium">General access</Label>
 				<Select.Root
 					type="single"
 					value={visibility}
-					onValueChange={(v) => {
-						if (v && isOwner) {
-							visibility = v as WorldVisibility;
-							scheduleSave();
-						}
-					}}
+					onValueChange={handleVisibilityChange}
 					disabled={!isOwner}
 				>
 					<Select.Trigger class="w-full">
@@ -200,6 +224,9 @@
 							{#if visibility === 'public'}
 								<Globe class="h-4 w-4 text-primary" />
 								<span>Public</span>
+							{:else if visibility === 'unlisted'}
+								<EyeOff class="h-4 w-4 text-muted-foreground" />
+								<span>Unlisted</span>
 							{:else}
 								<Lock class="h-4 w-4 text-muted-foreground" />
 								<span>Private</span>
@@ -207,24 +234,35 @@
 						</div>
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="private">
-							<div class="flex items-center gap-2">
-								<Lock class="h-4 w-4" />
-								<div>
-									<div class="font-medium">Private</div>
-									<div class="text-xs text-muted-foreground">
-										Only you and people you invite can access
-									</div>
-								</div>
-							</div>
-						</Select.Item>
 						<Select.Item value="public">
 							<div class="flex items-center gap-2">
 								<Globe class="h-4 w-4" />
 								<div>
 									<div class="font-medium">Public</div>
 									<div class="text-xs text-muted-foreground">
-										Anyone on the internet with the link can view
+										Discoverable by anyone. Anyone with the link can play.
+									</div>
+								</div>
+							</div>
+						</Select.Item>
+						<Select.Item value="unlisted">
+							<div class="flex items-center gap-2">
+								<EyeOff class="h-4 w-4" />
+								<div>
+									<div class="font-medium">Unlisted</div>
+									<div class="text-xs text-muted-foreground">
+										Not discoverable. Anyone with the link can play.
+									</div>
+								</div>
+							</div>
+						</Select.Item>
+						<Select.Item value="private">
+							<div class="flex items-center gap-2">
+								<Lock class="h-4 w-4" />
+								<div>
+									<div class="font-medium">Private</div>
+									<div class="text-xs text-muted-foreground">
+										Invite only. Only people you invite can play.
 									</div>
 								</div>
 							</div>
@@ -233,94 +271,108 @@
 				</Select.Root>
 				<p class="text-xs text-muted-foreground">
 					{#if visibility === 'public'}
-						Anyone on the internet with the link can view this world. People you invite can also
-						view it.
+						Anyone on the internet can discover and play this world.
+					{:else if visibility === 'unlisted'}
+						Anyone with the link can play, but the world won't appear in search or trending.
 					{:else}
-						Only you and people you invite below can access this world.
+						Only you and people you invite can access this world.
 					{/if}
 				</p>
 			</div>
 
-			<!-- Copy link -->
-			<button
-				onclick={copyWorldLink}
-				class="flex w-full items-center gap-3 rounded-lg border border-border bg-muted/50 px-3 py-2.5 text-left transition-colors hover:bg-muted"
-			>
-				<div
-					class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full {visibility ===
-					'public'
-						? 'bg-primary/15 text-primary'
-						: 'bg-muted-foreground/15 text-muted-foreground'}"
+			<!-- Link sharing -->
+			{#if visibility === 'public' || visibility === 'unlisted'}
+				<button
+					onclick={() => copyLink(getWorldLink())}
+					class="flex w-full items-center gap-3 rounded-lg border border-border bg-muted/50 px-3 py-2.5 text-left transition-colors hover:bg-muted"
 				>
-					<Link class="h-4 w-4" />
-				</div>
-				<div class="min-w-0 flex-1">
-					<p class="truncate text-sm font-medium text-foreground">Copy link</p>
-					<p class="truncate text-xs text-muted-foreground">
-						{#if visibility === 'public'}
-							Anyone with this link can view
-						{:else}
-							Only people with access can open
-						{/if}
-					</p>
-				</div>
-				<Copy class="h-4 w-4 shrink-0 text-muted-foreground" />
-			</button>
-
-			{#if isOwner}
-				<!-- Add people -->
-				<div class="space-y-2">
-					<Label>Invite others</Label>
-					<div class="flex gap-2">
-						<Input
-							type="email"
-							placeholder="Enter email address"
-							bind:value={newEmail}
-							onkeydown={handleKeyDown}
-							oninput={() => {
-								emailTouched = true;
-							}}
-							disabled={saving}
-							aria-invalid={emailError ? 'true' : undefined}
-							aria-describedby={emailError ? 'email-error' : undefined}
-							class="flex-1 {emailError ? 'border-destructive focus-visible:ring-destructive' : ''}"
-						/>
+					<div
+						class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"
+					>
+						<Link class="h-4 w-4" />
+					</div>
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-sm font-medium text-foreground">Copy link</p>
+						<p class="truncate text-xs text-muted-foreground">
+							Anyone with this link can play this world
+						</p>
+					</div>
+					<Copy class="h-4 w-4 shrink-0 text-muted-foreground" />
+				</button>
+			{:else if isOwner}
+				<!-- Private world invite link -->
+				<div class="space-y-3">
+					<Label class="text-sm font-medium">Invite link</Label>
+					{#if activeToken}
+						<div
+							class="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2.5"
+						>
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-xs font-mono text-muted-foreground">
+									{activeToken.invite_url}
+								</p>
+								<p class="mt-1 text-xs text-muted-foreground">
+									{getExpiryText(activeToken)}
+								</p>
+							</div>
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={() => copyLink(activeToken.invite_url)}
+								class="shrink-0"
+							>
+								<Copy class="mr-1 h-3.5 w-3.5" />
+								Copy
+							</Button>
+						</div>
 						<Button
 							variant="outline"
-							size="icon"
-							onclick={addEmail}
-							disabled={saving || !newEmail.trim()}
-							aria-label="Add email"
+							size="sm"
+							class="w-full text-destructive hover:text-destructive"
+							onclick={() => deleteTokenMutation.mutate()}
+							disabled={deleteTokenMutation.isPending}
 						>
-							<Plus class="h-4 w-4" />
+							{#if deleteTokenMutation.isPending}
+								<Spinner class="mr-2 h-3.5 w-3.5" />
+							{:else}
+								<Trash2 class="mr-2 h-3.5 w-3.5" />
+							{/if}
+							Delete Invite Link
 						</Button>
-					</div>
-					{#if emailError}
-						<p id="email-error" class="text-xs text-destructive">{emailError}</p>
+					{:else}
+						<Button
+							variant="outline"
+							class="w-full"
+							onclick={() => createTokenMutation.mutate()}
+							disabled={createTokenMutation.isPending}
+						>
+							{#if createTokenMutation.isPending}
+								<Spinner class="mr-2 h-3.5 w-3.5" />
+							{:else}
+								<Plus class="mr-2 h-3.5 w-3.5" />
+							{/if}
+							Create Invite Link
+						</Button>
+						<p class="text-xs text-muted-foreground">
+							Invite links are valid for 24 hours. Anyone with the link can join this world.
+						</p>
 					{/if}
-				</div>
-			{:else}
-				<div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
-					<p class="text-sm text-muted-foreground">
-						Only the owner of this world can invite others by email. You can still share the link
-						above if the world is public.
-					</p>
 				</div>
 			{/if}
 
-			<!-- Shared users as badges -->
-			{#if isOwner && sharedWith.length > 0}
+			<!-- Shared users (private worlds, owner only) -->
+			{#if isOwner && isPrivate && sharedWith.length > 0}
 				<div class="space-y-2">
 					<Label class="text-muted-foreground">People with access ({sharedWith.length})</Label>
 					<div class="flex flex-wrap gap-1.5">
-						{#each sharedWith as email (email)}
+						{#each sharedWith as userId (userId)}
 							<Badge variant="secondary" class="gap-1 py-1 pr-1 pl-2.5">
-								<span class="max-w-[200px] truncate">{email}</span>
+								<span class="max-w-[200px] truncate">{getUserDisplayName(userId)}</span>
 								<button
-									onclick={() => confirmRemove(email)}
+									onclick={() => confirmRemoveUser(userId)}
 									disabled={saving}
 									class="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-destructive/20 hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
-									aria-label="Remove {email}"
+									aria-label="Remove {getUserDisplayName(userId)}"
 								>
 									<X class="h-3 w-3" />
 								</button>
@@ -329,29 +381,65 @@
 					</div>
 				</div>
 			{/if}
+
+			{#if !isOwner}
+				<div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
+					<p class="text-sm text-muted-foreground">
+						Only the owner of this world can manage sharing settings.
+					</p>
+				</div>
+			{/if}
 		</div>
 	</Dialog.Content>
 </Dialog.Root>
 
-<!-- Removal confirmation -->
+<!-- Private visibility confirmation -->
 <AlertDialog.Root
-	open={emailToRemove !== null}
+	open={showPrivateConfirm}
 	onOpenChange={(o) => {
-		if (!o) emailToRemove = null;
+		if (!o) cancelPrivateSwitch();
+	}}
+>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Switch to private?</AlertDialog.Title>
+			<AlertDialog.Description>
+				Switching to private will remove access for all users who haven't been explicitly invited.
+				This cannot be undone.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel onclick={cancelPrivateSwitch}>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Action
+				class="bg-destructive text-white hover:bg-destructive/90"
+				onclick={confirmPrivateSwitch}
+			>
+				Switch to Private
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- User removal confirmation -->
+<AlertDialog.Root
+	open={userToRemove !== null}
+	onOpenChange={(o) => {
+		if (!o) userToRemove = null;
 	}}
 >
 	<AlertDialog.Content>
 		<AlertDialog.Header>
 			<AlertDialog.Title>Remove access?</AlertDialog.Title>
 			<AlertDialog.Description>
-				<span class="font-medium">{emailToRemove}</span> will no longer be able to view this world.
+				<span class="font-medium">{userToRemove ? getUserDisplayName(userToRemove) : ''}</span> will
+				no longer be able to view this world.
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
 			<AlertDialog.Action
 				class="bg-destructive text-white hover:bg-destructive/90"
-				onclick={executeRemove}
+				onclick={executeRemoveUser}
 			>
 				Remove
 			</AlertDialog.Action>

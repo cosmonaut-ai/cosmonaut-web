@@ -35,11 +35,12 @@
 		world: World;
 		onDelete: (worldId: string) => void;
 		isDeleting?: boolean;
+		isOwner?: boolean;
 		/** Stagger index for entrance animation (0-based) */
 		index?: number;
 	}
 
-	let { world, onDelete, isDeleting = false, index = 0 }: Props = $props();
+	let { world, onDelete, isDeleting = false, index = 0, isOwner = false }: Props = $props();
 
 	let showDeleteDialog = $state(false);
 	let isPlayLoading = $state(false);
@@ -172,7 +173,9 @@
 							onclick={handleDeleteClick}
 							disabled={isDeleting}
 							class="h-9 w-9 p-0 text-muted-foreground hover:text-destructive disabled:opacity-50"
-							aria-label="Delete world: {world.title || 'Untitled World'}"
+							aria-label={isOwner
+								? `Delete world: ${world.title || 'Untitled World'}`
+								: `Remove world: ${world.title || 'Untitled World'}`}
 						>
 							{#if isDeleting}
 								<Spinner class="h-4 w-4" />
@@ -181,7 +184,7 @@
 							{/if}
 						</Button>
 					</TooltipTrigger>
-					<TooltipContent>Delete World</TooltipContent>
+					<TooltipContent>{isOwner ? 'Delete World' : 'Remove from Library'}</TooltipContent>
 				</Tooltip>
 				{#if canPlay}
 					<Tooltip>
@@ -215,10 +218,15 @@
 >
 	<Dialog.Content showCloseButton={!isDeleting} onclick={(e: Event) => e.stopPropagation()}>
 		<Dialog.Header>
-			<Dialog.Title>Delete World</Dialog.Title>
+			<Dialog.Title>{isOwner ? 'Delete World' : 'Remove from Library'}</Dialog.Title>
 			<Dialog.Description>
-				Are you sure you want to delete "{world.title || 'Untitled World'}"? This action cannot be
-				undone and all story progress will be permanently lost.
+				{#if isOwner}
+					This will remove the world from your library. If no other users have saved it, the world
+					will be permanently deleted.
+				{:else}
+					This will remove the world from your library. You can rejoin later if the world is still
+					accessible.
+				{/if}
 			</Dialog.Description>
 		</Dialog.Header>
 		<Dialog.Footer>
@@ -226,9 +234,9 @@
 			<Button variant="destructive" onclick={handleConfirmDelete} disabled={isDeleting}>
 				{#if isDeleting}
 					<Spinner class="mr-2 h-4 w-4" />
-					Deleting...
+					{isOwner ? 'Deleting...' : 'Removing...'}
 				{:else}
-					Delete
+					{isOwner ? 'Delete' : 'Remove'}
 				{/if}
 			</Button>
 		</Dialog.Footer>
