@@ -174,11 +174,12 @@
 	}
 
 	async function handleBack() {
-		if (!currentNode?.parent_id) return;
+		const parentId = currentNode?.parent_id;
+		if (!parentId) return;
 		stream.abortStream();
 		slideDirection = 'back';
 		currentNodeOverride = null;
-		goto(`/worlds/${worldId}/nodes/${currentNode.parent_id}`, {
+		goto(`/worlds/${worldId}/nodes/${parentId}`, {
 			replaceState: false,
 			noScroll: true
 		});

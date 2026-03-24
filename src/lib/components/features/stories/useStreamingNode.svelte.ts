@@ -58,7 +58,11 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 	let showAudioQuotaPrompt = $state(false);
 	let abortController: AbortController | null = null;
 
-	/** Cancel any in-flight streaming request and reset streaming state. */
+	/** Cancel any in-flight streaming request and reset streaming state.
+	 *  Intentionally preserves `generatingNodeId` so the auto-generation
+	 *  $effect guard (`generatingNodeId === currentId`) still holds until
+	 *  the route's nodeId changes and the "clear generation guard" effect
+	 *  cleans it up naturally. */
 	function abortStream() {
 		if (abortController) {
 			abortController.abort();
@@ -68,7 +72,6 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 		streamingText = '';
 		streamingDone = false;
 		pendingNode = null;
-		generatingNodeId = null;
 		setLoading(false);
 	}
 
