@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { updateNewsletter } from '$lib/api/subscription';
 	import { checkAuthState, getIsAuthenticated } from '$lib/auth/auth.svelte';
 	import { logger } from '$lib/utils/logger';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -24,18 +23,6 @@
 		return destination || '/dashboard';
 	}
 
-	async function syncNewsletterOptIn() {
-		try {
-			const optedIn = localStorage.getItem('cosmonaut-newsletter-opt-in');
-			if (optedIn === 'true') {
-				await updateNewsletter(true);
-			}
-			localStorage.removeItem('cosmonaut-newsletter-opt-in');
-		} catch {
-			// Newsletter sync is non-critical
-		}
-	}
-
 	onMount(async () => {
 		try {
 			await checkAuthState();
@@ -43,14 +30,12 @@
 			await new Promise((resolve) => setTimeout(resolve, 500));
 
 			if (getIsAuthenticated()) {
-				await syncNewsletterOptIn();
 				goto(consumeRedirectUrl());
 			} else {
 				await new Promise((resolve) => setTimeout(resolve, 1000));
 				await checkAuthState();
 
 				if (getIsAuthenticated()) {
-					await syncNewsletterOptIn();
 					goto(consumeRedirectUrl());
 				} else {
 					error = 'Authentication failed. Please try again.';

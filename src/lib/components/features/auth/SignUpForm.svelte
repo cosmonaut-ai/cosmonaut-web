@@ -24,14 +24,12 @@
 		passwordValid: boolean;
 		passwordsMatch: boolean;
 		isSubmitting: boolean;
-		newsletterOptIn?: boolean;
 		isInAppBrowser?: boolean;
 		onEmailChange: (value: string) => void;
 		onPasswordChange: (value: string) => void;
 		onConfirmPasswordChange: (value: string) => void;
 		onShowPasswordChange: (value: boolean) => void;
 		onShowConfirmPasswordChange: (value: boolean) => void;
-		onNewsletterChange?: (value: boolean) => void;
 		onSignUp: () => void;
 		onGoogleSignIn: () => void;
 		onSwitchToSignIn: () => void;
@@ -47,14 +45,12 @@
 		passwordValid,
 		passwordsMatch,
 		isSubmitting,
-		newsletterOptIn = true,
 		isInAppBrowser = false,
 		onEmailChange,
 		onPasswordChange,
 		onConfirmPasswordChange,
 		onShowPasswordChange,
 		onShowConfirmPasswordChange,
-		onNewsletterChange = (_v: boolean) => {},
 		onSignUp,
 		onGoogleSignIn,
 		onSwitchToSignIn
@@ -145,18 +141,6 @@
 		{#if confirmPassword.length > 0 && !passwordsMatch}
 			<p class="text-xs text-destructive">Passwords do not match</p>
 		{/if}
-	</div>
-	<div class="flex items-start gap-2">
-		<input
-			type="checkbox"
-			id="newsletter"
-			checked={newsletterOptIn}
-			onchange={(e) => onNewsletterChange(e.currentTarget.checked)}
-			class="mt-0.5 h-4 w-4 rounded border-border accent-primary"
-		/>
-		<label for="newsletter" class="text-sm leading-tight text-muted-foreground">
-			Keep me updated on new features and improvements
-		</label>
 	</div>
 	<Button
 		class="w-full"
