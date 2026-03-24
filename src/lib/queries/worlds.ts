@@ -84,12 +84,6 @@ export function useCreateWorld() {
 					'Slow down',
 					"You're creating worlds too quickly. Please wait a moment and try again."
 				);
-			} else if (error instanceof ApiError && error.isStorageQuotaExceeded) {
-				client.invalidateQueries({ queryKey: queryKeys.usage.all });
-				showError(
-					'Saved worlds limit reached',
-					'Delete an existing world or upgrade your plan to create more.'
-				);
 			} else if (error instanceof ApiError && error.isQuotaExceeded) {
 				client.invalidateQueries({ queryKey: queryKeys.usage.all });
 				showError(
