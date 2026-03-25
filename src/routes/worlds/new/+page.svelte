@@ -3,7 +3,7 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { useCreateWorld, useUser } from '$lib/queries';
-	import type { WorldVisibility, WorldLength } from '$lib/types/api';
+	import type { WorldVisibility, WorldLength, VocabLevel, ContentFilter } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import {
@@ -16,10 +16,9 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
-	import { Switch } from '$lib/components/ui/switch';
-	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import * as Select from '$lib/components/ui/select';
-	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Info } from '@lucide/svelte';
+	import * as Accordion from '$lib/components/ui/accordion';
+	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Globe, Lock, EyeOff } from '@lucide/svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { logger } from '$lib/utils/logger';
 	import { formatResetDate } from '$lib/utils/date';
@@ -27,7 +26,8 @@
 
 	// ── localStorage helpers ────────────────────────────────────────────
 	const STORAGE_KEY_LENGTH = 'cosmonaut-world-length';
-	const STORAGE_KEY_FAMILY = 'cosmonaut-family-friendly';
+	const STORAGE_KEY_VOCAB = 'cosmonaut-vocab-level';
+	const STORAGE_KEY_FILTER = 'cosmonaut-content-filter';
 
 	function getStoredWorldLength(): WorldLength {
 		if (!browser) return 'medium';
@@ -40,28 +40,65 @@
 		return 'medium';
 	}
 
-	function getStoredFamilyFriendly(): boolean {
-		if (!browser) return false;
+	function getStoredVocabLevel(): VocabLevel {
+		if (!browser) return 'adult';
 		try {
-			return localStorage.getItem(STORAGE_KEY_FAMILY) === 'true';
+			const stored = localStorage.getItem(STORAGE_KEY_VOCAB);
+			if (stored === 'child' || stored === 'teen' || stored === 'adult') return stored;
 		} catch {
 			// localStorage might not be available
 		}
-		return false;
+		return 'adult';
 	}
 
-	// ── World length metadata ───────────────────────────────────────────
+	function getStoredContentFilter(): ContentFilter {
+		if (!browser) return 'none';
+		try {
+			const stored = localStorage.getItem(STORAGE_KEY_FILTER);
+			if (stored === 'none' || stored === 'moderate' || stored === 'strict') return stored;
+		} catch {
+			// localStorage might not be available
+		}
+		return 'none';
+	}
+
+	// ── Option metadata ─────────────────────────────────────────────────
 	const WORLD_LENGTH_OPTIONS: { value: WorldLength; label: string; description: string }[] = [
 		{ value: 'short', label: 'Short', description: '5-10 min read' },
 		{ value: 'medium', label: 'Medium', description: '10-20 min read' },
 		{ value: 'long', label: 'Long', description: '20-30 min read' }
 	];
 
+	const VOCAB_LEVEL_OPTIONS: { value: VocabLevel; label: string; description: string }[] = [
+		{
+			value: 'child',
+			label: 'Child',
+			description: 'Simple words and short sentences suitable for ages 8+.'
+		},
+		{ value: 'teen', label: 'Teen', description: 'Moderate vocabulary complexity for ages 13+.' },
+		{ value: 'adult', label: 'Adult', description: 'No vocabulary restrictions.' }
+	];
+
+	const CONTENT_FILTER_OPTIONS: { value: ContentFilter; label: string; description: string }[] = [
+		{ value: 'none', label: 'None', description: 'No content filtering beyond platform rules.' },
+		{
+			value: 'moderate',
+			label: 'Moderate',
+			description: 'Violence without gratuitous detail. No extreme horror.'
+		},
+		{
+			value: 'strict',
+			label: 'Strict',
+			description: 'No graphic violence, profanity, horror, or disturbing imagery.'
+		}
+	];
+
 	// Form state — pre-fill from URL if retrying after a failed world creation
 	let worldPrompt = $state(page.url.searchParams.get('prompt') ?? '');
 	let visibility = $state<WorldVisibility>('private');
 	let worldLength = $state<WorldLength>(getStoredWorldLength());
-	let familyFriendly = $state<boolean>(getStoredFamilyFriendly());
+	let vocabLevel = $state<VocabLevel>(getStoredVocabLevel());
+	let contentFilter = $state<ContentFilter>(getStoredContentFilter());
 	let prompts = $state<string[]>([]);
 	let promptsLoaded = $state(false);
 	let promptsLoading = $state(false);
@@ -80,7 +117,16 @@
 	$effect(() => {
 		if (!browser) return;
 		try {
-			localStorage.setItem(STORAGE_KEY_FAMILY, String(familyFriendly));
+			localStorage.setItem(STORAGE_KEY_VOCAB, vocabLevel);
+		} catch {
+			// localStorage might not be available
+		}
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		try {
+			localStorage.setItem(STORAGE_KEY_FILTER, contentFilter);
 		} catch {
 			// localStorage might not be available
 		}
@@ -88,6 +134,12 @@
 
 	const selectedLengthOption = $derived(
 		WORLD_LENGTH_OPTIONS.find((o) => o.value === worldLength) ?? WORLD_LENGTH_OPTIONS[1]
+	);
+	const selectedVocabOption = $derived(
+		VOCAB_LEVEL_OPTIONS.find((o) => o.value === vocabLevel) ?? VOCAB_LEVEL_OPTIONS[2]
+	);
+	const selectedFilterOption = $derived(
+		CONTENT_FILTER_OPTIONS.find((o) => o.value === contentFilter) ?? CONTENT_FILTER_OPTIONS[0]
 	);
 
 	// Use mutation for creating world
@@ -171,14 +223,16 @@
 				world_prompt: worldPrompt.trim(),
 				visibility,
 				world_length: worldLength,
-				family_friendly: familyFriendly
+				vocab_level: vocabLevel,
+				content_filter: contentFilter
 			},
 			{
 				onSuccess: (world) => {
 					trackEvent('world_created', {
 						visibility,
 						world_length: worldLength,
-						family_friendly: familyFriendly
+						vocab_level: vocabLevel,
+						content_filter: contentFilter
 					});
 					goto(`/worlds/${world.id}`);
 				}
@@ -314,80 +368,166 @@
 							}}
 						>
 							<Select.Trigger id="visibility" class="w-full" disabled={loading}>
-								{visibility === 'public' ? 'Public' : 'Private'}
+								<div class="flex items-center gap-2">
+									{#if visibility === 'public'}
+										<Globe class="h-4 w-4 text-primary" />
+										<span>Public</span>
+									{:else if visibility === 'unlisted'}
+										<EyeOff class="h-4 w-4 text-muted-foreground" />
+										<span>Unlisted</span>
+									{:else}
+										<Lock class="h-4 w-4 text-muted-foreground" />
+										<span>Private</span>
+									{/if}
+								</div>
 							</Select.Trigger>
 							<Select.Content>
-								<Select.Item value="private"
-									>Private - Only you and people you invite can access</Select.Item
-								>
-								<Select.Item value="public">Public - Anyone can view</Select.Item>
+								<Select.Item value="public">
+									<div class="flex items-center gap-2">
+										<Globe class="h-4 w-4" />
+										<div>
+											<div class="font-medium">Public</div>
+											<div class="text-xs text-muted-foreground">
+												Discoverable by anyone. Anyone with the link can play.
+											</div>
+										</div>
+									</div>
+								</Select.Item>
+								<Select.Item value="unlisted">
+									<div class="flex items-center gap-2">
+										<EyeOff class="h-4 w-4" />
+										<div>
+											<div class="font-medium">Unlisted</div>
+											<div class="text-xs text-muted-foreground">
+												Not discoverable. Anyone with the link can play.
+											</div>
+										</div>
+									</div>
+								</Select.Item>
+								<Select.Item value="private">
+									<div class="flex items-center gap-2">
+										<Lock class="h-4 w-4" />
+										<div>
+											<div class="font-medium">Private</div>
+											<div class="text-xs text-muted-foreground">
+												Invite only. Only people you invite can play.
+											</div>
+										</div>
+									</div>
+								</Select.Item>
 							</Select.Content>
 						</Select.Root>
 						<p class="text-xs text-muted-foreground">
 							{#if visibility === 'public'}
-								Anyone on the internet with your world's link will be able to view it.
+								Anyone on the internet can discover and play this world.
+							{:else if visibility === 'unlisted'}
+								Anyone with the link can play, but the world won't appear in search or trending.
 							{:else}
-								Only you can access this world. You can add people later from the share menu.
+								Only you and people you invite can access this world.
 							{/if}
 						</p>
 					</div>
 
-					<!-- Story Length -->
-					<div class="space-y-2">
-						<Label>Story Length</Label>
-						<div
-							class="inline-flex w-full rounded-lg border border-border bg-muted/50 p-1"
-							role="radiogroup"
-							aria-label="Story length"
-						>
-							{#each WORLD_LENGTH_OPTIONS as option (option.value)}
-								<button
-									type="button"
-									role="radio"
-									aria-checked={worldLength === option.value}
-									disabled={loading}
-									onclick={() => (worldLength = option.value)}
-									class="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-all
-										{worldLength === option.value
-										? 'bg-background text-foreground shadow-sm'
-										: 'text-muted-foreground hover:text-foreground'}"
-								>
-									{option.label}
-								</button>
-							{/each}
-						</div>
-						<p class="text-xs text-muted-foreground">
-							{selectedLengthOption.label} stories are approximately a {selectedLengthOption.description}.
-						</p>
-					</div>
+					<!-- More settings -->
+					<Accordion.Root type="single" class="w-full border-none">
+						<Accordion.Item value="more-settings" class="border-none">
+							<Accordion.Trigger
+								class="py-0 text-sm font-medium text-muted-foreground hover:text-foreground hover:no-underline"
+							>
+								More settings
+							</Accordion.Trigger>
+							<Accordion.Content>
+								<div class="space-y-6 pt-4">
+									<!-- Story Length -->
+									<div class="space-y-2">
+										<Label>Story Length</Label>
+										<div
+											class="inline-flex w-full rounded-lg border border-border bg-muted/50 p-1"
+											role="radiogroup"
+											aria-label="Story length"
+										>
+											{#each WORLD_LENGTH_OPTIONS as option (option.value)}
+												<button
+													type="button"
+													role="radio"
+													aria-checked={worldLength === option.value}
+													disabled={loading}
+													onclick={() => (worldLength = option.value)}
+													class="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-all
+														{worldLength === option.value
+														? 'bg-background text-foreground shadow-sm'
+														: 'text-muted-foreground hover:text-foreground'}"
+												>
+													{option.label}
+												</button>
+											{/each}
+										</div>
+										<p class="text-xs text-muted-foreground">
+											{selectedLengthOption.label} stories are approximately a {selectedLengthOption.description}.
+										</p>
+									</div>
 
-					<!-- Family Friendly -->
-					<div class="flex items-center justify-between rounded-lg border border-border p-4">
-						<div class="flex items-center gap-2">
-							<Label for="family_friendly" class="cursor-pointer text-sm font-medium">
-								Family Friendly
-							</Label>
-							<Tooltip>
-								<TooltipTrigger
-									type="button"
-									class="inline-flex text-muted-foreground transition-colors hover:text-foreground"
-									aria-label="What does family friendly mean?"
-								>
-									<Info class="h-4 w-4" />
-								</TooltipTrigger>
-								<TooltipContent class="max-w-xs">
-									When enabled, all content will be child-safe: no graphic violence, profanity, or
-									horror. Uses approachable vocabulary and an encouraging tone.
-								</TooltipContent>
-							</Tooltip>
-						</div>
-						<Switch
-							id="family_friendly"
-							checked={familyFriendly}
-							onCheckedChange={(v) => (familyFriendly = v)}
-							disabled={loading}
-						/>
-					</div>
+									<!-- Vocabulary Level -->
+									<div class="space-y-2">
+										<Label>Vocabulary Level</Label>
+										<div
+											class="inline-flex w-full rounded-lg border border-border bg-muted/50 p-1"
+											role="radiogroup"
+											aria-label="Vocabulary level"
+										>
+											{#each VOCAB_LEVEL_OPTIONS as option (option.value)}
+												<button
+													type="button"
+													role="radio"
+													aria-checked={vocabLevel === option.value}
+													disabled={loading}
+													onclick={() => (vocabLevel = option.value)}
+													class="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-all
+														{vocabLevel === option.value
+														? 'bg-background text-foreground shadow-sm'
+														: 'text-muted-foreground hover:text-foreground'}"
+												>
+													{option.label}
+												</button>
+											{/each}
+										</div>
+										<p class="text-xs text-muted-foreground">
+											{selectedVocabOption.description}
+										</p>
+									</div>
+
+									<!-- Content Filter -->
+									<div class="space-y-2">
+										<Label>Content Filter</Label>
+										<div
+											class="inline-flex w-full rounded-lg border border-border bg-muted/50 p-1"
+											role="radiogroup"
+											aria-label="Content filter"
+										>
+											{#each CONTENT_FILTER_OPTIONS as option (option.value)}
+												<button
+													type="button"
+													role="radio"
+													aria-checked={contentFilter === option.value}
+													disabled={loading}
+													onclick={() => (contentFilter = option.value)}
+													class="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-all
+														{contentFilter === option.value
+														? 'bg-background text-foreground shadow-sm'
+														: 'text-muted-foreground hover:text-foreground'}"
+												>
+													{option.label}
+												</button>
+											{/each}
+										</div>
+										<p class="text-xs text-muted-foreground">
+											{selectedFilterOption.description}
+										</p>
+									</div>
+								</div>
+							</Accordion.Content>
+						</Accordion.Item>
+					</Accordion.Root>
 
 					<!-- Actions -->
 					<div class="flex gap-4 pt-4">

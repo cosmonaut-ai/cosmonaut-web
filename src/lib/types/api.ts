@@ -15,6 +15,10 @@ export type WorldVisibility = 'private' | 'unlisted' | 'public';
 
 export type WorldLength = 'short' | 'medium' | 'long';
 
+export type VocabLevel = 'child' | 'teen' | 'adult';
+
+export type ContentFilter = 'none' | 'moderate' | 'strict';
+
 export interface Choice {
 	label: string;
 	outcome?: string | null;
@@ -97,7 +101,8 @@ export interface World {
 	node_text_length: number | null;
 	story_max_nodes: number | null;
 	world_length: WorldLength | null;
-	family_friendly: boolean;
+	vocab_level: VocabLevel;
+	content_filter: ContentFilter;
 	world_image_url: string | null;
 	world_image_alt_text: string | null;
 	world_image_width: string | null;
@@ -113,7 +118,8 @@ export interface CreateWorldRequest {
 	world_prompt: string;
 	visibility?: WorldVisibility;
 	world_length?: WorldLength;
-	family_friendly?: boolean;
+	vocab_level?: VocabLevel;
+	content_filter?: ContentFilter;
 }
 
 export interface UpdateWorldSharingRequest {
