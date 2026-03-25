@@ -4,6 +4,7 @@
 	import { useWorlds, useDeleteWorld, useUser } from '$lib/queries';
 	import WorldCard from '$lib/components/features/worlds/WorldCard.svelte';
 	import WorldCardSkeleton from '$lib/components/features/worlds/WorldCardSkeleton.svelte';
+	import FeaturedWorldsCarousel from '$lib/components/features/worlds/FeaturedWorldsCarousel.svelte';
 	import UsageLimitTooltip from '$lib/components/features/subscription/UsageLimitTooltip.svelte';
 	import UpgradePrompt from '$lib/components/features/subscription/UpgradePrompt.svelte';
 	import SubscriptionStatusBanner from '$lib/components/features/subscription/SubscriptionStatusBanner.svelte';
@@ -60,6 +61,8 @@
 		{#if usage}
 			<SubscriptionStatusBanner class="mb-8" {usage} />
 		{/if}
+
+		<FeaturedWorldsCarousel />
 
 		<!-- Your Worlds Section -->
 		<section class="mb-16">

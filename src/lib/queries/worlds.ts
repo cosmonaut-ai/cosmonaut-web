@@ -8,6 +8,7 @@ import {
 import {
 	getWorlds,
 	getWorld,
+	getFeaturedWorlds,
 	createWorld,
 	deleteWorld,
 	updateWorldSharing,
@@ -27,6 +28,17 @@ import { POLL_INTERVAL_MS } from '$lib/api/core';
 import { showError, showSuccess, showWarning } from '$lib/utils/toast';
 import { queryKeys } from './keys';
 import { type MaybeGetter, resolve } from './utils';
+
+/**
+ * Query hook to fetch featured public worlds for the dashboard carousel.
+ */
+export function useFeaturedWorlds() {
+	return createQuery(() => ({
+		queryKey: queryKeys.worlds.featured,
+		queryFn: getFeaturedWorlds,
+		staleTime: 10 * 60_000
+	}));
+}
 
 /**
  * Infinite query hook to fetch worlds for the current user with cursor pagination.
