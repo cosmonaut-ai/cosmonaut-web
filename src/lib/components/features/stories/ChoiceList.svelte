@@ -35,6 +35,13 @@
 		onCustomChoice?.(customChoiceText.trim());
 		customChoiceText = '';
 	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			handleCustomChoice();
+		}
+	}
 </script>
 
 <div class="mt-8 space-y-3 border-t border-border pt-8" in:fade={{ duration: 300, delay: 100 }}>
@@ -132,6 +139,7 @@
 					disabled={isDisabled}
 					placeholder="Describe what you want to do..."
 					class="story-textarea min-h-20 resize-none"
+					onkeydown={handleKeydown}
 				/>
 				<div class="flex items-center justify-between">
 					<span class="text-xs text-muted-foreground">

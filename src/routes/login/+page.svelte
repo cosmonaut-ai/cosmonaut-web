@@ -316,10 +316,6 @@
 						<img src="/logo.png" alt="Cosmonaut logo" class="h-7 w-7" />
 					</div>
 					<span class="font-orbitron text-xl font-semibold text-foreground">Cosmonaut</span>
-					<span
-						class="-translate-y-1 rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
-						>BETA</span
-					>
 				</a>
 				<p class="text-sm text-muted-foreground">
 					{#if hasRedirect && (view === 'signin' || view === 'signup')}
