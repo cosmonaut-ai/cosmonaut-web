@@ -31,7 +31,6 @@
 	let { world, open, onOpenChange, onWorldUpdate, isOwner = true }: Props = $props();
 
 	const worldId = $derived(world.id);
-	const shareableId = $derived(world.shareable_id ?? world.id);
 
 	let visibility = $state<WorldVisibility>('private');
 	let sharedWith = $state<string[]>([]);
@@ -74,12 +73,12 @@
 
 	const inviteTokenQuery = $derived.by(() =>
 		useInviteToken(
-			() => shareableId,
+			() => worldId,
 			() => open && isOwner && isPrivate
 		)
 	);
-	const createTokenMutation = $derived.by(() => useCreateInviteToken(shareableId));
-	const deleteTokenMutation = $derived.by(() => useDeleteInviteToken(shareableId));
+	const createTokenMutation = $derived.by(() => useCreateInviteToken(worldId));
+	const deleteTokenMutation = $derived.by(() => useDeleteInviteToken(worldId));
 	const activeToken = $derived(inviteTokenQuery.data as InviteToken | null | undefined);
 	const isLoadingInviteToken = $derived(inviteTokenQuery.isLoading && !inviteTokenQuery.data);
 	let isCreatingToken = $state(false);
@@ -183,7 +182,7 @@
 
 	function getWorldLink() {
 		if (!browser) return '';
-		return `${window.location.origin}/worlds/${shareableId}`;
+		return `${window.location.origin}/worlds/${worldId}`;
 	}
 
 	async function copyLink(link: string) {
