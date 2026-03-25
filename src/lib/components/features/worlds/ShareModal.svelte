@@ -15,6 +15,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Label } from '$lib/components/ui/label';
 	import { Share2, X, Globe, Lock, EyeOff, Link, Copy, Check, Plus, Trash2 } from '@lucide/svelte';
 	import { trackEvent } from '$lib/utils/analytics';
@@ -80,6 +81,7 @@
 	const createTokenMutation = $derived.by(() => useCreateInviteToken(shareableId));
 	const deleteTokenMutation = $derived.by(() => useDeleteInviteToken(shareableId));
 	const activeToken = $derived(inviteTokenQuery.data as InviteToken | null | undefined);
+	const isLoadingInviteToken = $derived(inviteTokenQuery.isLoading && !inviteTokenQuery.data);
 
 	function hasUnsavedChanges(): boolean {
 		const currentVisibility = world.visibility || 'private';
@@ -303,12 +305,17 @@
 				<!-- Private world invite link -->
 				<div class="space-y-3">
 					<Label class="text-sm font-medium">Invite link</Label>
-					{#if activeToken}
+					{#if isLoadingInviteToken}
+						<div class="space-y-2 rounded-lg border border-border bg-muted/50 px-3 py-2.5">
+							<Skeleton class="h-3.5 w-3/4" />
+							<Skeleton class="h-3 w-1/3" />
+						</div>
+					{:else if activeToken}
 						<div
 							class="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2.5"
 						>
 							<div class="min-w-0 flex-1">
-								<p class="truncate text-xs font-mono text-muted-foreground">
+								<p class="truncate font-mono text-xs text-muted-foreground">
 									{activeToken.invite_url}
 								</p>
 								<p class="mt-1 text-xs text-muted-foreground">
@@ -367,7 +374,9 @@
 					<div class="flex flex-wrap gap-1.5">
 						{#each sharedWith as userId (userId)}
 							<Badge variant="secondary" class="gap-1 py-1 pr-1 pl-2.5">
-								<span class="max-w-[200px] truncate">{getUserDisplayName(userId)}</span>
+								<span class="max-w-[200px] truncate"
+									><span class="text-muted-foreground/70">@</span>{getUserDisplayName(userId)}</span
+								>
 								<button
 									onclick={() => confirmRemoveUser(userId)}
 									disabled={saving}
@@ -410,10 +419,7 @@
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel onclick={cancelPrivateSwitch}>Cancel</AlertDialog.Cancel>
-			<AlertDialog.Action
-				class="bg-destructive text-white hover:bg-destructive/90"
-				onclick={confirmPrivateSwitch}
-			>
+			<AlertDialog.Action variant="destructive" onclick={confirmPrivateSwitch}>
 				Switch to Private
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
@@ -431,16 +437,13 @@
 		<AlertDialog.Header>
 			<AlertDialog.Title>Remove access?</AlertDialog.Title>
 			<AlertDialog.Description>
-				<span class="font-medium">{userToRemove ? getUserDisplayName(userToRemove) : ''}</span> will
-				no longer be able to view this world.
+				<span class="font-medium">{userToRemove ? getUserDisplayName(userToRemove) : ''}</span> will no
+				longer be able to view this world.
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-			<AlertDialog.Action
-				class="bg-destructive text-white hover:bg-destructive/90"
-				onclick={executeRemoveUser}
-			>
+			<AlertDialog.Action variant="destructive" onclick={executeRemoveUser}>
 				Remove
 			</AlertDialog.Action>
 		</AlertDialog.Footer>

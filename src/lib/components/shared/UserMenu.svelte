@@ -50,7 +50,7 @@
 		{/if}
 		{#if displayName}
 			<span class="hidden text-sm font-medium text-foreground sm:block">
-				{displayName}
+				<span class="text-muted-foreground/70">@</span>{displayName}
 			</span>
 		{/if}
 		<ChevronDown class="hidden h-3.5 w-3.5 text-muted-foreground sm:block" />
@@ -60,7 +60,7 @@
 		<!-- Tier badge header -->
 		<div class="px-2 py-2">
 			<p class="text-sm font-medium text-foreground">
-				{displayName || 'User'}
+				<span class="text-muted-foreground/70">@</span>{displayName || 'User'}
 			</p>
 			{#if usageQuery.data && tierConfig}
 				<Badge class="mt-1 {tierBadgeClass[usageQuery.data.tier] ?? ''}">

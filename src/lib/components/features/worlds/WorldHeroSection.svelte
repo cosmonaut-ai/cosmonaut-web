@@ -36,7 +36,20 @@
 			class="hero-img absolute inset-0 h-full w-full object-cover object-center"
 		/>
 	{:else}
-		<div class="hero-bg-fallback absolute inset-0"></div>
+		<div class="hero-bg-fallback absolute inset-0">
+			{#if world.image_generation_status === 'pending'}
+				<div class="hero-shimmer absolute inset-0"></div>
+			{/if}
+			<div class="absolute inset-0 flex items-center justify-center">
+				<img
+					src="/logo.png"
+					alt=""
+					class="h-16 w-16 opacity-10 {world.image_generation_status === 'pending'
+						? 'animate-pulse'
+						: ''}"
+				/>
+			</div>
+		</div>
 	{/if}
 
 	<div class="hero-scanlines pointer-events-none absolute inset-0" aria-hidden="true"></div>
@@ -148,6 +161,26 @@
 		}
 	}
 
+	.hero-shimmer {
+		background: linear-gradient(
+			90deg,
+			transparent 0%,
+			oklch(from var(--primary) l c h / 0.06) 50%,
+			transparent 100%
+		);
+		background-size: 200% 100%;
+		animation: hero-shimmer-move 2s ease-in-out infinite;
+	}
+
+	@keyframes hero-shimmer-move {
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
+	}
+
 	.hero-scanlines {
 		background: repeating-linear-gradient(
 			0deg,
@@ -239,6 +272,9 @@
 			opacity: 0.6;
 		}
 		.hero-bg-fallback {
+			animation: none;
+		}
+		.hero-shimmer {
 			animation: none;
 		}
 	}

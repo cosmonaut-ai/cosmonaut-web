@@ -9,6 +9,8 @@ export type StoryNodeProcessingStatus = 'pending' | 'processing' | 'completed' |
 
 export type StoryNodeGenerationStatus = 'initialized' | 'generating' | 'completed' | 'failed';
 
+export type ImageGenerationStatus = 'pending' | 'completed' | 'failed';
+
 export type WorldVisibility = 'private' | 'unlisted' | 'public';
 
 export type WorldLength = 'short' | 'medium' | 'long';
@@ -99,6 +101,7 @@ export interface World {
 	world_image_width: string | null;
 	world_image_height: string | null;
 	world_image_size: string | null;
+	image_generation_status: ImageGenerationStatus | null;
 	invite_token?: InviteToken | null;
 	created_at: string;
 	updated_at: string;
@@ -146,7 +149,7 @@ export class ApiError extends Error {
 	}
 
 	get isForbidden(): boolean {
-		if (this.code) return this.code === 'FORBIDDEN';
+		if (this.code) return this.code === 'FORBIDDEN' || this.code === 'SESSION_ACCESS_DENIED';
 		return this.status === 403;
 	}
 

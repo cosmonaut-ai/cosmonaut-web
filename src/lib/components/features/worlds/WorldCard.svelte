@@ -116,8 +116,20 @@
 				class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
 			/>
 		</div>
+	{:else if world.image_generation_status === 'pending'}
+		<div class="world-card-gradient relative h-40 w-full rounded-t-xl">
+			<div class="world-card-shimmer absolute inset-0 rounded-t-xl"></div>
+			<div class="absolute inset-0 flex flex-col items-center justify-center gap-2">
+				<img src="/logo.png" alt="" class="h-8 w-8 animate-pulse opacity-30" />
+				<span class="text-xs text-muted-foreground/60">Generating cover...</span>
+			</div>
+		</div>
 	{:else}
-		<div class="world-card-gradient h-40 w-full rounded-t-xl"></div>
+		<div class="world-card-gradient relative h-40 w-full rounded-t-xl">
+			<div class="absolute inset-0 flex items-center justify-center">
+				<img src="/logo.png" alt="" class="h-10 w-10 opacity-15" />
+			</div>
+		</div>
 	{/if}
 
 	<CardHeader class="pb-3">
@@ -302,6 +314,27 @@
 		}
 	}
 
+	/* ── Shimmer overlay for pending image generation ── */
+	.world-card-shimmer {
+		background: linear-gradient(
+			90deg,
+			transparent 0%,
+			oklch(from var(--primary) l c h / 0.08) 50%,
+			transparent 100%
+		);
+		background-size: 200% 100%;
+		animation: shimmer 1.5s ease-in-out infinite;
+	}
+
+	@keyframes shimmer {
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
+	}
+
 	/* ── Generating badge pulse ── */
 	:global(.world-badge-generating) {
 		animation: badge-pulse 2s ease-in-out infinite;
@@ -330,6 +363,9 @@
 			transform: none;
 		}
 		.world-card-gradient {
+			animation: none;
+		}
+		.world-card-shimmer {
 			animation: none;
 		}
 		:global(.world-badge-generating) {

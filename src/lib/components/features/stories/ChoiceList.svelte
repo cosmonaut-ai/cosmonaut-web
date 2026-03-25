@@ -110,7 +110,7 @@
 				{/if}
 				{#if choice.is_custom && choice.creator_display_name}
 					<span class="shrink-0 text-xs text-muted-foreground">
-						by {choice.creator_display_name}
+						by <span class="text-muted-foreground/70">@</span>{choice.creator_display_name}
 					</span>
 				{/if}
 			</div>
