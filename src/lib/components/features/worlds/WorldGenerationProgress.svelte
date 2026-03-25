@@ -167,6 +167,9 @@
 			>
 				{currentFlavor}
 			</p>
+			{#if !isDone}
+				<p class="gen-estimate">This may take 1–2 minutes.</p>
+			{/if}
 		</div>
 
 		<!-- Progress bar -->
@@ -437,6 +440,12 @@
 	}
 	.gen-flavor-visible {
 		opacity: 1;
+	}
+	.gen-estimate {
+		font-size: 0.75rem;
+		color: var(--muted-foreground);
+		opacity: 0.6;
+		margin: 0.5rem 0 0;
 	}
 
 	/* ── Progress bar ── */

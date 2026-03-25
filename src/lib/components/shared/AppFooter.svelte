@@ -24,10 +24,6 @@
 						<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
 					</div>
 					<span class="font-orbitron text-lg font-semibold text-foreground">Cosmonaut</span>
-					<span
-						class="rounded-full border border-amber-400/60 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-amber-400"
-						>BETA</span
-					>
 				</a>
 				<p class="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
 					Every choice shapes the narrative. Every world is an adventure waiting to unfold.

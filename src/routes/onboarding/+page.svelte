@@ -22,7 +22,7 @@
 	});
 
 	let username = $state('');
-	let newsletterOptIn = $state(true);
+	let newsletterOptIn = $state(false);
 	let checkStatus = $state<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
 	let validationError = $state<string | null>(null);
 
