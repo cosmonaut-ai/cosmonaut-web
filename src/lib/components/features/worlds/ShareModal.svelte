@@ -82,6 +82,30 @@
 	const deleteTokenMutation = $derived.by(() => useDeleteInviteToken(shareableId));
 	const activeToken = $derived(inviteTokenQuery.data as InviteToken | null | undefined);
 	const isLoadingInviteToken = $derived(inviteTokenQuery.isLoading && !inviteTokenQuery.data);
+	let isCreatingToken = $state(false);
+	let isDeletingToken = $state(false);
+
+	async function handleCreateToken() {
+		isCreatingToken = true;
+		try {
+			await createTokenMutation.mutateAsync();
+		} catch {
+			/* handled by mutation onError */
+		} finally {
+			isCreatingToken = false;
+		}
+	}
+
+	async function handleDeleteToken() {
+		isDeletingToken = true;
+		try {
+			await deleteTokenMutation.mutateAsync();
+		} catch {
+			/* handled by mutation onError */
+		} finally {
+			isDeletingToken = false;
+		}
+	}
 
 	function hasUnsavedChanges(): boolean {
 		const currentVisibility = world.visibility || 'private';
@@ -336,10 +360,10 @@
 							variant="outline"
 							size="sm"
 							class="w-full text-destructive hover:text-destructive"
-							onclick={() => deleteTokenMutation.mutate()}
-							disabled={deleteTokenMutation.isPending}
+							onclick={handleDeleteToken}
+							disabled={isDeletingToken}
 						>
-							{#if deleteTokenMutation.isPending}
+							{#if isDeletingToken}
 								<Spinner class="mr-2 h-3.5 w-3.5" />
 							{:else}
 								<Trash2 class="mr-2 h-3.5 w-3.5" />
@@ -350,10 +374,10 @@
 						<Button
 							variant="outline"
 							class="w-full"
-							onclick={() => createTokenMutation.mutate()}
-							disabled={createTokenMutation.isPending}
+							onclick={handleCreateToken}
+							disabled={isCreatingToken}
 						>
-							{#if createTokenMutation.isPending}
+							{#if isCreatingToken}
 								<Spinner class="mr-2 h-3.5 w-3.5" />
 							{:else}
 								<Plus class="mr-2 h-3.5 w-3.5" />

@@ -116,7 +116,7 @@
 							src="/art/no-worlds-astronaut.webp"
 							alt=""
 							loading="lazy"
-							class="empty-icon relative mb-6 h-28 w-auto object-contain sm:h-36"
+							class="empty-icon relative mb-10 h-28 w-auto object-contain sm:h-36"
 						/>
 						<h3 class="mb-2 text-xl font-semibold text-foreground">No worlds yet</h3>
 						<p class="mb-6 max-w-md text-center text-muted-foreground">
