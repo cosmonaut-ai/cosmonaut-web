@@ -40,6 +40,7 @@ export interface UserInfo {
 	email?: string;
 	name?: string;
 	picture?: string;
+	username?: string;
 }
 
 /**
@@ -98,7 +99,8 @@ export async function checkAuthState(): Promise<void> {
 					sub: currentUser.userId,
 					email: claims?.email as string | undefined,
 					name: claims?.given_name as string | undefined,
-					picture: claims?.picture as string | undefined
+					picture: claims?.picture as string | undefined,
+					username: claims?.['custom:username'] as string | undefined
 				};
 			} catch {
 				// If getCurrentUser fails but we have tokens, use the sub from claims
@@ -106,7 +108,8 @@ export async function checkAuthState(): Promise<void> {
 					sub: claims?.sub as string,
 					email: claims?.email as string | undefined,
 					name: claims?.given_name as string | undefined,
-					picture: claims?.picture as string | undefined
+					picture: claims?.picture as string | undefined,
+					username: claims?.['custom:username'] as string | undefined
 				};
 			}
 
