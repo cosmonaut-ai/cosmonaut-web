@@ -75,6 +75,8 @@ export interface InviteToken {
 
 export interface World {
 	id: string;
+	session_id: string | null;
+	/** @deprecated Use `id` directly — it is now always the root world id. */
 	shareable_id: string | null;
 	title: string | null;
 	description: string | null;
