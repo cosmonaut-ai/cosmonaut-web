@@ -8,7 +8,7 @@ import {
 } from '$lib/api/subscription';
 import type { CheckoutRequest, UsageInfo } from '$lib/types/subscription';
 import { showError } from '$lib/utils/toast';
-import { useAuth } from '$lib/auth/auth.svelte';
+import { useAuth, getAuthToken, checkAuthState } from '$lib/auth/auth.svelte';
 import { queryKeys } from './keys';
 
 /**
@@ -65,10 +65,14 @@ export function useSetUsername() {
 	const queryClient = useQueryClient();
 	return createMutation(() => ({
 		mutationFn: (username: string) => setUsername(username),
-		onSuccess: (data) => {
+		onSuccess: async (data) => {
 			queryClient.setQueryData<UsageInfo>(queryKeys.user.all, (old) =>
 				old ? { ...old, username: data.username, is_onboarded: true } : old
 			);
+
+			await getAuthToken(true);
+			await checkAuthState();
+
 			queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
 		},
 		onError: (error: Error) => {
