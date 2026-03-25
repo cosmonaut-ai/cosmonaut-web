@@ -70,8 +70,14 @@ export function useWorld(
 			refetchInterval: (query: { state: { data?: World; error: Error | null } }) => {
 				if (!options?.enablePolling) return false;
 				if (query.state.error) return false;
-				const status = query.state.data?.generation_status;
-				return status === 'completed' || status === 'failed' ? false : POLL_INTERVAL_MS;
+				const world = query.state.data;
+				const genDone =
+					world?.generation_status === 'completed' || world?.generation_status === 'failed';
+				const imgDone =
+					!world?.image_generation_status ||
+					world.image_generation_status === 'completed' ||
+					world.image_generation_status === 'failed';
+				return genDone && imgDone ? false : POLL_INTERVAL_MS;
 			},
 			refetchIntervalInBackground: false
 		};

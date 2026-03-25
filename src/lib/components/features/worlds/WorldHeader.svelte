@@ -27,7 +27,11 @@
 			<div class="absolute inset-0 bg-background/75"></div>
 		</div>
 	{:else}
-		<div class="absolute inset-0 z-0 bg-card/50"></div>
+		<div class="absolute inset-0 z-0 bg-card/50">
+			{#if world.image_generation_status === 'pending'}
+				<div class="absolute inset-0 animate-pulse bg-primary/5"></div>
+			{/if}
+		</div>
 	{/if}
 
 	<div class="relative z-10 mx-auto max-w-4xl px-6 py-4">

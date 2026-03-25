@@ -36,7 +36,9 @@
 			{/if}
 			<div>
 				{#if displayName}
-					<p class="text-lg font-medium text-foreground">{displayName}</p>
+					<p class="text-lg font-medium text-foreground">
+						<span class="text-muted-foreground/70">@</span>{displayName}
+					</p>
 				{/if}
 				{#if auth.user?.email}
 					<p class="text-sm text-muted-foreground">{auth.user.email}</p>

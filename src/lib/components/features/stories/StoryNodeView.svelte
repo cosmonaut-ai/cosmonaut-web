@@ -350,6 +350,33 @@
 				</div>
 			</CardContent>
 		</Card>
+	{:else if nodeQuery.isError && nodeQuery.error instanceof ApiError && nodeQuery.error.isWrongSession}
+		<!-- Node belongs to a different playthrough session -->
+		<Card class="border-border/50">
+			<CardContent class="flex flex-col items-center py-12 text-center">
+				<div
+					class="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-primary/10"
+				>
+					<Map class="h-6 w-6 text-primary" />
+				</div>
+				<h2 class="mb-2 text-lg font-semibold text-foreground">Different playthrough</h2>
+				<p class="mb-6 max-w-md text-sm text-muted-foreground">
+					This story path belongs to a different playthrough session. Navigate back to your own
+					path, or explore the map to find your way.
+				</p>
+				<div class="flex gap-3">
+					<Button variant="outline" onclick={() => goto(`/worlds/${worldId}/map`)}>
+						<Map class="mr-2 h-4 w-4" />
+						View Map
+					</Button>
+					{#if rootNodeId}
+						<Button onclick={() => goto(`/worlds/${worldId}/nodes/${rootNodeId}`)}>
+							Start from Beginning
+						</Button>
+					{/if}
+				</div>
+			</CardContent>
+		</Card>
 	{:else if nodeQuery.isError}
 		<!-- Query error state -->
 		<Card class="border-destructive bg-destructive/5">
