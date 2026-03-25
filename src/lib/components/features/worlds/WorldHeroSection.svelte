@@ -3,7 +3,16 @@
 	import { goto } from '$app/navigation';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import { ArrowLeft, Sparkles, Globe, Lock, Clock, ShieldCheck } from '@lucide/svelte';
+	import {
+		ArrowLeft,
+		Sparkles,
+		Globe,
+		Lock,
+		Clock,
+		Shield,
+		ShieldPlus,
+		BookOpen
+	} from '@lucide/svelte';
 
 	function getWorldLengthLabel(length: string | null): string | null {
 		switch (length) {
@@ -120,10 +129,21 @@
 					{getWorldLengthLabel(world.world_length)}
 				</Badge>
 			{/if}
-			{#if world.family_friendly}
+			{#if world.vocab_level && world.vocab_level !== 'adult'}
+				<Badge variant="outline" class="gap-1.5 border-border/50 bg-background/30 backdrop-blur-sm">
+					<BookOpen class="h-3 w-3" />
+					{world.vocab_level === 'child' ? 'Child' : 'Teen'} Vocab
+				</Badge>
+			{/if}
+			{#if world.content_filter === 'strict'}
 				<Badge variant="secondary" class="gap-1.5 border-primary/20 bg-primary/10 text-primary">
-					<ShieldCheck class="h-3 w-3" />
-					Family Friendly
+					<ShieldPlus class="h-3 w-3" />
+					Strict Filter
+				</Badge>
+			{:else if world.content_filter === 'moderate'}
+				<Badge variant="secondary" class="gap-1.5 border-primary/20 bg-primary/10 text-primary">
+					<Shield class="h-3 w-3" />
+					Moderate Filter
 				</Badge>
 			{/if}
 		</div>

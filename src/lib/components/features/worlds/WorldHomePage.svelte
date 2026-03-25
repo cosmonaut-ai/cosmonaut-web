@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { World } from '$lib/types/api';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import { ShieldCheck } from '@lucide/svelte';
+	import { Shield, ShieldPlus, BookOpen } from '@lucide/svelte';
 	import WorldHeroSection from './WorldHeroSection.svelte';
 	import WorldQuickActions from './WorldQuickActions.svelte';
 	import WorldDetailsSection from './WorldDetailsSection.svelte';
@@ -65,10 +65,21 @@
 				{:else if world.story_max_nodes}
 					<span>Max {world.story_max_nodes} nodes</span>
 				{/if}
-				{#if world.family_friendly}
+				{#if world.vocab_level && world.vocab_level !== 'adult'}
 					<span class="flex items-center gap-1.5">
-						<ShieldCheck class="h-3.5 w-3.5" />
-						Family Friendly
+						<BookOpen class="h-3.5 w-3.5" />
+						{world.vocab_level === 'child' ? 'Child' : 'Teen'} Vocab
+					</span>
+				{/if}
+				{#if world.content_filter === 'strict'}
+					<span class="flex items-center gap-1.5">
+						<ShieldPlus class="h-3.5 w-3.5" />
+						Strict Filter
+					</span>
+				{:else if world.content_filter === 'moderate'}
+					<span class="flex items-center gap-1.5">
+						<Shield class="h-3.5 w-3.5" />
+						Moderate Filter
 					</span>
 				{/if}
 				{#if world.node_text_length}

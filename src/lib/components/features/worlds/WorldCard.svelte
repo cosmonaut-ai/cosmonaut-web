@@ -12,7 +12,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { Trash2, ShieldCheck, Play } from '@lucide/svelte';
+	import { Trash2, Shield, ShieldPlus, Play } from '@lucide/svelte';
 	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import { getStatusBadgeVariant, getStatusText } from '$lib/utils/worldStatus';
 	import { getWorldProgress } from '$lib/api/nodes';
@@ -168,12 +168,19 @@
 					<span class="text-border">|</span>
 					<span>{getWorldLengthLabel(world.world_length)}</span>
 				{/if}
-				{#if world.family_friendly}
+				{#if world.content_filter === 'strict'}
 					<Tooltip>
 						<TooltipTrigger class="inline-flex text-primary/70">
-							<ShieldCheck class="h-3.5 w-3.5" />
+							<ShieldPlus class="h-3.5 w-3.5" />
 						</TooltipTrigger>
-						<TooltipContent>Family Friendly</TooltipContent>
+						<TooltipContent>Strict content filter</TooltipContent>
+					</Tooltip>
+				{:else if world.content_filter === 'moderate'}
+					<Tooltip>
+						<TooltipTrigger class="inline-flex text-primary/70">
+							<Shield class="h-3.5 w-3.5" />
+						</TooltipTrigger>
+						<TooltipContent>Moderate content filter</TooltipContent>
 					</Tooltip>
 				{/if}
 			</div>
