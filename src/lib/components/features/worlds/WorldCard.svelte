@@ -144,7 +144,9 @@
 		</div>
 		{#if world.genre}
 			<CardDescription class="mt-1">
-				<Badge variant="outline" class="text-xs">{world.genre}</Badge>
+				<Badge variant="outline" class="max-w-full text-xs"
+					><span class="truncate">{world.genre}</span></Badge
+				>
 			</CardDescription>
 		{/if}
 	</CardHeader>
