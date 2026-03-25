@@ -30,6 +30,13 @@ export async function getWorlds(cursor?: string | null): Promise<PaginatedWorlds
 }
 
 /**
+ * Fetch featured public worlds, ordered by featured_order ascending.
+ */
+export async function getFeaturedWorlds(): Promise<World[]> {
+	return apiRequest<World[]>(`${API_BASE_URL}/worlds/featured`);
+}
+
+/**
  * Get a specific world by ID, optionally with an invite token.
  */
 export async function getWorld(worldId: string, invite?: string | null): Promise<World> {

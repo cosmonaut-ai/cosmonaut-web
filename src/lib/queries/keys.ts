@@ -12,6 +12,7 @@
 export const queryKeys = {
 	worlds: {
 		all: ['worlds'] as const,
+		featured: ['worlds', 'featured'] as const,
 		detail: (id: string) => ['worlds', id] as const,
 		inviteToken: (id: string) => ['worlds', id, 'invite-token'] as const
 	},
