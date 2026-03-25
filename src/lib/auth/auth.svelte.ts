@@ -16,6 +16,7 @@ import { amplifyConfig, isLocalEnvironment, isAuthConfigured, API_BASE_URL } fro
 import { apiRequest } from '$lib/api/core';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
+import { queryClient } from '$lib/queries/client';
 import { logger } from '$lib/utils/logger';
 
 // Auth state using Svelte 5 runes
@@ -313,14 +314,19 @@ export async function deleteAccount(): Promise<void> {
 }
 
 /**
- * Sign out the current user
+ * Sign out the current user.
+ *
+ * Navigates to the landing page BEFORE mutating auth state so that
+ * reactive guards (layout redirect, query refetches, component re-renders)
+ * never fire against a half-torn-down session on a protected page.
  */
 export async function logout(): Promise<void> {
-	// In local environment, clear mock authentication
 	if (isLocalEnvironment) {
+		await goto('/', { replaceState: true });
 		isAuthenticated = false;
 		user = null;
 		authReadyPromise = null;
+		queryClient.clear();
 		if (browser) {
 			try {
 				localStorage.removeItem(LOCAL_AUTH_KEY);
@@ -335,15 +341,20 @@ export async function logout(): Promise<void> {
 		return;
 	}
 
+	await goto('/', { replaceState: true });
+
+	isAuthenticated = false;
+	user = null;
+	authReadyPromise = null;
+	_streamingSessionValidUntil = 0;
+	Sentry.setUser(null);
+
+	queryClient.clear();
+
 	try {
 		await signOut();
-		isAuthenticated = false;
-		user = null;
-		authReadyPromise = null; // Reset promise so it can be re-initialized
-		Sentry.setUser(null);
 	} catch (error) {
-		logger.error('Logout failed:', error);
-		throw error;
+		logger.error('Cognito sign-out failed:', error);
 	}
 }
 
@@ -399,14 +410,18 @@ export async function getAuthToken(forceRefresh = false): Promise<string | null>
 
 /**
  * Handle a terminal session expiry (refresh token gone / expired).
- * Clears local auth state and redirects to login with a message.
+ * Navigates to the login page first, then clears local state so that
+ * reactive guards on the (now-unmounted) protected page never fire.
  */
 export async function handleSessionExpired(): Promise<void> {
 	if (!browser) return;
+	const redirectPath = window.location.pathname + window.location.search;
+	await goto(`/login?expired=true&redirect=${encodeURIComponent(redirectPath)}`, {
+		replaceState: true
+	});
 	isAuthenticated = false;
 	user = null;
-	const redirectPath = window.location.pathname + window.location.search;
-	await goto(`/login?expired=true&redirect=${encodeURIComponent(redirectPath)}`);
+	queryClient.clear();
 }
 
 /**

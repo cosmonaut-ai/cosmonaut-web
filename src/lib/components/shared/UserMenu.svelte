@@ -11,7 +11,6 @@
 		Settings,
 		CreditCard,
 		MessageSquare,
-		HelpCircle,
 		LogOut,
 		ChevronDown
 	} from '@lucide/svelte';
@@ -94,13 +93,8 @@
 		<DropdownMenu.Separator />
 
 		<DropdownMenu.Item
-			onclick={async () => {
-				try {
-					await auth.logout();
-					goto('/');
-				} catch (error) {
-					logger.error('Failed to log out:', error);
-				}
+			onclick={() => {
+				auth.logout().catch((error) => logger.error('Failed to log out:', error));
 			}}
 			class="cursor-pointer"
 			variant="destructive"

@@ -285,16 +285,16 @@
 		<div class="login-glow" aria-hidden="true"></div>
 
 		<!-- Astronaut + Doorway composition -->
-		<div class="relative z-10 flex items-center justify-center">
+		<div class="relative z-10 flex h-[clamp(240px,35vh,400px)] items-center justify-center">
 			<img
 				src="/art/sign-in-astronaut.webp"
 				alt=""
-				class="login-astronaut relative z-20 -mr-6 h-36 w-auto object-contain lg:h-44"
+				class="login-astronaut relative z-20 -mr-6 h-[38%] w-auto object-contain"
 			/>
 			<img
 				src="/art/sign-in-doorway.webp"
 				alt=""
-				class="login-doorway relative z-10 h-[40vh] w-auto object-contain lg:h-[45vh]"
+				class="login-doorway relative z-10 h-full w-auto object-contain"
 			/>
 		</div>
 
