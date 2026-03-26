@@ -12,7 +12,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"verify": "npm run format && npx svelte-check --tsconfig ./tsconfig.json && npm run lint -- --fix && npm run build"
+		"verify": "npm run format && npx svelte-check --tsconfig ./tsconfig.json && npm run lint -- --fix && npm run build",
+		"cleanup:dev": "aws s3 sync ./build s3://cosmonaut-dev-frontend --delete",
+		"cleanup:prod": "aws s3 sync ./build s3://cosmonaut-prod-frontend --delete"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
