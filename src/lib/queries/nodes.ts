@@ -87,7 +87,7 @@ export function useChooseOption(worldId: MaybeGetter<string>) {
 				// Use exact: true to prevent invalidating individual node queries (prefix matching)
 				client.invalidateQueries({ queryKey: queryKeys.nodes.all(wId), exact: true });
 			}
-			// Note: no onError here — the caller uses mutateAsync and handles all
+			// Note: no onError here - the caller uses mutateAsync and handles all
 			// errors directly (409 retry logic + user-facing toasts) to avoid duplicates.
 		};
 	});

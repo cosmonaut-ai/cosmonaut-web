@@ -18,12 +18,12 @@
 	import {
 		MessageSquarePlus,
 		Send,
-		CheckCircle,
+		CircleCheck,
 		ArrowLeft,
 		Bug,
 		Lightbulb,
 		MessageCircle,
-		HelpCircle
+		MessageCircleQuestionMark
 	} from '@lucide/svelte';
 	import { Spinner } from '$lib/components/ui/spinner';
 
@@ -31,7 +31,7 @@
 		{ value: 'bug', label: 'Bug Report', icon: Bug },
 		{ value: 'feature', label: 'Feature Request', icon: Lightbulb },
 		{ value: 'feedback', label: 'General Feedback', icon: MessageCircle },
-		{ value: 'other', label: 'Other', icon: HelpCircle }
+		{ value: 'other', label: 'Other', icon: MessageCircleQuestionMark }
 	];
 
 	let category = $state<FeedbackCategory>('feedback');
@@ -82,7 +82,9 @@
 				Back to Dashboard
 			</Button>
 			<h1 class="text-3xl font-bold text-foreground">Feedback</h1>
-			<p class="mt-1 text-muted-foreground">Share your thoughts and help us improve Cosmonaut</p>
+			<p class="mt-1 text-muted-foreground">
+				We genuinely read all of this. Say whatever's on your mind.
+			</p>
 		</div>
 
 		<Card>
@@ -92,8 +94,7 @@
 					<CardTitle>Send Feedback</CardTitle>
 				</div>
 				<CardDescription>
-					Your feedback helps us build a better experience. Report bugs, suggest features, or share
-					general thoughts about Cosmonaut.
+					Found a bug? Have an idea? Just want to tell us something feels off? All of it is useful.
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -102,8 +103,8 @@
 						<div
 							class="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-primary"
 						>
-							<CheckCircle class="h-5 w-5 shrink-0" />
-							<span class="font-medium">Thank you! Your feedback has been submitted.</span>
+							<CircleCheck class="h-5 w-5 shrink-0" />
+							<span class="font-medium">Got it - thanks for taking the time.</span>
 						</div>
 					</div>
 				{:else}
@@ -147,7 +148,7 @@
 							<Textarea
 								id="message"
 								bind:value={message}
-								placeholder="Share your feedback, describe a bug, or suggest a feature..."
+								placeholder="What's on your mind?"
 								rows={5}
 								required
 								minlength={MIN_MESSAGE_LENGTH}
@@ -158,9 +159,9 @@
 							<div class="flex items-start justify-between gap-4">
 								<p class="text-xs text-muted-foreground">
 									{#if messageTooShort}
-										Please provide at least {MIN_MESSAGE_LENGTH} characters
+										A little more detail would help (at least {MIN_MESSAGE_LENGTH} characters)
 									{:else}
-										Minimum {MIN_MESSAGE_LENGTH} characters required
+										Tell us as much or as little as you'd like
 									{/if}
 								</p>
 								<span
@@ -177,7 +178,7 @@
 							<div
 								class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-600 dark:text-amber-400"
 							>
-								Please wait before submitting again.
+								Whoa there cowboy! We can only read so much feedback at a time - take a breather!
 							</div>
 						{/if}
 

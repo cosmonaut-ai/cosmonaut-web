@@ -18,7 +18,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import * as Accordion from '$lib/components/ui/accordion';
-	import { Rocket, ArrowLeft, Shuffle, AlertTriangle, Globe, Lock, EyeOff } from '@lucide/svelte';
+	import { Rocket, ArrowLeft, Shuffle, TriangleAlert, Globe, Lock, EyeOff } from '@lucide/svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { logger } from '$lib/utils/logger';
 	import { formatResetDate } from '$lib/utils/date';
@@ -93,7 +93,7 @@
 		}
 	];
 
-	// Form state — pre-fill from URL if retrying after a failed world creation
+	// Form state - pre-fill from URL if retrying after a failed world creation
 	let worldPrompt = $state(page.url.searchParams.get('prompt') ?? '');
 	let visibility = $state<WorldVisibility>('private');
 	let worldLength = $state<WorldLength>(getStoredWorldLength());
@@ -267,7 +267,7 @@
 	<main class="mx-auto max-w-3xl px-6 py-12">
 		{#if isAtWorldLimit}
 			<Alert class="mb-6 border-destructive/50 bg-destructive/10">
-				<AlertTriangle class="h-4 w-4 text-destructive" />
+				<TriangleAlert class="h-4 w-4 text-destructive" />
 				<AlertDescription>
 					<p>
 						You've reached your world creation limit ({usage?.worlds_created}/{usage?.worlds_limit}).
@@ -290,7 +290,7 @@
 			<CardHeader>
 				<CardTitle class="text-2xl">Describe Your World</CardTitle>
 				<CardDescription>
-					The cosmos awaits your vision. Be as detailed or brief as you like — a sentence or a saga.
+					The cosmos awaits your vision. Be as detailed or brief as you like - a sentence or a saga.
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -342,8 +342,8 @@
 									<p id="prompt-error" class="text-xs text-destructive">{promptError}</p>
 								{:else}
 									<p id="prompt-help" class="text-xs text-muted-foreground">
-										Include setting, tone, key characters, or any specific elements you'd like in
-										your story.
+										Setting, tone, characters, vibes - throw it all in. The more you give, the
+										richer the world.
 									</p>
 								{/if}
 							</div>
@@ -359,7 +359,7 @@
 
 					<!-- General access -->
 					<div class="space-y-2">
-						<Label for="visibility">General access</Label>
+						<Label for="visibility">Who can play?</Label>
 						<Select.Root
 							type="single"
 							value={visibility}

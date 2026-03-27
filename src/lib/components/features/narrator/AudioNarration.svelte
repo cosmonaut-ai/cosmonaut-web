@@ -168,7 +168,7 @@
 		playerVisible = true;
 
 		if (hasAudio) {
-			// Audio already cached — show player and play immediately
+			// Audio already cached - show player and play immediately
 			await nextTickPlay();
 		} else if (isNodeCompleted) {
 			// Generate audio first, then auto-play
@@ -222,7 +222,7 @@
 		try {
 			await audioElement.play();
 		} catch {
-			// Autoplay blocked or element invalidated — silently ignore
+			// Autoplay blocked or element invalidated - silently ignore
 		}
 	}
 
@@ -277,7 +277,7 @@
 		// Check if audio already exists for the new voice
 		const url = mergedAudio[voiceId];
 		if (url) {
-			// Audio exists — reset playback position (src changes reactively)
+			// Audio exists - reset playback position (src changes reactively)
 			currentTime = 0;
 			ended = false;
 			// The wasPlayingBeforePickerOpen flag won't apply since the picker
@@ -285,7 +285,7 @@
 			wasPlayingBeforePickerOpen = false;
 			nextTickPlay();
 		} else if (isNodeCompleted) {
-			// No audio for this voice yet — generate it
+			// No audio for this voice yet - generate it
 			wasPlayingBeforePickerOpen = false;
 			generateForVoice(voiceId);
 		}

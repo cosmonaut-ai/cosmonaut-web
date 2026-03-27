@@ -229,7 +229,7 @@
 		box-shadow: -2px 0 16px oklch(from var(--primary) l c h / 0.08);
 	}
 
-	/* ── Typing cursor — gold glow caret ── */
+	/* ── Typing cursor - gold glow caret ── */
 	.demo-cursor {
 		display: inline-block;
 		width: 2.5px;

@@ -65,11 +65,11 @@ showSuccess('Action completed', 'Optional description');
 
 - Don't use gold (`--primary`) for large backgrounds
 - Don't mix serif and sans-serif in UI elements
-- Don't animate everything—be purposeful
+- Don't animate everything-be purposeful
 - Don't forget spacing between sections
-- Don't use pure white text—use `--foreground`
-- Don't use `$navigating` store—it's deprecated in Svelte 5
+- Don't use pure white text-use `--foreground`
+- Don't use `$navigating` store-it's deprecated in Svelte 5
 - Don't block entire pages with full-screen spinners
-- Don't use different spinner styles—use `Spinner` consistently
-- Don't call API client directly—use query hooks
+- Don't use different spinner styles-use `Spinner` consistently
+- Don't call API client directly-use query hooks
 - Don't manually track loading state when using TanStack Query

@@ -11,7 +11,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { AlertTriangle, ShieldAlert } from '@lucide/svelte';
+	import { TriangleAlert, ShieldAlert } from '@lucide/svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
 
 	interface Props {
@@ -102,8 +102,7 @@
 							You don't have access to this world
 						</h2>
 						<p class="mb-6 max-w-md text-sm text-muted-foreground">
-							It looks like you don't have permission to view this world. Ask the owner to share it
-							with you.
+							This world is private. Ask the owner to share an invite link with you.
 						</p>
 					{/if}
 					<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
@@ -112,12 +111,12 @@
 		</main>
 	</div>
 {:else if isNetworkOrServerError}
-	<!-- Network or server error — offer retry -->
+	<!-- Network or server error - offer retry -->
 	<div class="min-h-full bg-background">
 		<main class="mx-auto max-w-3xl px-6 py-12">
 			<Card class="border-destructive/50">
 				<CardContent class="flex flex-col items-center py-12 text-center">
-					<AlertTriangle class="mb-4 h-8 w-8 text-destructive" />
+					<TriangleAlert class="mb-4 h-8 w-8 text-destructive" />
 					<p class="mb-2 font-semibold text-foreground">Something went wrong</p>
 					<p class="mb-6 text-sm text-muted-foreground">
 						We couldn't load this world. This might be a temporary issue.
@@ -136,7 +135,7 @@
 		<main class="mx-auto max-w-3xl px-6 py-12">
 			<Card class="border-destructive/50">
 				<CardContent class="py-12 text-center">
-					<p class="mb-4 text-muted-foreground">World not found.</p>
+					<p class="mb-4 text-muted-foreground">This world doesn't exist - or it's been deleted.</p>
 					<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
 				</CardContent>
 			</Card>
@@ -161,7 +160,7 @@
 		</div>
 	</div>
 {:else if isMainWorldPage}
-	<!-- Main world page — has its own navigation -->
+	<!-- Main world page - has its own navigation -->
 	<div class="min-h-full bg-background">
 		{@render children()}
 	</div>

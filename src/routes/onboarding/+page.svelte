@@ -178,7 +178,7 @@
 				<div class="flex items-center justify-between rounded-lg border border-border/50 px-4 py-3">
 					<div class="space-y-0.5 pr-4">
 						<p class="text-sm font-medium text-foreground">Product updates</p>
-						<p class="text-sm text-muted-foreground">Occasional emails about new features</p>
+						<p class="text-sm text-muted-foreground">Occasional emails when something new ships</p>
 					</div>
 					<Switch
 						id="newsletter-opt-in"
@@ -200,9 +200,8 @@
 						>
 					</label>
 					<p class="text-xs leading-relaxed text-muted-foreground">
-						While our platform is designed with family use in mind and safe for children, Cosmonaut
-						is intended for use by parents and guardians only, not children. Stories are meant to be
-						shared and enjoyed together.
+						Cosmonaut is designed for parents and guardians to use with their kids - not for
+						children to use on their own. Pull up a chair and read it together.
 					</p>
 				</div>
 

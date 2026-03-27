@@ -75,7 +75,7 @@
 
 <SEO
 	title="Cosmonaut - Custom interactive stories for you & your family"
-	description="Create, explore, and share interactive story worlds. Every choice shapes the narrative. Every world is an adventure waiting to unfold."
+	description="Describe any world and Cosmonaut builds it into a branching story shaped by your choices. Interactive storytelling for families, built with care."
 	path="/"
 	jsonLd={{
 		'@context': 'https://schema.org',
@@ -83,7 +83,7 @@
 		name: 'Cosmonaut',
 		url: 'https://cosmonaut-ai.com',
 		description:
-			'Create, explore, and share interactive story worlds. Every choice shapes the narrative. Every world is an adventure waiting to unfold.',
+			'Describe any world and Cosmonaut builds it into a branching story shaped by your choices. Interactive storytelling for families, built with care.',
 		applicationCategory: 'Entertainment',
 		operatingSystem: 'Web',
 		offers: {
@@ -151,13 +151,13 @@
 		use:observeCta
 	>
 		<div class="mx-auto max-w-4xl px-6 text-center">
-			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">Ready to Create?</h2>
+			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">What world are you building?</h2>
 			<p class="mx-auto mb-8 max-w-2xl text-muted-foreground">
-				Your universe is one prompt away. Describe a world, step inside, and let the story unfold.
+				One prompt is all it takes. Describe your world, step inside, and see where your choices take you.
 			</p>
 			<Button size="lg" class="gap-2 px-8" onclick={() => handleGetStarted('bottom_cta')}>
 				<Rocket class="h-5 w-5" />
-				Start Your Journey
+				Create Your World
 			</Button>
 		</div>
 	</section>

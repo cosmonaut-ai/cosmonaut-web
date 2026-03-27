@@ -50,7 +50,7 @@
 
 <SEO
 	title="Dashboard - Cosmonaut"
-	description="Manage your story worlds and explore new adventures."
+	description="Manage your stories and explore new adventures."
 	path="/dashboard"
 	noindex
 />
@@ -68,15 +68,15 @@
 		<section class="mb-16">
 			<div class="mb-8 flex items-center justify-between">
 				<div>
-					<h1 class="text-3xl font-bold text-foreground">Your Worlds</h1>
-					<p class="mt-1 text-muted-foreground">Create and explore your story universes</p>
+					<h1 class="text-3xl font-bold text-foreground">Your Stories</h1>
+					<p class="mt-1 text-muted-foreground">Every story starts with a prompt. What world are you building today?</p>
 				</div>
 				{#if isAtWorldLimit}
 					<Tooltip>
 						<TooltipTrigger>
 							<Button disabled class="gap-2">
 								<Plus class="h-4 w-4" />
-								Create World
+								Create Story
 							</Button>
 						</TooltipTrigger>
 						<UsageLimitTooltip resource="worlds" />
@@ -84,7 +84,7 @@
 				{:else}
 					<Button onclick={handleCreateWorld} class="gap-2">
 						<Plus class="h-4 w-4" />
-						Create World
+						Create Story
 					</Button>
 				{/if}
 			</div>
@@ -100,7 +100,7 @@
 				<Card class="border-destructive/50 bg-destructive/10">
 					<CardContent class="py-8 text-center">
 						<p class="text-destructive">
-							Failed to load worlds: {worldsQuery.error?.message ?? 'Unknown error'}
+							Failed to load stories: {worldsQuery.error?.message ?? 'Unknown error'}
 						</p>
 						<Button variant="outline" class="mt-4" onclick={() => worldsQuery.refetch()}>
 							Try Again
@@ -108,7 +108,7 @@
 					</CardContent>
 				</Card>
 			{:else if allWorlds.length === 0}
-				<!-- Empty state — polished -->
+				<!-- Empty state -->
 				<Card class="empty-card border-dashed">
 					<CardContent
 						class="relative flex flex-col items-center justify-center overflow-hidden py-16"
@@ -121,18 +121,18 @@
 							loading="lazy"
 							class="empty-icon relative mb-10 h-28 w-auto object-contain sm:h-36"
 						/>
-						<h3 class="mb-2 text-xl font-semibold text-foreground">No worlds yet</h3>
+						<h3 class="mb-2 text-xl font-semibold text-foreground">No stories yet</h3>
 						<p class="mb-6 max-w-md text-center text-muted-foreground">
 							Every great adventure starts with a single spark. Light yours.
 						</p>
 						<Button onclick={() => goto('/worlds/new')} class="empty-cta gap-2">
 							<Plus class="h-4 w-4" />
-							Create Your First World
+							Create Your First Story
 						</Button>
 					</CardContent>
 				</Card>
 			{:else}
-				<!-- Worlds grid -->
+				<!-- Stories grid -->
 				<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 					{#each allWorlds as world, i (world.id)}
 						<WorldCard

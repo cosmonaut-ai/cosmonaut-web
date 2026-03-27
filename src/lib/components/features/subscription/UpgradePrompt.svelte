@@ -80,7 +80,7 @@
 							used
 						</p>
 						{#if isFree}
-							<p class="mt-1 text-muted-foreground">One-time allowance — does not reset</p>
+							<p class="mt-1 text-muted-foreground">One-time allowance - does not reset</p>
 						{:else if usage.period_end}
 							<p class="mt-1 text-muted-foreground">
 								Resets on <strong class="text-foreground">{formatDate(usage.period_end)}</strong>

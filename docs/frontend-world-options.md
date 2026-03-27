@@ -16,9 +16,9 @@ Controls how long a single story branch can be (max number of nodes before the L
 | `"medium"` | 10        | ~10 minutes       |
 | `"long"`   | 15        | ~20 minutes       |
 
-- **Type:** `string` enum — `"short"` | `"medium"` | `"long"`
+- **Type:** `string` enum - `"short"` | `"medium"` | `"long"`
 - **Default:** `"medium"` (if omitted from the request)
-- **Immutable after creation** — this value is set once and determines `story_max_nodes` for the world.
+- **Immutable after creation** - this value is set once and determines `story_max_nodes` for the world.
 
 ### `vocab_level`
 
@@ -30,9 +30,9 @@ Controls the vocabulary complexity and reading level used in generated story tex
 | `"teen"`  | Moderate vocabulary complexity for ages 13+.           |
 | `"adult"` | No vocabulary restrictions.                            |
 
-- **Type:** `string` enum — `"child"` | `"teen"` | `"adult"`
+- **Type:** `string` enum - `"child"` | `"teen"` | `"adult"`
 - **Default:** `"adult"` (if omitted from the request)
-- **Immutable after creation** — the vocab level is baked into the world's generated lore and narrator profile.
+- **Immutable after creation** - the vocab level is baked into the world's generated lore and narrator profile.
 
 ### `content_filter`
 
@@ -44,15 +44,15 @@ Controls how explicit graphic material (mainly violence) can be. Sexual content 
 | `"moderate"` | Violence without gratuitous detail. No extreme horror.         |
 | `"strict"`   | No graphic violence, profanity, horror, or disturbing imagery. |
 
-- **Type:** `string` enum — `"none"` | `"moderate"` | `"strict"`
+- **Type:** `string` enum - `"none"` | `"moderate"` | `"strict"`
 - **Default:** `"none"` (if omitted from the request)
-- **Immutable after creation** — the filter level is baked into the world's generated lore and narrator profile.
+- **Immutable after creation** - the filter level is baked into the world's generated lore and narrator profile.
 
 ---
 
 ## API Changes
 
-### `POST /worlds/` — Create a World
+### `POST /worlds/` - Create a World
 
 Optional fields in the request body:
 
@@ -68,7 +68,7 @@ Optional fields in the request body:
 
 All fields except `world_prompt` are optional; omitting them gives `"medium"`, `"adult"`, and `"none"` respectively.
 
-### `GET /worlds/{world_id}` and `GET /worlds/` — Read Worlds
+### `GET /worlds/{world_id}` and `GET /worlds/` - Read Worlds
 
 The response includes these fields on every `WorldMetaDTO`:
 
@@ -91,9 +91,9 @@ The response includes these fields on every `WorldMetaDTO`:
 
 ### World Creation Form
 
-1. **World Length** — a segmented control with three options (Short / Medium / Long).
-2. **Vocabulary Level** — a segmented control with three options (Child / Teen / Adult), default Adult. Each option has a tooltip.
-3. **Content Filter** — a segmented control with three options (None / Moderate / Strict), default None. Each option has a tooltip.
+1. **World Length** - a segmented control with three options (Short / Medium / Long).
+2. **Vocabulary Level** - a segmented control with three options (Child / Teen / Adult), default Adult. Each option has a tooltip.
+3. **Content Filter** - a segmented control with three options (None / Moderate / Strict), default None. Each option has a tooltip.
 
 ### World Home Page
 

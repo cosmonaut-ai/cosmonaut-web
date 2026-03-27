@@ -251,7 +251,7 @@
 		color: var(--muted-foreground);
 	}
 
-	/* ── Typing cursor — gold glow caret ── */
+	/* ── Typing cursor - gold glow caret ── */
 	.story-cursor {
 		display: inline-block;
 		width: 2.5px;

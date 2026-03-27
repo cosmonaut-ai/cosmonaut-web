@@ -30,7 +30,7 @@
 				Back to Dashboard
 			</Button>
 			<h1 class="text-3xl font-bold text-foreground">Settings</h1>
-			<p class="mt-1 text-muted-foreground">Manage your account and subscription</p>
+			<p class="mt-1 text-muted-foreground">Your account, subscription, and preferences</p>
 		</div>
 
 		<div class="space-y-8">
@@ -47,7 +47,7 @@
 						<div class="space-y-0.5">
 							<p class="text-sm font-medium">Product Updates Newsletter</p>
 							<p class="text-sm text-muted-foreground">
-								Receive occasional emails about new features and improvements
+								Occasional emails when something new ships - no fluff
 							</p>
 						</div>
 						<Switch
