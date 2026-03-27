@@ -23,6 +23,7 @@
 
 	let username = $state('');
 	let newsletterOptIn = $state(false);
+	let ageVerified = $state(false);
 	let checkStatus = $state<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
 	let validationError = $state<string | null>(null);
 
@@ -43,7 +44,8 @@
 			!validationError &&
 			!usernameMutation.isPending &&
 			trimmedUsername.length >= 3 &&
-			trimmedUsername.length <= 30
+			trimmedUsername.length <= 30 &&
+			ageVerified
 	);
 
 	$effect(() => {
@@ -183,6 +185,25 @@
 						checked={newsletterOptIn}
 						onCheckedChange={(v) => (newsletterOptIn = v)}
 					/>
+				</div>
+
+				<div class="space-y-3 rounded-lg border border-border/50 px-4 py-3">
+					<label for="age-verification" class="flex cursor-pointer items-start gap-3">
+						<input
+							id="age-verification"
+							type="checkbox"
+							bind:checked={ageVerified}
+							class="mt-0.5 size-4 shrink-0 cursor-pointer rounded border-border accent-primary"
+						/>
+						<span class="text-sm font-medium text-foreground"
+							>I confirm that I am 13 years of age or older.</span
+						>
+					</label>
+					<p class="text-xs leading-relaxed text-muted-foreground">
+						While our platform is designed with family use in mind and safe for children, Cosmonaut
+						is intended for use by parents and guardians only, not children. Stories are meant to be
+						shared and enjoyed together.
+					</p>
 				</div>
 
 				<div class="flex items-center justify-between gap-4">
