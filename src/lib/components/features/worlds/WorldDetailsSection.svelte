@@ -233,7 +233,7 @@
 				✦ Possible Endings ✦
 			</p>
 			<h2 class="text-2xl font-bold text-foreground">Possible Destinations</h2>
-			<p class="mt-2 text-sm text-muted-foreground">Hover to reveal — but beware of spoilers</p>
+			<p class="mt-2 text-sm text-muted-foreground">Hover to reveal - but beware of spoilers</p>
 		</div>
 
 		<div class="mx-auto max-w-2xl space-y-3">

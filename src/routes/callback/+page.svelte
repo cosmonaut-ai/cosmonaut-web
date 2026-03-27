@@ -5,7 +5,7 @@
 	import { logger } from '$lib/utils/logger';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Button } from '$lib/components/ui/button';
-	import { AlertTriangle } from '@lucide/svelte';
+	import { TriangleAlert } from '@lucide/svelte';
 
 	const REDIRECT_STORAGE_KEY = 'cosmonaut-auth-redirect';
 
@@ -63,7 +63,7 @@
 				</div>
 				<div class="flex flex-col items-center gap-1.5">
 					<p class="text-sm font-medium text-foreground">Completing sign in</p>
-					<p class="text-xs text-muted-foreground">Just a moment&hellip;</p>
+					<p class="text-xs text-muted-foreground">Just a moment...</p>
 				</div>
 			</div>
 		{:else if error}
@@ -71,9 +71,9 @@
 				<div
 					class="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-destructive/20 bg-destructive/10"
 				>
-					<AlertTriangle class="h-6 w-6 text-destructive" />
+					<TriangleAlert class="h-6 w-6 text-destructive" />
 				</div>
-				<h2 class="mb-1.5 text-base font-semibold text-foreground">Authentication Failed</h2>
+				<h2 class="mb-1.5 text-base font-semibold text-foreground">Something went sideways</h2>
 				<p class="mb-6 text-center text-sm text-muted-foreground">{error}</p>
 				<div class="flex gap-3">
 					<Button variant="outline" onclick={() => goto('/login')}>Try Again</Button>

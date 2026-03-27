@@ -87,8 +87,8 @@
 			<p
 				class="hero-enter hero-enter-3 mx-auto mb-6 max-w-2xl text-sm text-muted-foreground md:mx-0 md:mb-12 md:text-base lg:text-lg"
 			>
-				Create, explore, and share interactive story worlds. Every choice shapes the narrative.
-				Every world is an adventure waiting to unfold.
+				Describe any world - a mystery, a kingdom, a spaceship with a secret - and Cosmonaut builds
+				it into a branching story shaped by your choices.
 			</p>
 
 			<!-- CTA Buttons -->

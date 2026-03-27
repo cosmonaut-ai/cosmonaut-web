@@ -80,7 +80,7 @@ export interface InviteToken {
 export interface World {
 	id: string;
 	session_id: string | null;
-	/** @deprecated Use `id` directly — it is now always the root world id. */
+	/** @deprecated Use `id` directly - it is now always the root world id. */
 	shareable_id: string | null;
 	title: string | null;
 	description: string | null;
@@ -133,7 +133,7 @@ export interface UpdateWorldSharingRequest {
  * on `code` (e.g. `err.isQuotaExceeded`) instead of string-matching.
  *
  * The backend uses a standardized envelope: `{ error: { code, message } }`.
- * A handful of legacy endpoints still return `{ detail }` — the parser
+ * A handful of legacy endpoints still return `{ detail }` - the parser
  * normalises both into `detail` (human-readable message) + `code`.
  */
 export class ApiError extends Error {

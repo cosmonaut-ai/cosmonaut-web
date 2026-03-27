@@ -4,11 +4,11 @@ Loading states are critical for user experience. They provide feedback that the 
 
 ## Core Principles
 
-1. **Non-Blocking Navigation** — Navigation should be instant. Never block page transitions with loading states.
-2. **Immediate Feedback** — Every user action should provide immediate visual feedback.
-3. **Progressive Loading** — Show content as it becomes available. Don't wait for everything.
-4. **Contextual Indicators** — Use the right loading indicator for the context (spinner, skeleton, progress bar).
-5. **Accessibility** — All loading states must have proper ARIA labels and semantic HTML.
+1. **Non-Blocking Navigation** - Navigation should be instant. Never block page transitions with loading states.
+2. **Immediate Feedback** - Every user action should provide immediate visual feedback.
+3. **Progressive Loading** - Show content as it becomes available. Don't wait for everything.
+4. **Contextual Indicators** - Use the right loading indicator for the context (spinner, skeleton, progress bar).
+5. **Accessibility** - All loading states must have proper ARIA labels and semantic HTML.
 
 ## Svelte 5 Patterns
 
@@ -267,13 +267,13 @@ Keep forms visible during submission. Disable inputs and show spinner in submit 
 
 **Don't Do:**
 
-- Don't use `$navigating` store — it's deprecated in Svelte 5
+- Don't use `$navigating` store - it's deprecated in Svelte 5
 - Don't block entire pages with full-screen spinners for navigation
-- Don't use different spinner styles across the app — use `Spinner` component consistently
+- Don't use different spinner styles across the app - use `Spinner` component consistently
 - Don't forget to disable buttons during loading
 - Don't hide forms entirely during submission
-- Don't use raw `animate-pulse` divs — use `Skeleton` component
-- Don't forget loading text — spinners alone don't communicate what's happening
+- Don't use raw `animate-pulse` divs - use `Skeleton` component
+- Don't forget loading text - spinners alone don't communicate what's happening
 
 **Do:**
 

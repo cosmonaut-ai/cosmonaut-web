@@ -77,14 +77,35 @@
 			<div class="space-y-4 pl-[52px] text-muted-foreground">
 				<p>
 					Cosmonaut AI is an interactive storytelling platform that lets you create, explore, and
-					shape unique story worlds. Every decision you make drives the narrative forward, creating
-					a reading experience that's different every time.
+					shape unique story worlds. You simply describe a world, characters, or setting, or even
+					base it off of a movie or book, and Cosmonaut's AI will generate an interactive story for
+					you.
 				</p>
 				<p>
-					Whether you're building a fantasy kingdom, navigating a sci-fi frontier, or crafting a
-					mystery adventure, Cosmonaut gives you the tools to bring your imagination to life — then
-					lets you step inside and explore it.
+					There are a couple of similar concepts out there, so we'll save you some time and cut to
+					some of the things we really care about:
 				</p>
+				<ul class="list-disc pl-5">
+					<li>
+						<strong>Branching storylines & narrative consistency:</strong> we want to allow users to explore
+						multiple paths in a story, but also ensure that the story is consistent and coherent across
+						all paths.
+					</li>
+					<li>
+						<strong>Minimize distraction / gamification:</strong> Technology is great, but there are a
+						wealth of studies that demonstrate the negative impact that excess exposure can have on both
+						children and adults. We want to create a platform that harkens back to the days of reading
+						choose-your-own-adventure books with the family and deepens relationships, not just provides
+						entertainment.
+					</li>
+					<li>
+						<strong>Parental control:</strong> We want parents to feel confident about the content their
+						children are consuming. It's a terrible experience to be halfway through a story and have
+						to stop and explain to your child that the story is not appropriate for them or that it's
+						too scary. We've added in customizable vocabulary levels and content filters to ensure that
+						the story is appropriate for the user's age and sensitivity.
+					</li>
+				</ul>
 			</div>
 		</section>
 
@@ -105,15 +126,15 @@
 			</div>
 			<div class="space-y-4 pl-[52px] text-muted-foreground">
 				<p>
-					You describe a world — its setting, characters, and tone — and Cosmonaut's AI brings it to
-					life with richly written prose, generated illustrations, and branching storylines. As you
-					read, you make choices that shape what happens next. The story remembers your decisions,
-					building a coherent narrative that evolves with you.
+					Start with a prompt - a setting, a character, a mood, or even a book or movie you love.
+					Cosmonaut turns that seed into a richly written story, then hands control back to you. At
+					key moments, you choose what happens next. The story branches and remembers your
+					decisions, so the world stays coherent no matter which path you take.
 				</p>
 				<p>
-					Behind the scenes, Cosmonaut uses advanced AI models to generate text, images, and audio
-					narration. A persistent memory system tracks the facts, relationships, and events within
-					your story to maintain continuity across every chapter.
+					We're deliberate about pacing. There's no autoplay, no feed to scroll, no points to
+					collect. You read a chapter, make a choice, and put it down. Come back when you're ready -
+					the story waits.
 				</p>
 			</div>
 		</section>
@@ -131,17 +152,19 @@
 				>
 					<Users class="h-5 w-5 text-primary" />
 				</div>
-				<h2 class="text-2xl font-semibold text-foreground">Built for Everyone</h2>
+				<h2 class="text-2xl font-semibold text-foreground">Built for Families</h2>
 			</div>
 			<div class="space-y-4 pl-[52px] text-muted-foreground">
 				<p>
-					Cosmonaut is designed for storytellers of all ages. Parents can create worlds tailored to
-					their children's interests and read together, making choices as a team. It's a new kind of
-					bedtime story — one where your child gets to decide what happens next.
+					Cosmonaut works best as something you do together. Set up a world based on a book your kid
+					loves, or a genre they've been curious about, then read through it side by side - debating
+					choices, taking turns, seeing what happens. It's closer to a board game night than putting
+					on a show.
 				</p>
 				<p>
-					Content safety filters help ensure that generated stories stay appropriate, and the
-					platform is built so that parents remain in control of the experience.
+					That said, it works just as well solo. Adults use it too - for their own stories, their
+					own genres, their own pace. The parental controls are there when you need them, and out of
+					the way when you don't.
 				</p>
 			</div>
 		</section>
@@ -154,9 +177,10 @@
 			{@attach observeSection(3)}
 		>
 			<div class="rounded-lg border border-border/50 bg-card/50 p-8 text-center">
-				<h2 class="mb-2 text-xl font-semibold text-foreground">Get in Touch</h2>
+				<h2 class="mb-2 text-xl font-semibold text-foreground">Say Hello</h2>
 				<p class="mb-4 text-muted-foreground">
-					Have questions, feedback, or just want to say hello? We'd love to hear from you.
+					We're a small team and we genuinely read every message. Questions, feedback, story ideas,
+					complaints - all welcome.
 				</p>
 				<a
 					href="mailto:support@cosmonaut-ai.com"

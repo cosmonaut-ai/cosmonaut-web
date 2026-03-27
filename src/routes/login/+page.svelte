@@ -33,6 +33,21 @@
 	let successMessage = $state('');
 	let isInAppBrowser = $state(false);
 
+	const taglines = [
+		"Don't forget your spacesuit!",
+		'Not all who wander are lost',
+		'SPEAK AND ENTER!',
+		'Hope you remember your password',
+		'The universe is waiting for you',
+		'Pizza is underrated, no?',
+		'A good story is like a good meal',
+		'The future is now',
+		'Powered by Claude',
+		'Try narration out!'
+	];
+
+	const tagline = $derived(taglines[Math.floor(Math.random() * taglines.length)]);
+
 	// Redirect URL from query params (set by the auth guard in the root layout)
 	const redirectParam = $derived(page.url.searchParams.get('redirect'));
 	const hasRedirect = $derived(!!redirectParam);
@@ -112,7 +127,8 @@
 	function formatError(error: unknown): string {
 		if (error instanceof Error) {
 			const msg = error.message;
-			if (msg.includes('UserAlreadyAuthenticatedException')) return 'You are already signed in.';
+			if (msg.includes('UserAlreadyAuthenticatedException'))
+				return 'You are already signed in... go forth and conquer!';
 			if (msg.includes('UsernameExistsException'))
 				return 'An account with this email already exists.';
 			if (msg.includes('InvalidPasswordException')) return 'Password does not meet requirements.';
@@ -300,7 +316,7 @@
 
 		<!-- Tagline -->
 		<p class="relative z-20 mt-8 font-orbitron text-sm tracking-widest text-primary/70 uppercase">
-			Every choice shapes the narrative
+			{tagline}
 		</p>
 	</div>
 

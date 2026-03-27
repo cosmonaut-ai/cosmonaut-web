@@ -35,7 +35,7 @@
 	{/if}
 
 	<div class="relative z-10 mx-auto max-w-4xl px-6 py-4">
-		<!-- World info — links to world home page -->
+		<!-- World info - links to world home page -->
 		<button
 			onclick={handleWorldHome}
 			class="world-info-link group -m-2 flex w-full cursor-pointer items-start gap-4 rounded-lg p-2 text-left transition-all duration-200 hover:bg-primary/5"

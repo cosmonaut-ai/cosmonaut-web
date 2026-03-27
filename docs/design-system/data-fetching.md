@@ -180,11 +180,11 @@ TanStack Query doesn't handle Server-Sent Events (SSE). For streaming content, u
 
 ## Best Practices
 
-1. **Always use query hooks** — Don't call API client directly in components
-2. **Don't duplicate loading state** — Use `query.isLoading` and `mutation.isPending`
-3. **Let mutations handle toasts** — Mutations automatically show success/error toasts
-4. **Use derived state** — Derive UI state from query state, not separate `$state`
-5. **Don't use $ prefix** — TanStack Query returns plain objects, not Svelte stores
+1. **Always use query hooks** - Don't call API client directly in components
+2. **Don't duplicate loading state** - Use `query.isLoading` and `mutation.isPending`
+3. **Let mutations handle toasts** - Mutations automatically show success/error toasts
+4. **Use derived state** - Derive UI state from query state, not separate `$state`
+5. **Don't use $ prefix** - TanStack Query returns plain objects, not Svelte stores
 
 ### Anti-Patterns
 

@@ -278,7 +278,7 @@ export async function signInWithEmail(email: string, password: string): Promise<
 }
 
 /**
- * Initiate forgot-password flow — sends a reset code to the user's email
+ * Initiate forgot-password flow - sends a reset code to the user's email
  */
 export async function forgotPassword(email: string): Promise<void> {
 	if (isLocalEnvironment) return;
@@ -490,7 +490,7 @@ export function getIsAuthenticated(): boolean {
 }
 
 /**
- * Custom error for sign-up not confirmed — the caller should prompt for
+ * Custom error for sign-up not confirmed - the caller should prompt for
  * the verification code.
  */
 export class SignUpNotConfirmedError extends Error {

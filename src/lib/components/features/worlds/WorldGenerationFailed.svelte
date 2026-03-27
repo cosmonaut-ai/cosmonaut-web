@@ -44,7 +44,7 @@
 
 					<h2 class="mb-2 text-2xl font-bold text-foreground">A Rift in the Cosmos</h2>
 					<p class="mb-2 max-w-md text-center text-muted-foreground">
-						We hit a snag while forging your world. The cosmos can be unpredictable — but your spark
+						We hit a snag while forging your world. The cosmos can be unpredictable - but your spark
 						is safe.
 					</p>
 					<p class="mb-8 text-center text-sm text-muted-foreground/70">

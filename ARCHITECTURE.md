@@ -72,17 +72,17 @@ src/
 
 ## State Management Tiers
 
-1. **Local `$state`** — Component-scoped UI state (form inputs, toggles, modals).
-2. **Module-level `$state`** — Auth store (`$lib/auth/auth.svelte.ts`), accessed via `useAuth()`.
-3. **TanStack Query** — All server state. The single source of truth for API data.
-4. **`$derived`** — Computed values from the above, never stored separately.
+1. **Local `$state`** - Component-scoped UI state (form inputs, toggles, modals).
+2. **Module-level `$state`** - Auth store (`$lib/auth/auth.svelte.ts`), accessed via `useAuth()`.
+3. **TanStack Query** - All server state. The single source of truth for API data.
+4. **`$derived`** - Computed values from the above, never stored separately.
 
 Guideline: Never duplicate TanStack Query cache data into local `$state`. Use `$derived` to compute display values from query results. Use `$state.raw()` for API response objects that are replaced wholesale (not deeply mutated).
 
 ## Data Fetching Conventions
 
 - **All API data** flows through TanStack Query hooks in `$lib/queries/`.
-- **No `load()` functions** or form actions — this is a client-side SPA.
+- **No `load()` functions** or form actions - this is a client-side SPA.
 - API functions in `$lib/api/` are thin typed wrappers around `fetch()`.
 - Streaming text generation uses SSE via `$lib/api/nodes.ts → generateNodeText()`.
 
@@ -115,7 +115,7 @@ Keys are hierarchical so prefix-based invalidation works correctly.
 - CSS variables defined in `src/routes/layout.css` using oklch color space.
 - Tailwind 4 with `@theme inline` for token integration.
 - Light/dark mode + named themes via `mode-watcher`.
-- No hardcoded hex values — use `var(--*)` or Tailwind tokens.
+- No hardcoded hex values - use `var(--*)` or Tailwind tokens.
 
 ## Backward-Compatibility Routes
 

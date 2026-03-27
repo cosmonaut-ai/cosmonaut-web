@@ -71,7 +71,7 @@
 				</div>
 				<h3 class="mb-3 text-xl font-semibold text-foreground">Describe your world</h3>
 				<p class="leading-relaxed text-muted-foreground">
-					"A noir mystery in 1940s Chicago" or "A space station hiding dark secrets"—you set the
+					"A noir mystery in 1940s Chicago" or "A space station hiding dark secrets"-you set the
 					stage, the AI fills in the details.
 				</p>
 			</div>
@@ -114,7 +114,7 @@
 		<!-- Bottom note -->
 		<div class="mt-20 text-center">
 			<p class="text-sm text-muted-foreground/70">
-				Multiplayer adventures coming soon—explore stories together with friends.
+				Multiplayer adventures coming soon-explore stories together with friends.
 			</p>
 		</div>
 	</div>

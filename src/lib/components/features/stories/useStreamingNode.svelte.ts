@@ -144,7 +144,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 					setCurrentNodeOverride(null);
 
 					if (freshNode.generation_status === 'generating') {
-						// Backend still processing — useNode polling (every 2s) +
+						// Backend still processing - useNode polling (every 2s) +
 						// isNodeGenerating UI will handle the transition to 'completed'.
 						return;
 					}
@@ -154,12 +154,12 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 						return;
 					}
 
-					// Terminal state (e.g. 'failed') — cache update triggers the
+					// Terminal state (e.g. 'failed') - cache update triggers the
 					// "Generation Failed" card, so no toast is needed.
 					generatingNodeId = null;
 					return;
 				} catch {
-					// Couldn't reach the server — show a single toast.
+					// Couldn't reach the server - show a single toast.
 					// Keep generatingNodeId set so the auto-generation effect
 					// doesn't re-fire and create a retry loop.
 					showError('Failed to generate text', err instanceof Error ? err.message : String(err));

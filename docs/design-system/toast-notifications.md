@@ -93,8 +93,8 @@ Toast notifications are automatically shown by mutation hooks. Don't manually ca
 
 ## Best Practices
 
-1. **Be concise** — Toast messages should be short and scannable
-2. **Use descriptions sparingly** — Only add descriptions when additional context is needed
-3. **Don't stack toasts** — If multiple operations complete, consider a single summary toast
-4. **Don't use for validation** — Form validation errors should be shown inline
-5. **Don't use for blocking errors** — Critical errors that prevent the user from continuing should use a dialog or error page
+1. **Be concise** - Toast messages should be short and scannable
+2. **Use descriptions sparingly** - Only add descriptions when additional context is needed
+3. **Don't stack toasts** - If multiple operations complete, consider a single summary toast
+4. **Don't use for validation** - Form validation errors should be shown inline
+5. **Don't use for blocking errors** - Critical errors that prevent the user from continuing should use a dialog or error page

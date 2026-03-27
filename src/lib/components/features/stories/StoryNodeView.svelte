@@ -16,7 +16,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { ChevronLeft, RotateCcw, AlertTriangle, Map, Rocket, Share2 } from '@lucide/svelte';
+	import { ChevronLeft, RotateCcw, TriangleAlert, Map, Rocket, Share2 } from '@lucide/svelte';
 
 	interface Props {
 		worldId: string;
@@ -150,14 +150,14 @@
 			}
 		} catch (err) {
 			if (err instanceof ApiError && err.isNodeProcessingConflict) {
-				// 409 Conflict — the node has a processing error (e.g. failed fact extraction).
+				// 409 Conflict - the node has a processing error (e.g. failed fact extraction).
 				// Automatically retry background processing and prompt the user to try again.
 				try {
 					await retryNodeProcessing(worldId, currentNode.id);
 					nodeQuery.refetch();
 					showError(
 						'Story node busy',
-						'A background task was still running. It has been re-queued — please try your choice again in a moment.'
+						'A background task was still running. It has been re-queued - please try your choice again in a moment.'
 					);
 				} catch {
 					showError(
@@ -296,7 +296,7 @@
 					<!-- Node generation failed - show error page with retry -->
 					<Card class="border-destructive bg-destructive/5">
 						<CardContent class="flex flex-col items-center justify-center py-16">
-							<AlertTriangle class="mb-4 h-12 w-12 text-destructive" />
+							<TriangleAlert class="mb-4 h-12 w-12 text-destructive" />
 							<h2 class="mb-2 text-xl font-semibold text-destructive">Generation Failed</h2>
 							<p class="mb-6 max-w-md text-center text-muted-foreground">
 								Something went wrong while generating this part of the story.
@@ -381,7 +381,7 @@
 		<!-- Query error state -->
 		<Card class="border-destructive bg-destructive/5">
 			<CardContent class="flex flex-col items-center justify-center gap-4 py-16">
-				<AlertTriangle class="h-12 w-12 text-destructive" />
+				<TriangleAlert class="h-12 w-12 text-destructive" />
 				<p class="text-destructive">Failed to load story node. Please try again.</p>
 				<Button variant="outline" onclick={() => nodeQuery.refetch()}>Retry</Button>
 			</CardContent>

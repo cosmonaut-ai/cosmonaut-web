@@ -52,6 +52,6 @@ For navigating between story nodes:
 
 ## Anti-Patterns
 
-- Don't animate everything—be purposeful
+- Don't animate everything-be purposeful
 - Don't use jarring or fast animations
 - Don't forget `prefers-reduced-motion` support

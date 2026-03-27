@@ -1,16 +1,16 @@
 You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
 
-Do not attempt to resize the browser window programmatically — use DevTools device emulation or Playwright for responsive testing instead.
+Do not attempt to resize the browser window programmatically - use DevTools device emulation or Playwright for responsive testing instead.
 
 ## General Guidelines
 
 ### 🔍 Search First, Assume Never
 
-When in doubt — search. If your knowledge of a library, API, pattern, or behavior is uncertain or potentially outdated, use available search tools to verify before proceeding. A well-researched implementation beats a confident wrong one every time. This applies to documentation, error messages, version-specific behavior, and edge cases alike.
+When in doubt - search. If your knowledge of a library, API, pattern, or behavior is uncertain or potentially outdated, use available search tools to verify before proceeding. A well-researched implementation beats a confident wrong one every time. This applies to documentation, error messages, version-specific behavior, and edge cases alike.
 
 ### 🧠 Understand Before You Touch
 
-Before making any changes, take the time to deeply understand the codebase. Read the relevant files, trace function calls, identify side effects, and map dependencies. Understand _why_ the code is written the way it is — not just _what_ it does. Quality over quantity: a single well-reasoned, correct change is worth far more than several hasty ones that require follow-up fixes.
+Before making any changes, take the time to deeply understand the codebase. Read the relevant files, trace function calls, identify side effects, and map dependencies. Understand _why_ the code is written the way it is - not just _what_ it does. Quality over quantity: a single well-reasoned, correct change is worth far more than several hasty ones that require follow-up fixes.
 
 Ask yourself:
 
@@ -28,7 +28,7 @@ Err on the side of communicating more, not less.
 
 ### 🖥️ Verify Frontend Changes in the Browser
 
-Any change that touches the UI — layout, styles, interactivity, responsiveness — must be verified visually in the browser before considering it complete. Do not rely solely on code review or static reasoning. Check for visual regressions, broken layouts across screen sizes, and interaction states (hover, focus, disabled, loading, error). If browser tooling is available, use it.
+Any change that touches the UI - layout, styles, interactivity, responsiveness - must be verified visually in the browser before considering it complete. Do not rely solely on code review or static reasoning. Check for visual regressions, broken layouts across screen sizes, and interaction states (hover, focus, disabled, loading, error). If browser tooling is available, use it.
 
 ## Available MCP Tools:
 
@@ -70,11 +70,11 @@ Standard commands from `package.json`:
 
 ### Local dev auth
 
-Authentication is **automatically mocked** when no Cognito env vars are set (the default). The app uses a `LOCAL_DEV_USER` identity — no AWS Cognito setup is needed. You can sign in with any email/password on the login form.
+Authentication is **automatically mocked** when no Cognito env vars are set (the default). The app uses a `LOCAL_DEV_USER` identity - no AWS Cognito setup is needed. You can sign in with any email/password on the login form.
 
 ### Backend API
 
-The frontend expects a backend at `http://localhost:8000` (configurable via `PUBLIC_API_BASE_URL`). The backend is in a **separate repository** and is not required for frontend-only development. API calls will fail with "Failed to fetch" when the backend is absent — this is expected.
+The frontend expects a backend at `http://localhost:8000` (configurable via `PUBLIC_API_BASE_URL`). The backend is in a **separate repository** and is not required for frontend-only development. API calls will fail with "Failed to fetch" when the backend is absent - this is expected.
 
 ### Pre-existing lint issues
 

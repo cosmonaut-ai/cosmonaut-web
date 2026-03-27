@@ -1,6 +1,6 @@
 # Cosmonaut Web
 
-SvelteKit frontend for Cosmonaut AI — an interactive choose-your-own-adventure storytelling platform. Builds as a static SPA deployed to S3 + CloudFront.
+SvelteKit frontend for Cosmonaut AI - an interactive choose-your-own-adventure storytelling platform. Builds as a static SPA deployed to S3 + CloudFront.
 
 ## Stack
 

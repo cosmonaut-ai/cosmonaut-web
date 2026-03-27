@@ -31,7 +31,7 @@ export const PRODUCTION_URL = 'https://cosmonaut-ai.com';
 // Sentry release (git SHA) set at build time in CI
 export const SENTRY_RELEASE: string = import.meta.env.PUBLIC_SENTRY_RELEASE || '';
 
-// Emails allowed to access the dev environment — all others are redirected to production
+// Emails allowed to access the dev environment - all others are redirected to production
 export const DEV_ALLOWED_EMAILS: string[] = [
 	'imatson9119@gmail.com',
 	'imatson9119+new@gmail.com',

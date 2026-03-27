@@ -1,4 +1,4 @@
-# Audio Narration (TTS) — Implementation Guide
+# Audio Narration (TTS) - Implementation Guide
 
 ## Overview
 
@@ -8,12 +8,12 @@ Story nodes can have AI-generated audio narrations via ElevenLabs TTS. Customers
 
 ## Backend Summary
 
-- **Model**: ElevenLabs Flash 2.5 (`eleven_flash_v2_5`) — generates in ~1-3 seconds.
+- **Model**: ElevenLabs Flash 2.5 (`eleven_flash_v2_5`) - generates in ~1-3 seconds.
 - **Voices**: 7 pre-defined voices, each with an internal `id`, a `display_name`, and a private ElevenLabs voice ID. Only `id` and `display_name` are exposed through the API.
 - **Storage**: MP3 files stored in S3 at `audio/{world_id}/{node_id}/{voice_id}.mp3`, served via CloudFront CDN. URLs are permanent and publicly accessible.
 - **Multi-voice per node**: Each node can have audio generated for multiple voices. Each voice/node combination is stored and served independently.
 - **Idempotency**: If audio already exists for a given node + voice, the endpoint returns the cached URL instantly without consuming quota.
-- **Race protection**: Concurrent requests for the same node + voice are safe — only the first generation consumes quota.
+- **Race protection**: Concurrent requests for the same node + voice are safe - only the first generation consumes quota.
 
 ### Available Voices
 
@@ -35,7 +35,7 @@ Story nodes can have AI-generated audio narrations via ElevenLabs TTS. Customers
 | EXPLORER  | 30                          | 30 days | Resets each billing period      |
 | COSMONAUT | 150                         | 30 days | Resets each billing period      |
 
-> Free-tier audio is a one-time allowance — once the 10 narrations are used, the user must upgrade to generate more. Paid tiers get fresh quota each billing cycle.
+> Free-tier audio is a one-time allowance - once the 10 narrations are used, the user must upgrade to generate more. Paid tiers get fresh quota each billing cycle.
 
 ---
 
@@ -155,8 +155,8 @@ The existing usage endpoint includes audio fields:
 }
 ```
 
-- `audio_narrations_used` — how many audio narrations the user has generated this period (or lifetime for free tier).
-- `audio_narrations_limit` — the user's tier cap.
+- `audio_narrations_used` - how many audio narrations the user has generated this period (or lifetime for free tier).
+- `audio_narrations_limit` - the user's tier cap.
 
 ---
 
@@ -179,7 +179,7 @@ All endpoints that return a `StoryNodeDTO` now include an `audio` dictionary map
 }
 ```
 
-- `audio` — `object`. A dictionary of `{voice_id: audio_url}`. Empty object `{}` if no audio has been generated for this node.
+- `audio` - `object`. A dictionary of `{voice_id: audio_url}`. Empty object `{}` if no audio has been generated for this node.
 
 ---
 
@@ -222,7 +222,7 @@ async function generateNodeAudio(
 
 ### 2. Voice Selection UI
 
-- Fetch available voices from `GET /voices/` (can be cached — the list is static).
+- Fetch available voices from `GET /voices/` (can be cached - the list is static).
 - Present a voice picker (e.g., dropdown, radio buttons, or voice cards) before or alongside the audio play button.
 - Store the user's selected voice preference in local storage for convenience.
 
@@ -232,8 +232,8 @@ In `StoryNodeView.svelte` (or equivalent component):
 
 **State**:
 
-- `selectedVoiceId: string` — the user's chosen voice.
-- `isGeneratingAudio: boolean` — true while the POST request is in flight.
+- `selectedVoiceId: string` - the user's chosen voice.
+- `isGeneratingAudio: boolean` - true while the POST request is in flight.
 - Use the node's `audio` dict from the DTO to determine if audio already exists for the selected voice.
 
 **UI**:
@@ -259,7 +259,7 @@ else:
 **Playback**:
 
 - Use a standard HTML `<audio>` element or a Svelte audio binding.
-- The CDN URL can be set as the `src` directly — no auth headers needed for playback.
+- The CDN URL can be set as the `src` directly - no auth headers needed for playback.
 - Consider preloading: `<audio preload="none">` to avoid unnecessary bandwidth on page load.
 
 ### 4. Usage Display
@@ -301,7 +301,7 @@ User clicks "Play Audio" on a completed story node (with voice selected)
 ## Notes
 
 - Audio generation takes ~1-3 seconds. The UI should show a loading/spinner state during this time.
-- The returned `audio_url` is permanent — once generated, it never expires or changes. The frontend can cache it freely.
+- The returned `audio_url` is permanent - once generated, it never expires or changes. The frontend can cache it freely.
 - The endpoint is idempotent per voice: calling it multiple times for the same node + voice always returns the same URL and only consumes quota once.
 - Audio files are MP3 format, typically 100-300KB for a story node.
 - Each voice generation counts as one audio narration toward the user's quota, even on the same node.

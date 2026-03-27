@@ -12,7 +12,7 @@
 	const message = $derived(
 		is404
 			? "This corner of the universe hasn't been charted yet. The page you're looking for doesn't exist or has drifted away."
-			: 'Something went sideways in the control room. Our crew is on it — try again in a moment.'
+			: 'Something went sideways in the control room. Our crew is on it - try again in a moment.'
 	);
 	const illustration = $derived(is404 ? '/art/404-astronaut.webp' : '/art/error-astronaut.webp');
 

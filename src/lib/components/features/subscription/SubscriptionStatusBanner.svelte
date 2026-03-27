@@ -5,7 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
-	import { AlertTriangle, Info, ExternalLink, Sparkles, ArrowDownRight } from '@lucide/svelte';
+	import { TriangleAlert, Info, ExternalLink, Sparkles, ArrowDownRight } from '@lucide/svelte';
 	import { formatDate } from '$lib/utils/date';
 
 	interface Props {
@@ -28,7 +28,7 @@
 
 {#if usage.pending_cancellation && usage.cancellation_date}
 	<Alert class="border-amber-500/50 bg-amber-500/10 {className}">
-		<AlertTriangle class="h-4 w-4 text-amber-400" />
+		<TriangleAlert class="h-4 w-4 text-amber-400" />
 		<AlertDescription>
 			<p class="text-amber-200">
 				Your {tierConfig.name} plan will end on
@@ -69,7 +69,7 @@
 	</Alert>
 {:else if isPastDue}
 	<Alert class="border-amber-500/50 bg-amber-500/10 {className}">
-		<AlertTriangle class="h-4 w-4 text-amber-400" />
+		<TriangleAlert class="h-4 w-4 text-amber-400" />
 		<AlertDescription>
 			<p class="text-amber-200">
 				There's an issue with your payment. Please update your payment method to avoid losing
@@ -108,7 +108,7 @@
 	</Alert>
 {:else if isUnpaid}
 	<Alert class="border-destructive/50 bg-destructive/10 {className}">
-		<AlertTriangle class="h-4 w-4 text-destructive" />
+		<TriangleAlert class="h-4 w-4 text-destructive" />
 		<AlertDescription>
 			<p class="text-destructive/90">
 				Your subscription payment failed and your account has been downgraded to the Free plan.
