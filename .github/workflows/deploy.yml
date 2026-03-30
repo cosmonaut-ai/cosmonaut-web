@@ -74,19 +74,54 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-2
 
-      - name: Upload assets
+      # Deploy in order: immutable assets first, then non-immutable, then index.html last.
+      # This ensures all referenced assets exist on S3 before any client loads new HTML.
+
+      - name: Upload immutable assets (additive — old hashes preserved)
+        run: |
+          aws s3 sync build/_app/immutable/ s3://${{ env.S3_BUCKET }}/_app/immutable/ \
+            --cache-control "public, max-age=31536000, immutable" \
+            --size-only
+
+      - name: Upload version metadata (short cache so version polling works)
+        run: |
+          if [ -f build/_app/version.json ]; then
+            aws s3 cp build/_app/version.json s3://${{ env.S3_BUCKET }}/_app/version.json \
+              --cache-control "public, max-age=60"
+          fi
+
+      - name: Upload remaining static assets
         run: |
           aws s3 sync build/ s3://${{ env.S3_BUCKET }} \
+            --exclude '_app/immutable/*' \
+            --exclude '_app/version.json' \
             --exclude 'index.html' \
-            --cache-control "public, max-age=31536000, immutable"
+            --cache-control "public, max-age=3600" \
+            --delete
 
-      - name: Upload index.html
+      - name: Upload index.html (last)
         run: |
           aws s3 cp build/index.html s3://${{ env.S3_BUCKET }}/index.html \
             --cache-control "no-cache, no-store, must-revalidate"
 
-      - name: Invalidate CloudFront Cache
+      - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*"
+            --paths "/index.html" "/" "/_app/version.json"
+
+      - name: Clean up stale immutable assets
+        continue-on-error: true
+        run: |
+          CUTOFF=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
+
+          aws s3api list-objects-v2 \
+            --bucket "${{ env.S3_BUCKET }}" \
+            --prefix "_app/immutable/" \
+            --query "Contents[?LastModified<\`${CUTOFF}\`].Key" \
+            --output text | tr '\t' '\n' | while read -r key; do
+            if [ -n "$key" ] && [ "$key" != "None" ] && [ ! -f "build/${key}" ]; then
+              echo "Deleted stale asset: $key"
+              aws s3api delete-object --bucket "${{ env.S3_BUCKET }}" --key "$key"
+            fi
+          done

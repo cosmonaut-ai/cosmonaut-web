@@ -1,13 +1,29 @@
 import * as Sentry from '@sentry/sveltekit';
 import { ENV, SENTRY_RELEASE, isLocalEnvironment } from '$lib/config';
 
+function reloadIfStale(key: string) {
+	const last = sessionStorage.getItem(key);
+	const now = Date.now();
+	if (!last || now - parseInt(last) > 10_000) {
+		sessionStorage.setItem(key, now.toString());
+		window.location.reload();
+	}
+}
+
 window.addEventListener('vite:preloadError', (event) => {
 	event.preventDefault();
-	const lastReload = sessionStorage.getItem('vite:preloadError:reload');
-	const now = Date.now();
-	if (!lastReload || now - parseInt(lastReload) > 10_000) {
-		sessionStorage.setItem('vite:preloadError:reload', now.toString());
-		window.location.reload();
+	reloadIfStale('vite:preloadError:reload');
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+	const msg = event.reason instanceof Error ? event.reason.message : String(event.reason ?? '');
+	if (
+		msg.includes('is not a valid JavaScript MIME type') ||
+		msg.includes('Failed to fetch dynamically imported module') ||
+		msg.includes('error loading dynamically imported module')
+	) {
+		event.preventDefault();
+		reloadIfStale('asset-load-error:reload');
 	}
 });
 

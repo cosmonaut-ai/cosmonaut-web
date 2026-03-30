@@ -10,7 +10,7 @@ const config = {
 			fallback: 'index.html'
 		}),
 		version: {
-			pollInterval: 60_000
+			pollInterval: 15_000
 		}
 	}
 };
