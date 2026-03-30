@@ -151,9 +151,12 @@
 		use:observeCta
 	>
 		<div class="mx-auto max-w-4xl px-6 text-center">
-			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">What world are you building?</h2>
+			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
+				What world are you building?
+			</h2>
 			<p class="mx-auto mb-8 max-w-2xl text-muted-foreground">
-				One prompt is all it takes. Describe your world, step inside, and see where your choices take you.
+				One prompt is all it takes. Describe your world, step inside, and see where your choices
+				take you.
 			</p>
 			<Button size="lg" class="gap-2 px-8" onclick={() => handleGetStarted('bottom_cta')}>
 				<Rocket class="h-5 w-5" />
