@@ -136,14 +136,20 @@ export function useGenerateAudio(worldId: MaybeGetter<string>) {
 		return {
 			mutationFn: ({ nodeId, voiceId }: { nodeId: string; voiceId: string }) =>
 				generateNodeAudio(wId, nodeId, voiceId),
-			onSuccess: (data: { audio_url: string }, variables: { nodeId: string; voiceId: string }) => {
+			onSuccess: (data, variables) => {
 				const cached = client.getQueryData<StoryNode>(
 					queryKeys.nodes.detail(wId, variables.nodeId)
 				);
 				if (cached) {
 					client.setQueryData(queryKeys.nodes.detail(wId, variables.nodeId), {
 						...cached,
-						audio: { ...cached.audio, [variables.voiceId]: data.audio_url }
+						audio: {
+							...cached.audio,
+							[variables.voiceId]: {
+								audio_url: data.audio_url,
+								timestamps_url: data.timestamps_url
+							}
+						}
 					});
 				}
 				client.invalidateQueries({ queryKey: queryKeys.user.all });
