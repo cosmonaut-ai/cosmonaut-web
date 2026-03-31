@@ -21,8 +21,8 @@ export async function generateNodeAudio(
 	worldId: string,
 	nodeId: string,
 	voiceId: string
-): Promise<{ audio_url: string }> {
-	return apiRequest<{ audio_url: string }>(
+): Promise<{ audio_url: string; timestamps_url?: string | null }> {
+	return apiRequest<{ audio_url: string; timestamps_url?: string | null }>(
 		`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/audio`,
 		{
 			method: 'POST',

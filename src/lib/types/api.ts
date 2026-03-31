@@ -50,6 +50,11 @@ export interface Voice {
 	sample_url: string;
 }
 
+export interface AudioEntry {
+	audio_url: string;
+	timestamps_url?: string | null;
+}
+
 export interface StoryNode {
 	id: string;
 	world_id: string;
@@ -62,8 +67,8 @@ export interface StoryNode {
 	ancestors: string[];
 	processing_status: StoryNodeProcessingStatus;
 	generation_status: StoryNodeGenerationStatus;
-	/** Map of voice_id → CDN audio URL for generated narrations */
-	audio: Record<string, string>;
+	/** Map of voice_id → audio entry with CDN URLs */
+	audio: Record<string, AudioEntry>;
 	created_at: string;
 	updated_at?: string;
 }
@@ -103,6 +108,7 @@ export interface World {
 	world_length: WorldLength | null;
 	vocab_level: VocabLevel;
 	content_filter: ContentFilter;
+	max_choices: number | null;
 	world_image_url: string | null;
 	world_image_alt_text: string | null;
 	world_image_width: string | null;
@@ -120,6 +126,7 @@ export interface CreateWorldRequest {
 	world_length?: WorldLength;
 	vocab_level?: VocabLevel;
 	content_filter?: ContentFilter;
+	max_choices?: number;
 }
 
 export interface UpdateWorldSharingRequest {

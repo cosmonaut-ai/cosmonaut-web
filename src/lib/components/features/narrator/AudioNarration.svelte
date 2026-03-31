@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { useGenerateAudio, useVoices } from '$lib/queries';
-	import { ApiError } from '$lib/types/api';
+	import { type AudioEntry, ApiError } from '$lib/types/api';
 	import { showError, showWarning } from '$lib/utils/toast';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
@@ -21,8 +21,8 @@
 	interface Props {
 		worldId: string;
 		nodeId: string;
-		/** Map of voice_id → CDN audio URL for already-generated narrations on this node */
-		audio: Record<string, string>;
+		/** Map of voice_id → audio entry for already-generated narrations on this node */
+		audio: Record<string, AudioEntry>;
 		isNodeCompleted: boolean;
 		onQuotaExceeded: () => void;
 		playerVisible?: boolean;
@@ -75,10 +75,10 @@
 
 	// ── Audio URL resolution ──
 	// Local cache for the brief gap between generation success and TanStack cache propagation
-	let localAudio = $state<Record<string, string>>({});
+	let localAudio = $state<Record<string, AudioEntry>>({});
 	const mergedAudio = $derived({ ...audio, ...localAudio });
 	const effectiveAudioUrl = $derived(
-		effectiveVoiceId ? (mergedAudio[effectiveVoiceId] ?? null) : null
+		effectiveVoiceId ? (mergedAudio[effectiveVoiceId]?.audio_url ?? null) : null
 	);
 
 	// Audio element reference and bindings
@@ -180,7 +180,11 @@
 	async function generateForVoice(voiceId: string) {
 		try {
 			const result = await audioMutation.mutateAsync({ nodeId, voiceId });
-			localAudio = { ...localAudio, [voiceId]: result.audio_url };
+			const entry: AudioEntry = {
+				audio_url: result.audio_url,
+				timestamps_url: (result as Record<string, unknown>).timestamps_url as string | undefined
+			};
+			localAudio = { ...localAudio, [voiceId]: entry };
 			await nextTickPlay();
 		} catch (err) {
 			if (err instanceof ApiError && err.isRateLimited) {
