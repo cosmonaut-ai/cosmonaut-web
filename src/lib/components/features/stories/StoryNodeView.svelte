@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
-	import { retryNodeProcessing } from '$lib/api/nodes';
-	import { useNode, useChooseOption, useUser, type ChoiceOption } from '$lib/queries';
+	import { useNode, useUser } from '$lib/queries';
 	import { getWorldContext } from '$lib/contexts/world';
-	import { showError } from '$lib/utils/toast';
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
 	import SlideTransition from './SlideTransition.svelte';
@@ -12,6 +10,7 @@
 	import ShareModal from '$lib/components/features/worlds/ShareModal.svelte';
 	import UpgradePrompt from '$lib/components/features/subscription/UpgradePrompt.svelte';
 	import { useStreamingNode } from './useStreamingNode.svelte';
+	import { useChoiceExecution } from './useChoiceExecution.svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 	import { Card, CardContent } from '$lib/components/ui/card';
@@ -79,19 +78,32 @@
 	// The current node is either the override (during streaming/navigation) or from the query
 	const currentNode = $derived(currentNodeOverride ?? nodeQuery.data ?? null);
 
-	// Use mutation for choosing options
-	const chooseMutation = useChooseOption(() => worldId);
+	const choices = useChoiceExecution({
+		worldId: () => worldId,
+		currentNode: () => currentNode,
+		isProcessingChoice: () => isProcessingChoice,
+		loading: () => loading,
+		setLoading: (v) => {
+			loading = v;
+		},
+		setCurrentNodeOverride: (node) => {
+			currentNodeOverride = node;
+		},
+		setSlideDirection: (dir) => {
+			slideDirection = dir;
+		},
+		stream,
+		nodeQueryRefetch: () => nodeQuery.refetch()
+	});
 
 	// Proactive quota check
 	const usageQuery = useUser();
 	const usage = $derived(usageQuery.data);
 	const isAtNodeLimit = $derived(usage ? usage.nodes_used >= usage.nodes_limit : false);
 
-	const isProcessingChoice = $derived(
-		stream.isStreaming || isNodeGenerating || chooseMutation.isPending
-	);
+	const isProcessingChoice = $derived(stream.isStreaming || isNodeGenerating || choices.isPending);
 	const isLoading = $derived(
-		loading || nodeQuery.isLoading || isNodeGenerating || chooseMutation.isPending
+		loading || nodeQuery.isLoading || isNodeGenerating || choices.isPending
 	);
 
 	// Clear override when nodeId changes (e.g., back/forward navigation)
@@ -110,76 +122,14 @@
 		}
 	});
 
-	async function handleChoiceSelect(targetId: string) {
-		if (!currentNode || loading || isProcessingChoice) return;
-		if (!currentNode.parent_id) {
-			trackEvent('story_started', { world_id: worldId });
-		}
-		trackEvent('choice_made', { world_id: worldId, choice_type: 'preset' });
-		await executeChoice({ targetId });
-	}
-
-	async function handleCustomChoice(text: string) {
-		if (!currentNode || loading || isProcessingChoice) return;
-		trackEvent('custom_choice_made', { world_id: worldId, choice_type: 'custom' });
-		await executeChoice({ customChoice: text });
-	}
-
-	async function executeChoice(choice: ChoiceOption) {
-		if (!currentNode) return;
-
-		try {
-			loading = true;
-			slideDirection = 'forward';
-
-			// Step 1: Call /choose - returns either a new initialized node or an existing one
-			const node = await chooseMutation.mutateAsync({
-				nodeId: currentNode.id,
-				choice
-			});
-
-			// Step 2: Navigate to the node and set override
-			currentNodeOverride = node;
-			goto(`/worlds/${worldId}/nodes/${node.id}`, { replaceState: false, noScroll: true });
-
-			// Step 3: If the node needs generation, start immediately instead of
-			// waiting for the $effect cycle (saves ~50-150ms of re-render delay).
-			if (node.generation_status === 'initialized') {
-				stream.setGeneratingNodeId(node.id);
-				await stream.startGeneration(worldId, node.id, { setLoading: true });
-				return; // loading will be cleared by the finally above
-			}
-		} catch (err) {
-			if (err instanceof ApiError && err.isNodeProcessingConflict) {
-				// 409 Conflict - the node has a processing error (e.g. failed fact extraction).
-				// Automatically retry background processing and prompt the user to try again.
-				try {
-					await retryNodeProcessing(worldId, currentNode.id);
-					nodeQuery.refetch();
-					showError(
-						'Story node busy',
-						'A background task was still running. It has been re-queued - please try your choice again in a moment.'
-					);
-				} catch {
-					showError(
-						'Story node busy',
-						'This node encountered a processing issue. Please wait a moment and try again.'
-					);
-				}
-			} else {
-				showError('Failed to make choice', err instanceof Error ? err.message : String(err));
-			}
-		} finally {
-			loading = false;
-		}
-	}
-
 	async function handleBack() {
 		const parentId = currentNode?.parent_id;
 		if (!parentId) return;
+		choices.cancel();
 		stream.abortStream();
 		slideDirection = 'back';
 		currentNodeOverride = null;
+		loading = false;
 		goto(`/worlds/${worldId}/nodes/${parentId}`, {
 			replaceState: false,
 			noScroll: true
@@ -189,9 +139,11 @@
 	async function handleRestart() {
 		if (!rootNodeId) return;
 		trackEvent('story_restarted', { world_id: worldId });
+		choices.cancel();
 		stream.abortStream();
 		slideDirection = 'back';
 		currentNodeOverride = null;
+		loading = false;
 		goto(`/worlds/${worldId}/nodes/${rootNodeId}`, {
 			replaceState: false,
 			noScroll: true
@@ -334,8 +286,8 @@
 						{isLoading}
 						isAtQuotaLimit={isAtNodeLimit}
 						showCustomChoice={!isEnding}
-						onChoiceSelect={handleChoiceSelect}
-						onCustomChoice={handleCustomChoice}
+						onChoiceSelect={choices.handleChoiceSelect}
+						onCustomChoice={choices.handleCustomChoice}
 						onRestart={handleRestart}
 					/>
 				{/if}

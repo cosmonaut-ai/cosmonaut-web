@@ -9,7 +9,7 @@
 <section class="relative py-24">
 	<!-- Top gradient from DemoStory -->
 	<div
-		class="pointer-events-none absolute inset-x-0 top-0 h-100 bg-gradient-to-b from-background via-background/50 to-transparent"
+		class="pointer-events-none absolute inset-x-0 top-0 h-100 bg-linear-to-b from-background via-background/50 to-transparent"
 	></div>
 
 	<div class="relative mx-auto max-w-5xl px-6">
@@ -33,7 +33,7 @@
 				>
 					<Sparkles class="h-8 w-8 text-primary" />
 				</div>
-				<h3 class="mb-3 text-xl font-semibold text-foreground">Describe your world</h3>
+				<h3 class="mb-3 text-xl font-semibold text-foreground">Describe your story</h3>
 				<p class="leading-relaxed text-muted-foreground">
 					"A noir mystery in 1940s Chicago" or "A space station hiding dark secrets"-you set the
 					stage, the AI fills in the details.

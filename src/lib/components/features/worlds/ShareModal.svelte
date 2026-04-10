@@ -207,7 +207,7 @@
 		<Dialog.Header class="min-w-0">
 			<Dialog.Title class="flex items-center gap-2 overflow-hidden">
 				<Share2 class="h-5 w-5 text-primary" />
-				<span class="truncate overflow-hidden">Share "{world.title || 'Untitled World'}"</span>
+				<span class="truncate overflow-hidden">Share "{world.title || 'Untitled Story'}"</span>
 				{#if saving}
 					<span
 						class="ml-auto flex shrink-0 items-center gap-1.5 text-xs font-normal text-muted-foreground"
@@ -227,15 +227,15 @@
 		</Dialog.Header>
 
 		<div class="min-w-0 space-y-6 py-4">
-		<!-- Visibility selector -->
-		<div class="space-y-3">
-			<Label class="text-sm font-medium">General access</Label>
-			<VisibilitySelect
-				value={visibility}
-				onValueChange={handleVisibilityChange}
-				disabled={!isOwner}
-			/>
-		</div>
+			<!-- Visibility selector -->
+			<div class="space-y-3">
+				<Label class="text-sm font-medium">General access</Label>
+				<VisibilitySelect
+					value={visibility}
+					onValueChange={handleVisibilityChange}
+					disabled={!isOwner}
+				/>
+			</div>
 
 			<!-- Link sharing -->
 			{#if visibility === 'public' || visibility === 'unlisted'}
@@ -251,7 +251,7 @@
 					<div class="min-w-0 flex-1">
 						<p class="truncate text-sm font-medium text-foreground">Copy link</p>
 						<p class="truncate text-xs text-muted-foreground">
-							Anyone with this link can play this world
+							Anyone with this link can view this story
 						</p>
 					</div>
 					<Copy class="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -316,7 +316,7 @@
 							Create Invite Link
 						</Button>
 						<p class="text-xs text-muted-foreground">
-							Invite links are valid for 24 hours. Anyone with the link can join this world.
+							Invite links are valid for 24 hours. Anyone with the link can join this story.
 						</p>
 					{/if}
 				</div>
@@ -349,7 +349,7 @@
 			{#if !isOwner}
 				<div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
 					<p class="text-sm text-muted-foreground">
-						Only the owner of this world can manage sharing settings.
+						Only the owner of this story can manage sharing settings.
 					</p>
 				</div>
 			{/if}
@@ -393,7 +393,7 @@
 			<AlertDialog.Title>Remove access?</AlertDialog.Title>
 			<AlertDialog.Description>
 				<span class="font-medium">{userToRemove ? getUserDisplayName(userToRemove) : ''}</span> will no
-				longer be able to view this world.
+				longer be able to view this story.
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>

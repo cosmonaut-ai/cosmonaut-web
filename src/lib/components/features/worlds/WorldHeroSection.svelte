@@ -8,6 +8,7 @@
 		Sparkles,
 		Globe,
 		Lock,
+		EyeOff,
 		Clock,
 		Shield,
 		ShieldPlus,
@@ -40,7 +41,7 @@
 	{#if world.world_image_url}
 		<img
 			src={world.world_image_url}
-			alt={world.world_image_alt_text || world.title || 'World image'}
+			alt={world.world_image_alt_text || world.title || 'Story image'}
 			loading="lazy"
 			class="hero-img absolute inset-0 h-full w-full object-cover object-center"
 		/>
@@ -85,14 +86,14 @@
 	<div class="relative z-10 mx-auto w-full max-w-4xl px-6 pt-24 pb-8">
 		<div class="hero-enter hero-enter-1 mb-4 flex items-center gap-3 text-primary/60">
 			<span class="hero-twinkle hero-twinkle-1 text-lg">✦</span>
-			<span class="text-xs tracking-[0.3em] text-muted-foreground uppercase">World</span>
+			<span class="text-xs tracking-[0.3em] text-muted-foreground uppercase">Story</span>
 			<span class="hero-twinkle hero-twinkle-2 text-lg">✦</span>
 		</div>
 
 		<h1
 			class="hero-title hero-enter hero-enter-2 mb-4 text-4xl font-bold text-foreground sm:text-5xl md:text-6xl"
 		>
-			{world.title || 'Untitled World'}
+			{world.title || 'Untitled Story'}
 		</h1>
 
 		{#if hasDescription}
@@ -118,6 +119,9 @@
 				{#if world.visibility === 'public'}
 					<Globe class="h-3 w-3" />
 					Public
+				{:else if world.visibility === 'unlisted'}
+					<EyeOff class="h-3 w-3" />
+					Unlisted
 				{:else}
 					<Lock class="h-3 w-3" />
 					Private

@@ -40,7 +40,7 @@
 
 {#if featuredQuery.isLoading}
 	<section class="mb-12">
-		<h2 class="mb-4 text-lg font-semibold text-foreground">Featured Worlds</h2>
+		<h2 class="mb-4 text-lg font-semibold text-foreground">Featured Stories</h2>
 		<div class="carousel-scroll flex gap-4 overflow-x-auto px-1 pb-2">
 			{#each [1, 2, 3] as i (i)}
 				<Card class="w-64 shrink-0 overflow-hidden sm:w-72">
@@ -57,7 +57,7 @@
 {:else if hasWorlds}
 	<section class="mb-12">
 		<div class="mb-4 flex items-center justify-between">
-			<h2 class="text-lg font-semibold text-foreground">Featured Worlds</h2>
+			<h2 class="text-lg font-semibold text-foreground">Featured Stories</h2>
 
 			<div class="flex gap-1">
 				<button
@@ -105,7 +105,7 @@
 								{#if world.world_image_url}
 									<img
 										src={world.world_image_url}
-										alt={world.world_image_alt_text || world.title || 'World image'}
+										alt={world.world_image_alt_text || world.title || 'Story image'}
 										loading="lazy"
 										class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
 									/>
@@ -119,7 +119,7 @@
 							</div>
 							<div class="space-y-1.5 p-4">
 								<h3 class="line-clamp-1 text-sm font-semibold text-foreground">
-									{world.title || 'Untitled World'}
+									{world.title || 'Untitled Story'}
 								</h3>
 								{#if world.genre}
 									<Badge variant="secondary" class="max-w-full gap-1 text-xs">

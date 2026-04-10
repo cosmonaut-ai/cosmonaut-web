@@ -30,7 +30,7 @@ export const TIER_CONFIG: TierConfig[] = [
 		audioNarrationsLimit: 10,
 		resetPeriod: '7 days',
 		features: [
-			'3 worlds per week',
+			'3 stories per week',
 			'30 story nodes per week',
 			'Unlimited saved stories',
 			'10 audio narrations (one-time)',
@@ -49,7 +49,7 @@ export const TIER_CONFIG: TierConfig[] = [
 		resetPeriod: '30 days',
 		highlighted: true,
 		features: [
-			'20 worlds per month',
+			'20 stories per month',
 			'500 story nodes per month',
 			'Unlimited saved stories',
 			'30 audio narrations / month',
@@ -67,7 +67,7 @@ export const TIER_CONFIG: TierConfig[] = [
 		audioNarrationsLimit: 150,
 		resetPeriod: '30 days',
 		features: [
-			'100 worlds per month',
+			'100 stories per month',
 			'2,000 story nodes per month',
 			'Unlimited saved stories',
 			'150 audio narrations / month',

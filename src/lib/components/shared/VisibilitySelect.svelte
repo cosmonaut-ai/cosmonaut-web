@@ -17,6 +17,7 @@
 <Select.Root
 	type="single"
 	{value}
+	{disabled}
 	onValueChange={(v) => {
 		if (v) onValueChange(v as WorldVisibility);
 	}}
@@ -75,11 +76,11 @@
 {#if showHelp}
 	<p class="text-xs text-muted-foreground">
 		{#if value === 'public'}
-			Anyone on the internet can discover and play this world.
+			Anyone on the internet can discover and play this story.
 		{:else if value === 'unlisted'}
-			Anyone with the link can play, but the world won't appear in search or trending.
+			Anyone with the link can play, but the story won't appear in search or trending.
 		{:else}
-			Only you and people you invite can access this world.
+			Only you and people you invite can access this story.
 		{/if}
 	</p>
 {/if}

@@ -53,7 +53,7 @@
 			<div>
 				<p class="text-sm font-medium text-foreground">Delete account</p>
 				<p class="text-sm text-muted-foreground">
-					Permanently delete your account and all data. Your worlds will be permanently deleted,
+					Permanently delete your account and all data. Your stories will be permanently deleted,
 					even if other users have saved them. This cannot be undone.
 				</p>
 			</div>
@@ -70,7 +70,7 @@
 							Delete Account
 						</Dialog.Title>
 						<Dialog.Description>
-							This will permanently delete your account and all your worlds, even if other users
+							This will permanently delete your account and all your stories, even if other users
 							have saved them. Any active subscriptions will be cancelled. This action cannot be
 							undone.
 						</Dialog.Description>

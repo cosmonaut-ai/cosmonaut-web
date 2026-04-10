@@ -26,7 +26,7 @@
 					<span class="font-orbitron text-lg font-semibold text-foreground">Cosmonaut</span>
 				</a>
 				<p class="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-					Every choice shapes the narrative. Every world is an adventure waiting to unfold.
+					Every choice shapes the narrative. Every story is an adventure waiting to unfold.
 				</p>
 				<div class="mt-5 flex items-center gap-3">
 					{#if isAuthenticated}
@@ -129,7 +129,7 @@
 										<Rocket
 											class="h-3.5 w-3.5 transition-transform group-hover/link:translate-x-0.5"
 										/>
-										Create a World
+										Create a Story
 									</a>
 								</li>
 							</ul>
