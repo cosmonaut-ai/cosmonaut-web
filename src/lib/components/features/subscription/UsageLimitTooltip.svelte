@@ -20,9 +20,9 @@
 
 	const used = $derived(resource === 'worlds' ? usage?.worlds_created : usage?.nodes_used);
 	const limit = $derived(resource === 'worlds' ? usage?.worlds_limit : usage?.nodes_limit);
-	const resourceLabel = $derived(resource === 'worlds' ? 'worlds' : 'generations');
+	const resourceLabel = $derived(resource === 'worlds' ? 'stories' : 'generations');
 	const title = $derived(
-		resource === 'worlds' ? 'World limit reached' : 'Generation limit reached'
+		resource === 'worlds' ? 'Story creation limit reached' : 'Generation limit reached'
 	);
 </script>
 

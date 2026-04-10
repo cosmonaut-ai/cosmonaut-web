@@ -44,7 +44,7 @@
 
 <SEO
 	title="Cosmonaut - Custom interactive stories for you & your family"
-	description="Describe any world and Cosmonaut builds it into a branching story shaped by your choices. Interactive storytelling for families, built with care."
+	description="Describe any story and Cosmonaut builds it into a branching narrativeshaped by your choices. Interactive storytelling for families, built with care."
 	path="/"
 	jsonLd={{
 		'@context': 'https://schema.org',
@@ -52,7 +52,7 @@
 		name: 'Cosmonaut',
 		url: 'https://cosmonaut-ai.com',
 		description:
-			'Describe any world and Cosmonaut builds it into a branching story shaped by your choices. Interactive storytelling for families, built with care.',
+			'Describe any story and Cosmonaut builds it into a branching narrative shaped by your choices. Interactive storytelling for families, built with care.',
 		applicationCategory: 'Entertainment',
 		operatingSystem: 'Web',
 		offers: {
@@ -121,15 +121,15 @@
 	>
 		<div class="mx-auto max-w-4xl px-6 text-center">
 			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
-				What world are you building?
+				What story are you building?
 			</h2>
 			<p class="mx-auto mb-8 max-w-2xl text-muted-foreground">
-				One prompt is all it takes. Describe your world, step inside, and see where your choices
+				One prompt is all it takes. Describe your story, step inside, and see where your choices
 				take you.
 			</p>
 			<Button size="lg" class="gap-2 px-8" onclick={() => handleGetStarted('bottom_cta')}>
 				<Rocket class="h-5 w-5" />
-				Create Your World
+				Create Your Story
 			</Button>
 		</div>
 	</section>

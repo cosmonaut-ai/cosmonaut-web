@@ -67,8 +67,8 @@
 				</li>
 				<li>
 					<strong>Generate Content (AI):</strong> Your story inputs and choices are sent to
-					third-party AI models (specifically <strong>Google Gemini</strong>) to generate text and
-					images.
+					third-party AI models (specifically <strong>Google Gemini and Claude Haiku</strong>) to
+					generate text and images.
 				</li>
 				<li>
 					<strong>Improve Consistency:</strong> We use vector databases (<strong>Pinecone</strong>)

@@ -117,7 +117,7 @@
 				<Skeleton class="h-12 w-full" />
 			</div>
 		{:else if usage}
-			<UsageBar label="Worlds Created" used={usage.worlds_created} limit={usage.worlds_limit} />
+			<UsageBar label="Stories Created" used={usage.worlds_created} limit={usage.worlds_limit} />
 			<UsageBar label="Story Generations" used={usage.nodes_used} limit={usage.nodes_limit} />
 
 			{#if usage.period_end}

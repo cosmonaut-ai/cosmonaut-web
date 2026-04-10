@@ -32,17 +32,17 @@
 			<Button size="lg" class="group gap-2 px-8" onclick={handleEnterStory}>
 				{#if hasProgress}
 					<Play class="h-5 w-5 transition-transform group-hover:scale-110" />
-					Continue Story
+					Continue
 				{:else}
 					<BookOpen class="h-5 w-5 transition-transform group-hover:scale-110" />
-					Enter the Story
+					Begin Story
 				{/if}
 			</Button>
 		{/if}
 
 		<Button variant="outline" size="lg" class="gap-2 px-6" onclick={handleViewMap}>
 			<Map class="h-5 w-5" />
-			View Story Map
+			View Map
 		</Button>
 
 		<Button
@@ -52,7 +52,7 @@
 			onclick={onShare}
 		>
 			<Share2 class="h-5 w-5" />
-			Share World
+			Share
 		</Button>
 	</div>
 

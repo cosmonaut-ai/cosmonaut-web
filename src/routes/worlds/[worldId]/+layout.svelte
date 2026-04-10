@@ -101,10 +101,10 @@
 						</p>
 					{:else}
 						<h2 class="mb-2 text-lg font-semibold text-foreground">
-							You don't have access to this world
+							You don't have access to this story
 						</h2>
 						<p class="mb-6 max-w-md text-sm text-muted-foreground">
-							This world is private. Ask the owner to share an invite link with you.
+							This story is private. Ask the owner to share an invite link with you.
 						</p>
 					{/if}
 					<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
@@ -121,7 +121,7 @@
 					<TriangleAlert class="mb-4 h-8 w-8 text-destructive" />
 					<p class="mb-2 font-semibold text-foreground">Something went wrong</p>
 					<p class="mb-6 text-sm text-muted-foreground">
-						We couldn't load this world. This might be a temporary issue.
+						We couldn't load this story. This might be a temporary issue.
 					</p>
 					<div class="flex gap-3">
 						<Button variant="outline" onclick={() => worldQuery.refetch()}>Try Again</Button>
@@ -137,7 +137,7 @@
 		<main class="mx-auto max-w-3xl px-6 py-12">
 			<Card class="border-destructive/50">
 				<CardContent class="py-12 text-center">
-					<p class="mb-4 text-muted-foreground">This world doesn't exist - or it's been deleted.</p>
+					<p class="mb-4 text-muted-foreground">This story doesn't exist - or it's been deleted.</p>
 					<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
 				</CardContent>
 			</Card>

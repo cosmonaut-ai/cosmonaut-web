@@ -5,7 +5,6 @@
 	import { BookOpen, Sparkles, Users } from '@lucide/svelte';
 
 	let visibleSections = $state([false, false, false, false]);
-
 </script>
 
 <SEO
@@ -25,7 +24,7 @@
 			</div>
 			<h1 class="text-4xl font-bold text-foreground">About Cosmonaut</h1>
 			<p class="mt-4 text-lg text-muted-foreground">
-				Interactive storytelling where every choice shapes the world.
+				Interactive storytelling where every choice shapes the story.
 			</p>
 		</div>
 
@@ -47,9 +46,8 @@
 			<div class="space-y-4 pl-[52px] text-muted-foreground">
 				<p>
 					Cosmonaut AI is an interactive storytelling platform that lets you create, explore, and
-					shape unique story worlds. You simply describe a world, characters, or setting, or even
-					base it off of a movie or book, and Cosmonaut's AI will generate an interactive story for
-					you.
+					shape unique stories. You simply describe a world, characters, or setting, or even base it
+					off of a movie or book, and Cosmonaut's AI will generate an interactive story for you.
 				</p>
 				<p>
 					There are a couple of similar concepts out there, so we'll save you some time and cut to
@@ -99,7 +97,7 @@
 					Start with a prompt - a setting, a character, a mood, or even a book or movie you love.
 					Cosmonaut turns that seed into a richly written story, then hands control back to you. At
 					key moments, you choose what happens next. The story branches and remembers your
-					decisions, so the world stays coherent no matter which path you take.
+					decisions, so the story stays coherent no matter which path you take.
 				</p>
 				<p>
 					We're deliberate about pacing. There's no autoplay, no feed to scroll, no points to
@@ -126,7 +124,7 @@
 			</div>
 			<div class="space-y-4 pl-[52px] text-muted-foreground">
 				<p>
-					Cosmonaut works best as something you do together. Set up a world based on a book your kid
+					Cosmonaut works best as something you do together. Set up a story based on a book your kid
 					loves, or a genre they've been curious about, then read through it side by side - debating
 					choices, taking turns, seeing what happens. It's closer to a board game night than putting
 					on a show.

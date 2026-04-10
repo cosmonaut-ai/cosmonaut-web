@@ -30,7 +30,7 @@
 
 	const isAudioResource = $derived(resource === 'audio');
 	const resourceLabel = $derived.by(() => {
-		if (resource === 'worlds') return 'world creation';
+		if (resource === 'worlds') return 'story creation';
 		if (isAudioResource) return 'audio narration';
 		return 'story generation';
 	});
@@ -42,7 +42,7 @@
 			<Dialog.Title class="flex items-center gap-2">
 				<Sparkles class="h-5 w-5 text-primary" />
 				{#if resource === 'worlds'}
-					World Creation Limit Reached
+					Story Creation Limit Reached
 				{:else if isAudioResource}
 					Audio Narration Limit Reached
 				{:else}
@@ -66,7 +66,7 @@
 					{#if resource === 'worlds'}
 						<p class="text-muted-foreground">
 							<strong class="text-foreground">{usage.worlds_created}</strong> of
-							<strong class="text-foreground">{usage.worlds_limit}</strong> worlds created this period
+							<strong class="text-foreground">{usage.worlds_limit}</strong> stories created this period
 						</p>
 						{#if usage.period_end}
 							<p class="mt-1 text-muted-foreground">

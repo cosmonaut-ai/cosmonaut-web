@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { World } from '$lib/types/api';
 	import { goto } from '$app/navigation';
-	import { Globe, Lock } from '@lucide/svelte';
+	import { Globe, Lock, EyeOff } from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 
 	interface Props {
@@ -39,7 +39,7 @@
 		<button
 			onclick={handleWorldHome}
 			class="world-info-link group -m-2 flex w-full cursor-pointer items-start gap-4 rounded-lg p-2 text-left transition-all duration-200 hover:bg-primary/5"
-			aria-label="Go to world home page"
+			aria-label="Go to story home page"
 		>
 			<!-- Icon -->
 			<div
@@ -54,12 +54,15 @@
 					<h1
 						class="truncate text-xl font-bold text-foreground transition-colors duration-200 group-hover:text-primary"
 					>
-						{world.title || 'Untitled World'}
+						{world.title || 'Untitled Story'}
 					</h1>
 					<Badge variant="outline" class="shrink-0 gap-1 border-border/50 bg-background/50">
 						{#if world.visibility === 'public'}
 							<Globe class="h-3 w-3" />
 							Public
+						{:else if world.visibility === 'unlisted'}
+							<EyeOff class="h-3 w-3" />
+							Unlisted
 						{:else}
 							<Lock class="h-3 w-3" />
 							Private

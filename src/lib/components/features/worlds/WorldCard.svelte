@@ -98,7 +98,7 @@
 	onclick={handleClick}
 	role="button"
 	tabindex={0}
-	aria-label="Open world: {world.title || 'Untitled World'}"
+	aria-label="Open story: {world.title || 'Untitled Story'}"
 	onkeydown={(e) => {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
@@ -111,7 +111,7 @@
 		<div class="h-40 w-full overflow-hidden rounded-t-xl bg-card">
 			<img
 				src={world.world_image_url}
-				alt={world.world_image_alt_text || world.title || 'World image'}
+				alt={world.world_image_alt_text || world.title || 'Story image'}
 				loading="lazy"
 				class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
 			/>
@@ -134,7 +134,7 @@
 
 	<CardHeader class="pb-3">
 		<div class="flex items-start justify-between gap-3">
-			<CardTitle class="line-clamp-1 text-lg">{world.title || 'Untitled World'}</CardTitle>
+			<CardTitle class="line-clamp-1 text-lg">{world.title || 'Untitled Story'}</CardTitle>
 			<Badge
 				variant={getStatusBadgeVariant(world.generation_status)}
 				class="shrink-0 {isGenerating ? 'world-badge-generating' : ''}"
@@ -194,7 +194,7 @@
 							onclick={handleDeleteClick}
 							disabled={isDeleting}
 							class="h-9 w-9 p-0 text-muted-foreground hover:text-destructive disabled:opacity-50"
-							aria-label="Remove world '{world.title || 'Untitled World'}' from library"
+							aria-label="Remove story '{world.title || 'Untitled Story'}' from library"
 						>
 							{#if isDeleting}
 								<Spinner class="h-4 w-4" />
@@ -214,7 +214,7 @@
 								onclick={handlePlayClick}
 								disabled={isPlayLoading || isDeleting}
 								class="h-9 w-9 p-0 text-muted-foreground hover:text-primary disabled:opacity-50"
-								aria-label="Continue story: {world.title || 'Untitled World'}"
+								aria-label="Continue story: {world.title || 'Untitled Story'}"
 							>
 								{#if isPlayLoading}
 									<Spinner class="h-4 w-4" />
@@ -240,10 +240,10 @@
 			<Dialog.Title>Remove from Library</Dialog.Title>
 			<Dialog.Description>
 				{#if isOwner}
-					This will remove the world from your library. If no other users have saved it, the world
+					This will remove the story from your library. If no other users have saved it, the story
 					will be permanently deleted.
 				{:else}
-					This will remove the world from your library. You can rejoin later if the world is still
+					This will remove the story from your library. You can rejoin later if the story is still
 					accessible.
 				{/if}
 			</Dialog.Description>

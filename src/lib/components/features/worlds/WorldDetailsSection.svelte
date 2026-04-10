@@ -105,7 +105,7 @@
 	>
 		<div class="mb-8 text-center">
 			<p class="mb-3 text-xs font-medium tracking-[0.3em] text-primary/60 uppercase">
-				✦ World Briefing ✦
+				✦ Story Briefing ✦
 			</p>
 		</div>
 

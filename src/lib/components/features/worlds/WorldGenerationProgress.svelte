@@ -38,7 +38,7 @@
 			'Tuning the narrative lens...',
 			'Choosing words with care...'
 		],
-		completed: ['Your world awaits.'],
+		completed: ['Your story awaits.'],
 		failed: ['Something went wrong.']
 	};
 
@@ -128,9 +128,9 @@
 		<div class="gen-text">
 			<h2 class="gen-title">
 				{#if isDone}
-					World Forged
+					Story Forged
 				{:else}
-					Forging Your World
+					Forging Your Story
 				{/if}
 			</h2>
 			<p
@@ -153,7 +153,7 @@
 			aria-valuenow={progress}
 			aria-valuemin={0}
 			aria-valuemax={100}
-			aria-label="World generation progress"
+			aria-label="Story generation progress"
 		>
 			<div class="gen-bar-fill" style="width: {progress}%">
 				<div class="gen-bar-glow"></div>

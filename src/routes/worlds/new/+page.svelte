@@ -207,8 +207,8 @@
 </script>
 
 <SEO
-	title="Create World - Cosmonaut"
-	description="Create a new interactive story world."
+	title="Create Story - Cosmonaut"
+	description="Create a new interactive story."
 	path="/worlds/new"
 	noindex
 />
@@ -224,7 +224,7 @@
 			<div class="h-4 w-px bg-border"></div>
 			<div class="flex items-center gap-2">
 				<Rocket class="h-5 w-5 text-primary" />
-				<span class="font-semibold text-foreground">Create a New World</span>
+				<span class="font-semibold text-foreground">Create a New Story</span>
 			</div>
 		</div>
 	</header>
@@ -235,11 +235,11 @@
 				<TriangleAlert class="h-4 w-4 text-destructive" />
 				<AlertDescription>
 					<p>
-						You've reached your world creation limit ({usage?.worlds_created}/{usage?.worlds_limit}).
+						You've reached your story creation limit ({usage?.worlds_created}/{usage?.worlds_limit}).
 						<a href="/pricing" class="text-yellow-400 underline hover:text-yellow-300">
 							Upgrade your plan
 						</a>
-						for more worlds, or wait for your usage period to reset.
+						for more stories, or wait for your usage period to reset.
 						{#if usage?.period_end}
 							<span class="text-muted-foreground">
 								{formatResetDate(usage.period_end)}
@@ -253,7 +253,7 @@
 		<!-- Creation Form -->
 		<Card>
 			<CardHeader>
-				<CardTitle class="text-2xl">Describe Your World</CardTitle>
+				<CardTitle class="text-2xl">Describe Your Story</CardTitle>
 				<CardDescription>
 					The cosmos awaits your vision. Be as detailed or brief as you like - a sentence or a saga.
 				</CardDescription>
@@ -270,7 +270,7 @@
 					<div class="space-y-2">
 						<div class="flex items-center justify-between">
 							<Label for="world_prompt">
-								World Prompt <span class="text-destructive">*</span>
+								Story Prompt <span class="text-destructive">*</span>
 							</Label>
 							<Button
 								type="button"
@@ -308,7 +308,7 @@
 								{:else}
 									<p id="prompt-help" class="text-xs text-muted-foreground">
 										Setting, tone, characters, vibes - throw it all in. The more you give, the
-										richer the world.
+										richer the story.
 									</p>
 								{/if}
 							</div>
@@ -322,16 +322,16 @@
 						</div>
 					</div>
 
-				<!-- General access -->
-				<div class="space-y-2">
-					<Label for="visibility">Who can play?</Label>
-					<VisibilitySelect
-						id="visibility"
-						value={visibility}
-						onValueChange={(v) => (visibility = v)}
-						disabled={loading}
-					/>
-				</div>
+					<!-- General access -->
+					<div class="space-y-2">
+						<Label for="visibility">Who can play?</Label>
+						<VisibilitySelect
+							id="visibility"
+							value={visibility}
+							onValueChange={(v) => (visibility = v)}
+							disabled={loading}
+						/>
+					</div>
 
 					<!-- More settings -->
 					<Accordion.Root type="single" class="w-full border-none">
@@ -343,50 +343,50 @@
 							</Accordion.Trigger>
 							<Accordion.Content>
 								<div class="space-y-6 pt-4">
-								<!-- Story Length -->
-								<div class="space-y-2">
-									<Label>Story Length</Label>
-									<SegmentedControl
-										options={WORLD_LENGTH_OPTIONS}
-										value={worldLength}
-										onValueChange={(v) => (worldLength = v as WorldLength)}
-										disabled={loading}
-										label="Story length"
-									/>
-									<p class="text-xs text-muted-foreground">
-										{selectedLengthOption.label} stories are approximately a {selectedLengthOption.description}.
-									</p>
-								</div>
+									<!-- Story Length -->
+									<div class="space-y-2">
+										<Label>Story Length</Label>
+										<SegmentedControl
+											options={WORLD_LENGTH_OPTIONS}
+											value={worldLength}
+											onValueChange={(v) => (worldLength = v as WorldLength)}
+											disabled={loading}
+											label="Story length"
+										/>
+										<p class="text-xs text-muted-foreground">
+											{selectedLengthOption.label} stories are approximately a {selectedLengthOption.description}.
+										</p>
+									</div>
 
-								<!-- Vocabulary Level -->
-								<div class="space-y-2">
-									<Label>Vocabulary Level</Label>
-									<SegmentedControl
-										options={VOCAB_LEVEL_OPTIONS}
-										value={vocabLevel}
-										onValueChange={(v) => (vocabLevel = v as VocabLevel)}
-										disabled={loading}
-										label="Vocabulary level"
-									/>
-									<p class="text-xs text-muted-foreground">
-										{selectedVocabOption.description}
-									</p>
-								</div>
+									<!-- Vocabulary Level -->
+									<div class="space-y-2">
+										<Label>Vocabulary Level</Label>
+										<SegmentedControl
+											options={VOCAB_LEVEL_OPTIONS}
+											value={vocabLevel}
+											onValueChange={(v) => (vocabLevel = v as VocabLevel)}
+											disabled={loading}
+											label="Vocabulary level"
+										/>
+										<p class="text-xs text-muted-foreground">
+											{selectedVocabOption.description}
+										</p>
+									</div>
 
-								<!-- Content Filter -->
-								<div class="space-y-2">
-									<Label>Content Filter</Label>
-									<SegmentedControl
-										options={CONTENT_FILTER_OPTIONS}
-										value={contentFilter}
-										onValueChange={(v) => (contentFilter = v as ContentFilter)}
-										disabled={loading}
-										label="Content filter"
-									/>
-									<p class="text-xs text-muted-foreground">
-										{selectedFilterOption.description}
-									</p>
-								</div>
+									<!-- Content Filter -->
+									<div class="space-y-2">
+										<Label>Content Filter</Label>
+										<SegmentedControl
+											options={CONTENT_FILTER_OPTIONS}
+											value={contentFilter}
+											onValueChange={(v) => (contentFilter = v as ContentFilter)}
+											disabled={loading}
+											label="Content filter"
+										/>
+										<p class="text-xs text-muted-foreground">
+											{selectedFilterOption.description}
+										</p>
+									</div>
 								</div>
 							</Accordion.Content>
 						</Accordion.Item>
@@ -412,7 +412,7 @@
 								Creating...
 							{:else}
 								<Rocket class="h-4 w-4" />
-								Create World
+								Create Story
 							{/if}
 						</Button>
 					</div>
