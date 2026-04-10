@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import type { TransitionConfig } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import { browser } from '$app/environment';
+	import { prefersReducedMotion } from '$lib/utils/media';
 
 	interface Props {
 		key: string;
@@ -11,11 +11,6 @@
 	}
 
 	let { key, direction, children }: Props = $props();
-
-	/** Detect prefers-reduced-motion */
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
 
 	// Custom slide transition with depth (translate + opacity + scale)
 	// Falls back to a zero-duration no-op when reduced motion is preferred

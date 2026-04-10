@@ -4,7 +4,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { RotateCcw, ChevronRight } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
-	import { browser } from '$app/environment';
+	import { prefersReducedMotion } from '$lib/utils/media';
 	import { trackEvent } from '$lib/utils/analytics';
 
 	let currentNodeId = $state(startNodeId);
@@ -12,11 +12,6 @@
 	let isTransitioning = $state(false);
 	let displayedText = $state('');
 	let isTyping = $state(true);
-
-	/** Detect prefers-reduced-motion */
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
 
 	/** Transition durations that respect motion preference */
 	const fadeDuration = prefersReducedMotion ? 0 : 300;

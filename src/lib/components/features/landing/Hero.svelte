@@ -2,7 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Rocket, LogIn } from '@lucide/svelte';
-	import { browser } from '$app/environment';
+	import { prefersReducedMotion } from '$lib/utils/media';
 
 	interface Props {
 		onGetStarted?: () => void | Promise<void>;
@@ -19,10 +19,6 @@
 	let my = $state(0);
 
 	const LERP_FACTOR = 0.04;
-
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
 
 	function handleMouseMove(e: MouseEvent) {
 		if (prefersReducedMotion) return;

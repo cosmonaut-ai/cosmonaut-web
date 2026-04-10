@@ -2,7 +2,8 @@ import * as Sentry from '@sentry/sveltekit';
 import { ApiError } from '$lib/types/api';
 import { isLocalEnvironment } from '$lib/config';
 import { logger } from '$lib/utils/logger';
-import { getAuthToken, refreshStreamingSession, handleSessionExpired } from '$lib/auth/auth.svelte';
+import { getAuthToken } from '$lib/auth/auth.svelte';
+import { fetchWithAuthRetry } from './fetchWithAuthRetry';
 
 /** Delay after streaming completes to ensure server-side persistence before re-fetching */
 export const POST_STREAM_DELAY_MS = 500;
@@ -80,38 +81,19 @@ export async function apiRequest<T>(
 	fetchFn: typeof fetch = fetch
 ): Promise<T> {
 	const method = (options.method ?? 'GET').toUpperCase();
-	const headers = await getAuthHeaders();
-	const response = await fetchFn(url, {
-		...options,
-		headers: {
-			...(headers as Record<string, string>),
-			...(options.headers as Record<string, string>)
-		}
-	});
 
-	if (response.status === 401 && retry && !isLocalEnvironment) {
-		// Force token refresh
-		const newHeaders = await getAuthHeaders(true);
-
-		// Also refresh streaming session (sets signed cookies for CloudFront)
-		// This is often required by the backend in addition to the Bearer token
-		await refreshStreamingSession();
-
-		// Retry once
-		const retryResponse = await fetchFn(url, {
+	if (!retry || fetchFn !== fetch) {
+		const headers = await getAuthHeaders();
+		const response = await fetchFn(url, {
 			...options,
 			headers: {
-				...(newHeaders as Record<string, string>),
+				...(headers as Record<string, string>),
 				...(options.headers as Record<string, string>)
 			}
 		});
-
-		if (retryResponse.status === 401) {
-			await handleSessionExpired();
-		}
-
-		return handleResponse<T>(retryResponse, method);
+		return handleResponse<T>(response, method);
 	}
 
+	const response = await fetchWithAuthRetry(url, options);
 	return handleResponse<T>(response, method);
 }

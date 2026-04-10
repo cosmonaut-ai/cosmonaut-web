@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { prefersReducedMotion } from '$lib/utils/media';
 	import type { Choice } from '$lib/types/api';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -60,10 +60,6 @@
 		'Turning the cosmic gears...',
 		'Conjuring words from the void...'
 	];
-
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
 
 	// Whether the typewriter should be active
 	const showFlavor = $derived(isTyping && !text.trim());

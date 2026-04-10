@@ -6,7 +6,7 @@
 	import Features from '$lib/components/features/landing/Features.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Rocket } from '@lucide/svelte';
-	import { browser } from '$app/environment';
+	import { intersectionReveal } from '$lib/utils/intersectionReveal';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
@@ -14,39 +14,8 @@
 
 	let isScrolled = $state(false);
 
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
-
 	/** Scroll-triggered visibility for the final CTA section */
 	let ctaVisible = $state(false);
-
-	function observeCta(node: HTMLElement) {
-		if (prefersReducedMotion) {
-			ctaVisible = true;
-			return;
-		}
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						ctaVisible = true;
-						observer.unobserve(node);
-					}
-				}
-			},
-			{ threshold: 0.2 }
-		);
-
-		observer.observe(node);
-
-		return {
-			destroy() {
-				observer.disconnect();
-			}
-		};
-	}
 
 	function handleGetStarted(location: string = 'hero') {
 		trackEvent('cta_clicked', { location });
@@ -148,7 +117,7 @@
 	<!-- Final CTA section -->
 	<section
 		class="cta-section relative py-24 {ctaVisible ? 'cta-visible' : 'cta-hidden'}"
-		use:observeCta
+		use:intersectionReveal={{ onReveal: () => (ctaVisible = true), threshold: 0.2 }}
 	>
 		<div class="mx-auto max-w-4xl px-6 text-center">
 			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">

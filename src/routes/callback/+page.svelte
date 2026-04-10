@@ -6,22 +6,10 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Button } from '$lib/components/ui/button';
 	import { TriangleAlert } from '@lucide/svelte';
-
-	const REDIRECT_STORAGE_KEY = 'cosmonaut-auth-redirect';
+	import { consumeRedirectUrl } from '$lib/auth/redirect';
 
 	let error = $state<string | null>(null);
 	let checking = $state(true);
-
-	function consumeRedirectUrl(): string {
-		let destination: string | null = null;
-		try {
-			destination = localStorage.getItem(REDIRECT_STORAGE_KEY);
-			localStorage.removeItem(REDIRECT_STORAGE_KEY);
-		} catch {
-			// localStorage might not be available
-		}
-		return destination || '/dashboard';
-	}
 
 	onMount(async () => {
 		try {

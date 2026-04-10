@@ -148,18 +148,21 @@ export function useDeleteWorld() {
 /**
  * Mutation hook to update world sharing settings
  */
-export function useUpdateWorldSharing(worldId: string) {
+export function useUpdateWorldSharing(worldId: MaybeGetter<string>) {
 	const client = useQueryClient();
-	return createMutation(() => ({
-		mutationFn: (data: UpdateWorldSharingRequest) => updateWorldSharing(worldId, data),
-		onSuccess: (updatedWorld: World) => {
-			client.setQueryData(queryKeys.worlds.detail(worldId), updatedWorld);
-			client.invalidateQueries({ queryKey: queryKeys.worlds.all });
-		},
-		onError: (error: Error) => {
-			showError('Failed to update sharing settings', error.message);
-		}
-	}));
+	return createMutation(() => {
+		const id = resolve(worldId);
+		return {
+			mutationFn: (data: UpdateWorldSharingRequest) => updateWorldSharing(id, data),
+			onSuccess: (updatedWorld: World) => {
+				client.setQueryData(queryKeys.worlds.detail(id), updatedWorld);
+				client.invalidateQueries({ queryKey: queryKeys.worlds.all });
+			},
+			onError: (error: Error) => {
+				showError('Failed to update sharing settings', error.message);
+			}
+		};
+	});
 }
 
 // ---------------------------------------------------------------------------
@@ -182,29 +185,35 @@ export function useInviteToken(worldId: MaybeGetter<string>, enabled: MaybeGette
 	});
 }
 
-export function useCreateInviteToken(worldId: string) {
+export function useCreateInviteToken(worldId: MaybeGetter<string>) {
 	const client = useQueryClient();
-	return createMutation(() => ({
-		mutationFn: () => createInviteToken(worldId),
-		onSuccess: (token: InviteToken) => {
-			client.setQueryData(queryKeys.worlds.inviteToken(worldId), token);
-		},
-		onError: (error: Error) => {
-			showError('Failed to create invite link', error.message);
-		}
-	}));
+	return createMutation(() => {
+		const id = resolve(worldId);
+		return {
+			mutationFn: () => createInviteToken(id),
+			onSuccess: (token: InviteToken) => {
+				client.setQueryData(queryKeys.worlds.inviteToken(id), token);
+			},
+			onError: (error: Error) => {
+				showError('Failed to create invite link', error.message);
+			}
+		};
+	});
 }
 
-export function useDeleteInviteToken(worldId: string) {
+export function useDeleteInviteToken(worldId: MaybeGetter<string>) {
 	const client = useQueryClient();
-	return createMutation(() => ({
-		mutationFn: () => deleteInviteToken(worldId),
-		onSuccess: () => {
-			client.setQueryData(queryKeys.worlds.inviteToken(worldId), null);
-			showSuccess('Invite link deleted');
-		},
-		onError: (error: Error) => {
-			showError('Failed to delete invite link', error.message);
-		}
-	}));
+	return createMutation(() => {
+		const id = resolve(worldId);
+		return {
+			mutationFn: () => deleteInviteToken(id),
+			onSuccess: () => {
+				client.setQueryData(queryKeys.worlds.inviteToken(id), null);
+				showSuccess('Invite link deleted');
+			},
+			onError: (error: Error) => {
+				showError('Failed to delete invite link', error.message);
+			}
+		};
+	});
 }

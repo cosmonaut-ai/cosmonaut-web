@@ -1,41 +1,11 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
+	import { intersectionReveal } from '$lib/utils/intersectionReveal';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import ConstellationDivider from '$lib/components/shared/ConstellationDivider.svelte';
 	import { BookOpen, Sparkles, Users } from '@lucide/svelte';
 
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
-
 	let visibleSections = $state([false, false, false, false]);
 
-	function observeSection(index: number) {
-		return function (node: HTMLElement) {
-			if (prefersReducedMotion) {
-				visibleSections[index] = true;
-				return;
-			}
-
-			const observer = new IntersectionObserver(
-				(entries) => {
-					for (const entry of entries) {
-						if (entry.isIntersecting) {
-							visibleSections[index] = true;
-							observer.unobserve(node);
-						}
-					}
-				},
-				{ threshold: 0.15 }
-			);
-
-			observer.observe(node);
-
-			return () => {
-				observer.disconnect();
-			};
-		};
-	}
 </script>
 
 <SEO
@@ -64,7 +34,7 @@
 		<!-- What is Cosmonaut -->
 		<section
 			class="about-section mb-12 {visibleSections[0] ? 'about-visible' : 'about-hidden'}"
-			{@attach observeSection(0)}
+			use:intersectionReveal={{ onReveal: () => (visibleSections[0] = true) }}
 		>
 			<div class="mb-4 flex items-center gap-3">
 				<div
@@ -114,7 +84,7 @@
 		<!-- How it works -->
 		<section
 			class="about-section mb-12 {visibleSections[1] ? 'about-visible' : 'about-hidden'}"
-			{@attach observeSection(1)}
+			use:intersectionReveal={{ onReveal: () => (visibleSections[1] = true) }}
 		>
 			<div class="mb-4 flex items-center gap-3">
 				<div
@@ -144,7 +114,7 @@
 		<!-- Built for families -->
 		<section
 			class="about-section mb-12 {visibleSections[2] ? 'about-visible' : 'about-hidden'}"
-			{@attach observeSection(2)}
+			use:intersectionReveal={{ onReveal: () => (visibleSections[2] = true) }}
 		>
 			<div class="mb-4 flex items-center gap-3">
 				<div
@@ -174,7 +144,7 @@
 		<!-- Contact -->
 		<section
 			class="about-section {visibleSections[3] ? 'about-visible' : 'about-hidden'}"
-			{@attach observeSection(3)}
+			use:intersectionReveal={{ onReveal: () => (visibleSections[3] = true) }}
 		>
 			<div class="rounded-lg border border-border/50 bg-card/50 p-8 text-center">
 				<h2 class="mb-2 text-xl font-semibold text-foreground">Say Hello</h2>

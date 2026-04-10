@@ -1,14 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
+	import { prefersReducedMotion } from '$lib/utils/media';
 
 	let canvas: HTMLCanvasElement;
 	let animationId: number;
-
-	/** Detect prefers-reduced-motion at mount time */
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
 
 	function canvasAttachment(node: HTMLCanvasElement) {
 		canvas = node;

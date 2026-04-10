@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import {
 		Card,
 		CardContent,
@@ -12,6 +11,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Select from '$lib/components/ui/select';
 	import SEO from '$lib/components/shared/SEO.svelte';
+	import AppPageHeader from '$lib/components/shared/AppPageHeader.svelte';
 	import { useFeedback } from '$lib/queries/feedback';
 	import { ApiError } from '$lib/api/core';
 	import type { FeedbackCategory } from '$lib/api/feedback';
@@ -19,7 +19,6 @@
 		MessageSquarePlus,
 		Send,
 		CircleCheck,
-		ArrowLeft,
 		Bug,
 		Lightbulb,
 		MessageCircle,
@@ -76,16 +75,10 @@
 
 <div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-2xl px-6 py-12">
-		<div class="mb-8">
-			<Button variant="ghost" size="sm" onclick={() => goto('/dashboard')} class="mb-4 gap-2">
-				<ArrowLeft class="h-4 w-4" />
-				Back to Dashboard
-			</Button>
-			<h1 class="text-3xl font-bold text-foreground">Feedback</h1>
-			<p class="mt-1 text-muted-foreground">
-				We genuinely read all of this. Say whatever's on your mind.
-			</p>
-		</div>
+		<AppPageHeader
+			title="Feedback"
+			description="We genuinely read all of this. Say whatever's on your mind."
+		/>
 
 		<Card>
 			<CardHeader>

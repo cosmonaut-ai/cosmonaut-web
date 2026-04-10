@@ -6,6 +6,7 @@
 	import { getTierConfig } from '$lib/config/tiers';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Badge } from '$lib/components/ui/badge';
+	import { getDisplayName } from '$lib/utils/displayName';
 	import {
 		LayoutDashboard,
 		Settings,
@@ -18,9 +19,7 @@
 	const auth = useAuth();
 	const usageQuery = useUser();
 
-	const displayName = $derived(
-		auth.user?.username || usageQuery.data?.display_name || auth.user?.email
-	);
+	const displayName = $derived(getDisplayName(auth.user, usageQuery.data?.display_name));
 	const tierConfig = $derived(usageQuery.data ? getTierConfig(usageQuery.data.tier) : null);
 
 	const tierBadgeClass: Record<string, string> = {

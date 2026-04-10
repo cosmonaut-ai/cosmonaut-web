@@ -32,11 +32,9 @@ export const PRODUCTION_URL = 'https://cosmonaut-ai.com';
 export const SENTRY_RELEASE: string = import.meta.env.PUBLIC_SENTRY_RELEASE || '';
 
 // Emails allowed to access the dev environment - all others are redirected to production
-export const DEV_ALLOWED_EMAILS: string[] = [
-	'imatson9119@gmail.com',
-	'imatson9119+new@gmail.com',
-	'ian@cosmonaut-ai.com'
-];
+export const DEV_ALLOWED_EMAILS: string[] = import.meta.env.PUBLIC_DEV_ALLOWED_EMAILS
+	? (import.meta.env.PUBLIC_DEV_ALLOWED_EMAILS as string).split(',').map((e) => e.trim())
+	: ['imatson9119@gmail.com', 'imatson9119+new@gmail.com', 'ian@cosmonaut-ai.com'];
 
 // Check if auth is configured (non-local environments require Cognito)
 export const isAuthConfigured =

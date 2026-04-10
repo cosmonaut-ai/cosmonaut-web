@@ -1,21 +1,25 @@
-import { Amplify } from 'aws-amplify';
 import {
-	signInWithRedirect,
-	signOut,
-	getCurrentUser,
-	fetchAuthSession,
-	signUp,
-	confirmSignUp,
-	signIn,
-	resetPassword,
-	confirmResetPassword,
-	resendSignUpCode
-} from 'aws-amplify/auth';
+	configureAmplify,
+	amplifyFetchSession,
+	amplifyGetCurrentUser,
+	amplifySignIn,
+	amplifySignUp,
+	amplifyConfirmSignUp,
+	amplifyResendCode,
+	amplifyResetPassword,
+	amplifyConfirmResetPassword,
+	amplifySignInWithGoogle,
+	amplifySignOut,
+	extractUserFromClaims
+} from './amplify';
+import type { UserInfo } from './types';
+export type { UserInfo };
 import * as Sentry from '@sentry/sveltekit';
-import { amplifyConfig, isLocalEnvironment, isAuthConfigured, API_BASE_URL } from '$lib/config';
+import { isLocalEnvironment, isAuthConfigured, API_BASE_URL } from '$lib/config';
 import { apiRequest } from '$lib/api/core';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
+import { setItem, removeItem } from '$lib/utils/storage';
 import { queryClient } from '$lib/queries/client';
 import { logger } from '$lib/utils/logger';
 
@@ -36,14 +40,6 @@ const LOCAL_DEV_USER: UserInfo = {
 	picture: undefined
 };
 
-export interface UserInfo {
-	sub: string;
-	email?: string;
-	name?: string;
-	picture?: string;
-	username?: string;
-}
-
 /**
  * Initialize Amplify Auth - call this once in the root layout
  */
@@ -53,7 +49,7 @@ export function initializeAuth(): Promise<void> {
 	authReadyPromise = (async () => {
 		if (isAuthConfigured) {
 			try {
-				Amplify.configure(amplifyConfig);
+				configureAmplify();
 				// Check current auth state and wait for it
 				await checkAuthState();
 			} catch (error) {
@@ -87,31 +83,19 @@ export async function checkAuthState(): Promise<void> {
 		isLoading = true;
 
 		// Try to get the session first - this is more reliable on page load
-		const session = await fetchAuthSession();
+		const session = await amplifyFetchSession();
 
 		// If we have a valid session with tokens, we're authenticated
 		if (session.tokens?.idToken) {
-			const claims = session.tokens.idToken.payload;
+			const claims = session.tokens.idToken.payload as Record<string, unknown>;
 
 			// Try to get current user for the userId
 			try {
-				const currentUser = await getCurrentUser();
-				user = {
-					sub: currentUser.userId,
-					email: claims?.email as string | undefined,
-					name: claims?.given_name as string | undefined,
-					picture: claims?.picture as string | undefined,
-					username: claims?.['custom:username'] as string | undefined
-				};
+				const currentUser = await amplifyGetCurrentUser();
+				user = extractUserFromClaims(claims, currentUser.userId);
 			} catch {
 				// If getCurrentUser fails but we have tokens, use the sub from claims
-				user = {
-					sub: claims?.sub as string,
-					email: claims?.email as string | undefined,
-					name: claims?.given_name as string | undefined,
-					picture: claims?.picture as string | undefined,
-					username: claims?.['custom:username'] as string | undefined
-				};
+				user = extractUserFromClaims(claims);
 			}
 
 			isAuthenticated = true;
@@ -155,13 +139,7 @@ export async function login(): Promise<void> {
 	if (isLocalEnvironment) {
 		isAuthenticated = true;
 		user = LOCAL_DEV_USER;
-		if (browser) {
-			try {
-				localStorage.setItem(LOCAL_AUTH_KEY, 'true');
-			} catch {
-				// localStorage might not be available
-			}
-		}
+		setItem(LOCAL_AUTH_KEY, 'true');
 		return;
 	}
 
@@ -186,7 +164,7 @@ export async function loginWithGoogle(): Promise<void> {
 	}
 
 	try {
-		await signInWithRedirect({ provider: 'Google' });
+		await amplifySignInWithGoogle();
 	} catch (error) {
 		logger.error('Google login failed:', error);
 		throw error;
@@ -208,15 +186,7 @@ export async function signUpWithEmail(
 
 	if (!isAuthConfigured) throw new Error('Auth is not configured');
 
-	const result = await signUp({
-		username: email,
-		password,
-		options: {
-			userAttributes: {
-				email
-			}
-		}
-	});
+	const result = await amplifySignUp(email, password);
 
 	return {
 		isConfirmationRequired: result.nextStep.signUpStep === 'CONFIRM_SIGN_UP'
@@ -230,10 +200,7 @@ export async function confirmSignUpWithCode(email: string, code: string): Promis
 	if (isLocalEnvironment) return;
 	if (!isAuthConfigured) throw new Error('Auth is not configured');
 
-	await confirmSignUp({
-		username: email,
-		confirmationCode: code
-	});
+	await amplifyConfirmSignUp(email, code);
 }
 
 /**
@@ -243,7 +210,7 @@ export async function resendVerificationCode(email: string): Promise<void> {
 	if (isLocalEnvironment) return;
 	if (!isAuthConfigured) throw new Error('Auth is not configured');
 
-	await resendSignUpCode({ username: email });
+	await amplifyResendCode(email);
 }
 
 /**
@@ -253,22 +220,13 @@ export async function signInWithEmail(email: string, password: string): Promise<
 	if (isLocalEnvironment) {
 		isAuthenticated = true;
 		user = { ...LOCAL_DEV_USER, email };
-		if (browser) {
-			try {
-				localStorage.setItem(LOCAL_AUTH_KEY, 'true');
-			} catch {
-				// localStorage might not be available
-			}
-		}
+		setItem(LOCAL_AUTH_KEY, 'true');
 		return;
 	}
 
 	if (!isAuthConfigured) throw new Error('Auth is not configured');
 
-	const result = await signIn({
-		username: email,
-		password
-	});
+	const result = await amplifySignIn(email, password);
 
 	if (result.isSignedIn) {
 		await checkAuthState();
@@ -284,7 +242,7 @@ export async function forgotPassword(email: string): Promise<void> {
 	if (isLocalEnvironment) return;
 	if (!isAuthConfigured) throw new Error('Auth is not configured');
 
-	await resetPassword({ username: email });
+	await amplifyResetPassword(email);
 }
 
 /**
@@ -298,11 +256,7 @@ export async function confirmForgotPassword(
 	if (isLocalEnvironment) return;
 	if (!isAuthConfigured) throw new Error('Auth is not configured');
 
-	await confirmResetPassword({
-		username: email,
-		confirmationCode: code,
-		newPassword
-	});
+	await amplifyConfirmResetPassword(email, code, newPassword);
 }
 
 /**
@@ -327,13 +281,7 @@ export async function logout(): Promise<void> {
 		user = null;
 		authReadyPromise = null;
 		queryClient.clear();
-		if (browser) {
-			try {
-				localStorage.removeItem(LOCAL_AUTH_KEY);
-			} catch {
-				// localStorage might not be available
-			}
-		}
+		removeItem(LOCAL_AUTH_KEY);
 		return;
 	}
 
@@ -352,7 +300,7 @@ export async function logout(): Promise<void> {
 	queryClient.clear();
 
 	try {
-		await signOut();
+		await amplifySignOut();
 	} catch (error) {
 		logger.error('Cognito sign-out failed:', error);
 	}
@@ -384,7 +332,7 @@ export async function getAuthToken(forceRefresh = false): Promise<string | null>
 	}
 
 	try {
-		const session = await fetchAuthSession({ forceRefresh });
+		const session = await amplifyFetchSession(forceRefresh);
 
 		// If we're forcing refresh and it succeeds, ensure we're marked as authenticated
 		if (forceRefresh && session.tokens?.idToken) {

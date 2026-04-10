@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import { useUser } from '$lib/queries/subscription';
+	import { getDisplayName } from '$lib/utils/displayName';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { User } from '@lucide/svelte';
 
 	const auth = useAuth();
 	const usageQuery = useUser();
 
-	const displayName = $derived(
-		auth.user?.username || usageQuery.data?.display_name || auth.user?.email
-	);
+	const displayName = $derived(getDisplayName(auth.user, usageQuery.data?.display_name));
 </script>
 
 <Card>
