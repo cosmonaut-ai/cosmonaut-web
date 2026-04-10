@@ -10,15 +10,16 @@
 	import { showError, showSuccess } from '$lib/utils/toast';
 	import { browser } from '$app/environment';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Select from '$lib/components/ui/select';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Label } from '$lib/components/ui/label';
-	import { Share2, X, Globe, Lock, EyeOff, Link, Copy, Check, Plus, Trash2 } from '@lucide/svelte';
+	import { Share2, X, Link, Copy, Check, Plus, Trash2 } from '@lucide/svelte';
+	import VisibilitySelect from '$lib/components/shared/VisibilitySelect.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
+	import { useAutosave } from '$lib/utils/useAutosave.svelte';
 
 	interface Props {
 		world: World;
@@ -30,13 +31,12 @@
 
 	let { world, open, onOpenChange, onWorldUpdate, isOwner = true }: Props = $props();
 
+	const autosave = useAutosave();
+
 	const worldId = $derived(world.id);
 
 	let visibility = $state<WorldVisibility>('private');
 	let sharedWith = $state<string[]>([]);
-	let justSaved = $state(false);
-	let saveTimeout: ReturnType<typeof setTimeout> | undefined;
-	let savedTimeout: ReturnType<typeof setTimeout> | undefined;
 	let showPrivateConfirm = $state(false);
 	let pendingVisibility = $state<WorldVisibility | null>(null);
 	let userToRemove = $state<string | null>(null);
@@ -46,9 +46,7 @@
 		if (open) {
 			visibility = world.visibility || 'private';
 			sharedWith = [...(world.shared_with || [])];
-			justSaved = false;
-			clearTimeout(saveTimeout);
-			clearTimeout(savedTimeout);
+			autosave.reset();
 			resolveUsers();
 		}
 	});
@@ -115,11 +113,10 @@
 	}
 
 	function scheduleSave() {
-		clearTimeout(saveTimeout);
-		saveTimeout = setTimeout(() => {
+		autosave.schedule(() => {
 			if (!hasUnsavedChanges()) return;
 			triggerSave();
-		}, 500);
+		});
 	}
 
 	function triggerSave() {
@@ -132,19 +129,14 @@
 						shared_count: sharedWith.length
 					});
 					onWorldUpdate?.(updatedWorld);
-					justSaved = true;
-					clearTimeout(savedTimeout);
-					savedTimeout = setTimeout(() => {
-						justSaved = false;
-					}, 2000);
+					autosave.markSaved();
 				}
 			}
 		);
 	}
 
-	function handleVisibilityChange(v: string | undefined) {
-		if (!v || !isOwner) return;
-		const newVis = v as WorldVisibility;
+	function handleVisibilityChange(newVis: WorldVisibility) {
+		if (!isOwner) return;
 		if (newVis === 'private' && visibility !== 'private') {
 			pendingVisibility = newVis;
 			showPrivateConfirm = true;
@@ -223,7 +215,7 @@
 						<Spinner class="h-3 w-3" />
 						Saving…
 					</span>
-				{:else if justSaved}
+				{:else if autosave.justSaved}
 					<span
 						class="ml-auto flex shrink-0 items-center gap-1.5 text-xs font-normal text-green-600 dark:text-green-400"
 					>
@@ -235,75 +227,15 @@
 		</Dialog.Header>
 
 		<div class="min-w-0 space-y-6 py-4">
-			<!-- Visibility selector -->
-			<div class="space-y-3">
-				<Label class="text-sm font-medium">General access</Label>
-				<Select.Root
-					type="single"
-					value={visibility}
-					onValueChange={handleVisibilityChange}
-					disabled={!isOwner}
-				>
-					<Select.Trigger class="w-full">
-						<div class="flex items-center gap-2">
-							{#if visibility === 'public'}
-								<Globe class="h-4 w-4 text-primary" />
-								<span>Public</span>
-							{:else if visibility === 'unlisted'}
-								<EyeOff class="h-4 w-4 text-muted-foreground" />
-								<span>Unlisted</span>
-							{:else}
-								<Lock class="h-4 w-4 text-muted-foreground" />
-								<span>Private</span>
-							{/if}
-						</div>
-					</Select.Trigger>
-					<Select.Content>
-						<Select.Item value="public">
-							<div class="flex items-center gap-2">
-								<Globe class="h-4 w-4" />
-								<div>
-									<div class="font-medium">Public</div>
-									<div class="text-xs text-muted-foreground">
-										Discoverable by anyone. Anyone with the link can play.
-									</div>
-								</div>
-							</div>
-						</Select.Item>
-						<Select.Item value="unlisted">
-							<div class="flex items-center gap-2">
-								<EyeOff class="h-4 w-4" />
-								<div>
-									<div class="font-medium">Unlisted</div>
-									<div class="text-xs text-muted-foreground">
-										Not discoverable. Anyone with the link can play.
-									</div>
-								</div>
-							</div>
-						</Select.Item>
-						<Select.Item value="private">
-							<div class="flex items-center gap-2">
-								<Lock class="h-4 w-4" />
-								<div>
-									<div class="font-medium">Private</div>
-									<div class="text-xs text-muted-foreground">
-										Invite only. Only people you invite can play.
-									</div>
-								</div>
-							</div>
-						</Select.Item>
-					</Select.Content>
-				</Select.Root>
-				<p class="text-xs text-muted-foreground">
-					{#if visibility === 'public'}
-						Anyone on the internet can discover and play this world.
-					{:else if visibility === 'unlisted'}
-						Anyone with the link can play, but the world won't appear in search or trending.
-					{:else}
-						Only you and people you invite can access this world.
-					{/if}
-				</p>
-			</div>
+		<!-- Visibility selector -->
+		<div class="space-y-3">
+			<Label class="text-sm font-medium">General access</Label>
+			<VisibilitySelect
+				value={visibility}
+				onValueChange={handleVisibilityChange}
+				disabled={!isOwner}
+			/>
+		</div>
 
 			<!-- Link sharing -->
 			{#if visibility === 'public' || visibility === 'unlisted'}

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { browser } from '$app/environment';
+	import { prefersReducedMotion } from '$lib/utils/media';
 	import { Button } from '$lib/components/ui/button';
 	import { Home, LayoutDashboard } from '@lucide/svelte';
 
@@ -15,10 +15,6 @@
 			: 'Something went sideways in the control room. Our crew is on it - try again in a moment.'
 	);
 	const illustration = $derived(is404 ? '/art/404-astronaut.webp' : '/art/error-astronaut.webp');
-
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
 </script>
 
 <div class="error-root flex min-h-dvh flex-col items-center justify-center bg-background px-6">

@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { useUser, useUpdateNewsletter } from '$lib/queries';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-	import { Button } from '$lib/components/ui/button';
 	import { Switch } from '$lib/components/ui/switch';
-	import { ArrowLeft } from '@lucide/svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
+	import AppPageHeader from '$lib/components/shared/AppPageHeader.svelte';
 	import AccountSection from '$lib/components/features/subscription/AccountSection.svelte';
 	import SubscriptionSection from '$lib/components/features/subscription/SubscriptionSection.svelte';
 	import DangerZone from '$lib/components/features/subscription/DangerZone.svelte';
@@ -24,14 +22,7 @@
 
 <div class="h-full overflow-y-auto bg-background">
 	<main class="mx-auto max-w-3xl px-6 py-12">
-		<div class="mb-8">
-			<Button variant="ghost" size="sm" onclick={() => goto('/dashboard')} class="mb-4 gap-2">
-				<ArrowLeft class="h-4 w-4" />
-				Back to Dashboard
-			</Button>
-			<h1 class="text-3xl font-bold text-foreground">Settings</h1>
-			<p class="mt-1 text-muted-foreground">Your account, subscription, and preferences</p>
-		</div>
+		<AppPageHeader title="Settings" description="Your account, subscription, and preferences" />
 
 		<div class="space-y-8">
 			<AccountSection />

@@ -1,11 +1,9 @@
 import type { StoryNode, ChooseRequest, StreamingCallback } from '$lib/types/api';
 import { API_BASE_URL, STREAMING_BASE_URL, isLocalEnvironment } from '$lib/config';
-import {
-	getAuthToken,
-	refreshStreamingSession,
-	invalidateStreamingSession
-} from '$lib/auth/auth.svelte';
-import { apiRequest, getAuthHeaders, parseApiError, ApiError, POST_STREAM_DELAY_MS } from './core';
+import { refreshStreamingSession } from '$lib/auth/auth.svelte';
+import { createParser, type EventSourceMessage } from 'eventsource-parser';
+import { apiRequest, parseApiError, ApiError, POST_STREAM_DELAY_MS } from './core';
+import { fetchWithAuthRetry } from './fetchWithAuthRetry';
 
 /** Response from the progress endpoint */
 export interface WorldProgressResponse {
@@ -104,32 +102,11 @@ export async function generateNodeText(
 		}
 	}
 
-	const headers = (await getAuthHeaders()) as Record<string, string>;
-
-	let response = await fetch(url, {
-		method: 'POST',
-		headers,
-		credentials: 'include',
-		signal
-	});
-
-	// Retry on auth errors
-	if ((response.status === 401 || response.status === 403) && !isLocalEnvironment) {
-		invalidateStreamingSession();
-		const refreshedToken = await getAuthToken(true);
-		const sessionRefreshed = await refreshStreamingSession();
-
-		if (refreshedToken && sessionRefreshed) {
-			const retryHeaders = (await getAuthHeaders()) as Record<string, string>;
-
-			response = await fetch(url, {
-				method: 'POST',
-				headers: retryHeaders,
-				credentials: 'include',
-				signal
-			});
-		}
-	}
+	const response = await fetchWithAuthRetry(
+		url,
+		{ method: 'POST' },
+		{ credentials: 'include', handleExpired: false, signal }
+	);
 
 	if (!response.ok) {
 		throw await parseApiError(response);
@@ -139,7 +116,6 @@ export async function generateNodeText(
 	const contentType = response.headers.get('Content-Type') || '';
 
 	if (contentType.includes('text/plain') || contentType.includes('text/event-stream')) {
-		// Handle streaming SSE response
 		const reader = response.body?.getReader();
 		if (!reader) {
 			throw new Error('No response body for streaming');
@@ -147,78 +123,51 @@ export async function generateNodeText(
 
 		const decoder = new TextDecoder();
 		let fullText = '';
-		let buffer = '';
+		let streamComplete = false;
+		let streamError: ApiError | null = null;
 
-		let currentEventType = '';
+		const parser = createParser({
+			onEvent(event: EventSourceMessage) {
+				if (event.event === 'error') {
+					let status = 500;
+					if (event.data.startsWith('Quota exceeded')) {
+						status = 429;
+					} else if (/Cannot generate text for node/i.test(event.data)) {
+						status = 400;
+					}
+					streamError = new ApiError(status, event.data);
+					return;
+				}
+
+				if (event.data === '[DONE]') {
+					streamComplete = true;
+					onTextUpdate(fullText, true);
+					return;
+				}
+
+				const processedContent = event.data.replace(/\\n/g, '\n');
+				fullText += processedContent;
+				onTextUpdate(fullText, false);
+			}
+		});
 
 		while (true) {
 			const { done, value } = await reader.read();
 			if (done) break;
-
-			// Decode the chunk and add to buffer
-			buffer += decoder.decode(value, { stream: true });
-
-			// Process complete SSE messages (lines ending with \n)
-			const lines = buffer.split('\n');
-			// Keep the last incomplete line in the buffer
-			buffer = lines.pop() || '';
-
-			for (const line of lines) {
-				// Track SSE event type (e.g. "event: error")
-				if (line.startsWith('event: ')) {
-					currentEventType = line.slice(7).trim();
-					continue;
-				}
-
-				// Empty line resets event type per SSE spec
-				if (line === '') {
-					currentEventType = '';
-					continue;
-				}
-
-				// SSE format: "data: content"
-				if (line.startsWith('data: ')) {
-					const content = line.slice(6); // Remove "data: " prefix
-
-					// Handle error events before processing as text
-					if (currentEventType === 'error') {
-						reader.cancel();
-						let status = 500;
-						if (content.startsWith('Quota exceeded')) {
-							status = 429;
-						} else if (/Cannot generate text for node/i.test(content)) {
-							status = 400;
-						}
-						throw new ApiError(status, content);
-					}
-
-					// Reset event type after processing a data line
-					currentEventType = '';
-
-					// Check for completion marker
-					if (content === '[DONE]') {
-						// Signal streaming is complete
-						onTextUpdate(fullText, true);
-						break;
-					}
-
-					// Convert literal \n to actual newlines and append to full text
-					const processedContent = content.replace(/\\n/g, '\n');
-					fullText += processedContent;
-					onTextUpdate(fullText, false);
-				}
-			}
+			parser.feed(decoder.decode(value, { stream: true }));
+			if (streamError) break;
 		}
 
-		// If we haven't received [DONE], signal completion anyway
-		if (!fullText || buffer) {
+		if (streamError) {
+			await reader.cancel();
+			throw streamError;
+		}
+
+		if (!streamComplete) {
 			onTextUpdate(fullText, true);
 		}
 
-		// Wait briefly to ensure the node is fully updated on the server
 		await new Promise((resolve) => setTimeout(resolve, POST_STREAM_DELAY_MS));
-
-		// Fetch the full node to get all metadata (choices, title, etc.)
 		return await getNode(worldId, nodeId);
 	} else {
 		// Handle JSON response (pre-generated node or already completed)

@@ -25,8 +25,6 @@ export function getStatusText(status: string): string {
 			return 'Generating Lore';
 		case 'generating_narrator_profile':
 			return 'Creating Narrator';
-		case 'generating_start_node':
-			return 'Generating Story';
 		case 'initialized':
 			return 'Initializing';
 		case 'failed':

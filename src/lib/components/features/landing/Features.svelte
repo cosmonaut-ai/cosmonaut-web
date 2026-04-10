@@ -1,45 +1,9 @@
 <script lang="ts">
 	import { Sparkles, GitBranch, Eye } from '@lucide/svelte';
-	import { browser } from '$app/environment';
-
-	/** Detect prefers-reduced-motion */
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
+	import { intersectionReveal } from '$lib/utils/intersectionReveal';
 
 	// Track visibility for each feature card
 	let visible = $state([false, false, false]);
-
-	function observeFeature(node: HTMLElement, index: number) {
-		if (prefersReducedMotion) {
-			// Instantly visible when motion is reduced
-			visible[index] = true;
-			return;
-		}
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						// Stagger: delay based on index
-						setTimeout(() => {
-							visible[index] = true;
-						}, index * 150);
-						observer.unobserve(node);
-					}
-				}
-			},
-			{ threshold: 0.2 }
-		);
-
-		observer.observe(node);
-
-		return {
-			destroy() {
-				observer.disconnect();
-			}
-		};
-	}
 </script>
 
 <section class="relative py-24">
@@ -62,7 +26,7 @@
 			<!-- Feature 1: Describe -->
 			<div
 				class="feature-card text-center {visible[0] ? 'feature-visible' : 'feature-hidden'}"
-				use:observeFeature={0}
+				use:intersectionReveal={{ onReveal: () => (visible[0] = true), threshold: 0.2 }}
 			>
 				<div
 					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 hover:scale-110 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
@@ -79,7 +43,7 @@
 			<!-- Feature 2: Branch -->
 			<div
 				class="feature-card text-center {visible[1] ? 'feature-visible' : 'feature-hidden'}"
-				use:observeFeature={1}
+				use:intersectionReveal={{ onReveal: () => (visible[1] = true), threshold: 0.2 }}
 			>
 				<div
 					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 hover:scale-110 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
@@ -96,7 +60,7 @@
 			<!-- Feature 3: See -->
 			<div
 				class="feature-card text-center {visible[2] ? 'feature-visible' : 'feature-hidden'}"
-				use:observeFeature={2}
+				use:intersectionReveal={{ onReveal: () => (visible[2] = true), threshold: 0.2 }}
 			>
 				<div
 					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 hover:scale-110 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"

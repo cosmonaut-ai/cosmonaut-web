@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { useWorld } from '$lib/queries';
+	import { setWorldContext } from '$lib/contexts/world';
 	import { ApiError } from '$lib/types/api';
 	import WorldHeader from '$lib/components/features/worlds/WorldHeader.svelte';
 	import WorldGenerationProgress from '$lib/components/features/worlds/WorldGenerationProgress.svelte';
@@ -36,6 +37,7 @@
 		enablePolling: true,
 		invite: () => inviteToken
 	});
+	setWorldContext(worldQuery);
 
 	// Derived world data
 	const world = $derived(worldQuery.data);

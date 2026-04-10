@@ -6,7 +6,7 @@ declare global {
 	}
 }
 
-const MEASUREMENT_ID = 'G-JMQKVCPEDF';
+const MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || 'G-JMQKVCPEDF';
 
 export function trackEvent(name: string, params?: Record<string, string | number | boolean>) {
 	if (!browser || typeof window.gtag !== 'function') return;

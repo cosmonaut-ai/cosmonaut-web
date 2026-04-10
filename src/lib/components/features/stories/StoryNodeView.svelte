@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { retryNodeProcessing } from '$lib/api/nodes';
-	import { useNode, useChooseOption, useUser, useWorld, type ChoiceOption } from '$lib/queries';
+	import { useNode, useChooseOption, useUser, type ChoiceOption } from '$lib/queries';
+	import { getWorldContext } from '$lib/contexts/world';
 	import { showError } from '$lib/utils/toast';
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
@@ -220,7 +221,7 @@
 	let audioPlayerVisible = $state(false);
 
 	// ── World data for ShareModal ──
-	const worldQuery = useWorld(() => worldId);
+	const worldQuery = getWorldContext();
 	const world = $derived(worldQuery.data);
 	let shareModalOpen = $state(false);
 	const auth = useAuth();

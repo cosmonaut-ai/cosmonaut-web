@@ -49,6 +49,7 @@
 		"@xyflow/svelte": "^1.5.0",
 		"aws-amplify": "^6.15.9",
 		"clsx": "^2.1.1",
+		"eventsource-parser": "^3.0.6",
 		"inapp-spy": "^5.0.8",
 		"svelte-sonner": "^1.0.7",
 		"tailwind-merge": "^3.4.0",

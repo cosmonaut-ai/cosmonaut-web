@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { World } from '$lib/types/api';
-	import { browser } from '$app/environment';
+	import { intersectionReveal } from '$lib/utils/intersectionReveal';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
@@ -16,10 +16,6 @@
 
 	let promptCopied = $state(false);
 
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
-
 	let promptVisible = $state(false);
 	let briefingVisible = $state(false);
 	let locationsVisible = $state(false);
@@ -31,33 +27,6 @@
 		world.potential_endings !== null && world.potential_endings.length > 0
 	);
 	const hasSetting = $derived(world.setting !== null && world.setting.trim() !== '');
-
-	function observeSection(setter: (v: boolean) => void) {
-		return function (node: HTMLElement) {
-			if (prefersReducedMotion) {
-				setter(true);
-				return;
-			}
-
-			const observer = new IntersectionObserver(
-				(entries) => {
-					for (const entry of entries) {
-						if (entry.isIntersecting) {
-							setter(true);
-							observer.unobserve(node);
-						}
-					}
-				},
-				{ threshold: 0.15 }
-			);
-
-			observer.observe(node);
-
-			return () => {
-				observer.disconnect();
-			};
-		};
-	}
 
 	async function copyPrompt() {
 		if (!world.world_prompt) return;
@@ -79,9 +48,7 @@
 		class="section-animate mx-auto max-w-4xl px-6 py-8 {promptVisible
 			? 'section-visible'
 			: 'section-hidden'}"
-		{@attach observeSection((v) => {
-			promptVisible = v;
-		})}
+		use:intersectionReveal={{ onReveal: () => (promptVisible = true) }}
 	>
 		<div class="mb-8 text-center">
 			<p class="mb-3 text-xs font-medium tracking-[0.3em] text-primary/60 uppercase">
@@ -134,9 +101,7 @@
 		class="section-animate mx-auto max-w-4xl px-6 py-8 {briefingVisible
 			? 'section-visible'
 			: 'section-hidden'}"
-		{@attach observeSection((v) => {
-			briefingVisible = v;
-		})}
+		use:intersectionReveal={{ onReveal: () => (briefingVisible = true) }}
 	>
 		<div class="mb-8 text-center">
 			<p class="mb-3 text-xs font-medium tracking-[0.3em] text-primary/60 uppercase">
@@ -169,9 +134,7 @@
 		class="section-animate mx-auto max-w-4xl px-6 py-8 {locationsVisible
 			? 'section-visible'
 			: 'section-hidden'}"
-		{@attach observeSection((v) => {
-			locationsVisible = v;
-		})}
+		use:intersectionReveal={{ onReveal: () => (locationsVisible = true) }}
 	>
 		<div class="mb-8 text-center">
 			<p class="mb-3 text-xs font-medium tracking-[0.3em] text-primary/60 uppercase">
@@ -224,9 +187,7 @@
 		class="section-animate mx-auto max-w-4xl px-6 py-8 {endingsVisible
 			? 'section-visible'
 			: 'section-hidden'}"
-		{@attach observeSection((v) => {
-			endingsVisible = v;
-		})}
+		use:intersectionReveal={{ onReveal: () => (endingsVisible = true) }}
 	>
 		<div class="mb-8 text-center">
 			<p class="mb-3 text-xs font-medium tracking-[0.3em] text-primary/60 uppercase">

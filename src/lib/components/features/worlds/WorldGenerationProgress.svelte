@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
+	import { useCyclingText } from '$lib/utils/useCyclingText.svelte';
 	import type { WorldGenerationStatus } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Check, ArrowLeft } from '@lucide/svelte';
@@ -11,10 +10,6 @@
 	}
 
 	let { generationStatus }: Props = $props();
-
-	const prefersReducedMotion = browser
-		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		: false;
 
 	// Steps with evocative labels
 	const steps: { status: WorldGenerationStatus; label: string }[] = [
@@ -47,32 +42,11 @@
 		failed: ['Something went wrong.']
 	};
 
-	let flavorIndex = $state(0);
-	let flavorVisible = $state(true);
+	const flavor = useCyclingText(() => flavorTexts[generationStatus] ?? ['Processing...']);
 
-	// Reset flavor index when status changes
 	$effect(() => {
 		void generationStatus;
-		flavorIndex = 0;
-		flavorVisible = true;
-	});
-
-	onMount(() => {
-		if (prefersReducedMotion) return;
-		const interval = setInterval(() => {
-			flavorVisible = false;
-			setTimeout(() => {
-				const texts = flavorTexts[generationStatus] ?? ['Processing...'];
-				flavorIndex = (flavorIndex + 1) % texts.length;
-				flavorVisible = true;
-			}, 400);
-		}, 3200);
-		return () => clearInterval(interval);
-	});
-
-	const currentFlavor = $derived.by(() => {
-		const texts = flavorTexts[generationStatus] ?? ['Processing...'];
-		return texts[flavorIndex % texts.length] ?? 'Processing...';
+		flavor.resetIndex();
 	});
 
 	function getProgress(status: WorldGenerationStatus): number {
@@ -161,11 +135,11 @@
 			</h2>
 			<p
 				class="gen-flavor"
-				class:gen-flavor-visible={flavorVisible}
+				class:gen-flavor-visible={flavor.visible}
 				role="status"
 				aria-live="polite"
 			>
-				{currentFlavor}
+				{flavor.text}
 			</p>
 			{#if !isDone}
 				<p class="gen-estimate">This may take 1–2 minutes.</p>

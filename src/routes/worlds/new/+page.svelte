@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { useCreateWorld, useUser } from '$lib/queries';
 	import type { WorldVisibility, WorldLength, VocabLevel, ContentFilter } from '$lib/types/api';
@@ -16,13 +15,15 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
-	import * as Select from '$lib/components/ui/select';
 	import * as Accordion from '$lib/components/ui/accordion';
-	import { Rocket, ArrowLeft, Shuffle, TriangleAlert, Globe, Lock, EyeOff } from '@lucide/svelte';
+	import { Rocket, ArrowLeft, Shuffle, TriangleAlert } from '@lucide/svelte';
+	import VisibilitySelect from '$lib/components/shared/VisibilitySelect.svelte';
+	import SegmentedControl from '$lib/components/shared/SegmentedControl.svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { logger } from '$lib/utils/logger';
 	import { formatResetDate } from '$lib/utils/date';
 	import { trackEvent } from '$lib/utils/analytics';
+	import { getItem, setItem } from '$lib/utils/storage';
 
 	// ── localStorage helpers ────────────────────────────────────────────
 	const STORAGE_KEY_LENGTH = 'cosmonaut-world-length';
@@ -30,35 +31,20 @@
 	const STORAGE_KEY_FILTER = 'cosmonaut-content-filter';
 
 	function getStoredWorldLength(): WorldLength {
-		if (!browser) return 'medium';
-		try {
-			const stored = localStorage.getItem(STORAGE_KEY_LENGTH);
-			if (stored === 'short' || stored === 'medium' || stored === 'long') return stored;
-		} catch {
-			// localStorage might not be available
-		}
+		const stored = getItem(STORAGE_KEY_LENGTH);
+		if (stored === 'short' || stored === 'medium' || stored === 'long') return stored;
 		return 'medium';
 	}
 
 	function getStoredVocabLevel(): VocabLevel {
-		if (!browser) return 'adult';
-		try {
-			const stored = localStorage.getItem(STORAGE_KEY_VOCAB);
-			if (stored === 'child' || stored === 'teen' || stored === 'adult') return stored;
-		} catch {
-			// localStorage might not be available
-		}
+		const stored = getItem(STORAGE_KEY_VOCAB);
+		if (stored === 'child' || stored === 'teen' || stored === 'adult') return stored;
 		return 'adult';
 	}
 
 	function getStoredContentFilter(): ContentFilter {
-		if (!browser) return 'none';
-		try {
-			const stored = localStorage.getItem(STORAGE_KEY_FILTER);
-			if (stored === 'none' || stored === 'moderate' || stored === 'strict') return stored;
-		} catch {
-			// localStorage might not be available
-		}
+		const stored = getItem(STORAGE_KEY_FILTER);
+		if (stored === 'none' || stored === 'moderate' || stored === 'strict') return stored;
 		return 'none';
 	}
 
@@ -106,30 +92,9 @@
 
 	// Persist preferences to localStorage
 	$effect(() => {
-		if (!browser) return;
-		try {
-			localStorage.setItem(STORAGE_KEY_LENGTH, worldLength);
-		} catch {
-			// localStorage might not be available
-		}
-	});
-
-	$effect(() => {
-		if (!browser) return;
-		try {
-			localStorage.setItem(STORAGE_KEY_VOCAB, vocabLevel);
-		} catch {
-			// localStorage might not be available
-		}
-	});
-
-	$effect(() => {
-		if (!browser) return;
-		try {
-			localStorage.setItem(STORAGE_KEY_FILTER, contentFilter);
-		} catch {
-			// localStorage might not be available
-		}
+		setItem(STORAGE_KEY_LENGTH, worldLength);
+		setItem(STORAGE_KEY_VOCAB, vocabLevel);
+		setItem(STORAGE_KEY_FILTER, contentFilter);
 	});
 
 	const selectedLengthOption = $derived(
@@ -357,76 +322,16 @@
 						</div>
 					</div>
 
-					<!-- General access -->
-					<div class="space-y-2">
-						<Label for="visibility">Who can play?</Label>
-						<Select.Root
-							type="single"
-							value={visibility}
-							onValueChange={(v) => {
-								if (v) visibility = v as WorldVisibility;
-							}}
-						>
-							<Select.Trigger id="visibility" class="w-full" disabled={loading}>
-								<div class="flex items-center gap-2">
-									{#if visibility === 'public'}
-										<Globe class="h-4 w-4 text-primary" />
-										<span>Public</span>
-									{:else if visibility === 'unlisted'}
-										<EyeOff class="h-4 w-4 text-muted-foreground" />
-										<span>Unlisted</span>
-									{:else}
-										<Lock class="h-4 w-4 text-muted-foreground" />
-										<span>Private</span>
-									{/if}
-								</div>
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="public">
-									<div class="flex items-center gap-2">
-										<Globe class="h-4 w-4" />
-										<div>
-											<div class="font-medium">Public</div>
-											<div class="text-xs text-muted-foreground">
-												Discoverable by anyone. Anyone with the link can play.
-											</div>
-										</div>
-									</div>
-								</Select.Item>
-								<Select.Item value="unlisted">
-									<div class="flex items-center gap-2">
-										<EyeOff class="h-4 w-4" />
-										<div>
-											<div class="font-medium">Unlisted</div>
-											<div class="text-xs text-muted-foreground">
-												Not discoverable. Anyone with the link can play.
-											</div>
-										</div>
-									</div>
-								</Select.Item>
-								<Select.Item value="private">
-									<div class="flex items-center gap-2">
-										<Lock class="h-4 w-4" />
-										<div>
-											<div class="font-medium">Private</div>
-											<div class="text-xs text-muted-foreground">
-												Invite only. Only people you invite can play.
-											</div>
-										</div>
-									</div>
-								</Select.Item>
-							</Select.Content>
-						</Select.Root>
-						<p class="text-xs text-muted-foreground">
-							{#if visibility === 'public'}
-								Anyone on the internet can discover and play this world.
-							{:else if visibility === 'unlisted'}
-								Anyone with the link can play, but the world won't appear in search or trending.
-							{:else}
-								Only you and people you invite can access this world.
-							{/if}
-						</p>
-					</div>
+				<!-- General access -->
+				<div class="space-y-2">
+					<Label for="visibility">Who can play?</Label>
+					<VisibilitySelect
+						id="visibility"
+						value={visibility}
+						onValueChange={(v) => (visibility = v)}
+						disabled={loading}
+					/>
+				</div>
 
 					<!-- More settings -->
 					<Accordion.Root type="single" class="w-full border-none">
@@ -438,92 +343,50 @@
 							</Accordion.Trigger>
 							<Accordion.Content>
 								<div class="space-y-6 pt-4">
-									<!-- Story Length -->
-									<div class="space-y-2">
-										<Label>Story Length</Label>
-										<div
-											class="inline-flex w-full rounded-lg border border-border bg-muted/50 p-1"
-											role="radiogroup"
-											aria-label="Story length"
-										>
-											{#each WORLD_LENGTH_OPTIONS as option (option.value)}
-												<button
-													type="button"
-													role="radio"
-													aria-checked={worldLength === option.value}
-													disabled={loading}
-													onclick={() => (worldLength = option.value)}
-													class="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-all
-														{worldLength === option.value
-														? 'bg-background text-foreground shadow-sm'
-														: 'text-muted-foreground hover:text-foreground'}"
-												>
-													{option.label}
-												</button>
-											{/each}
-										</div>
-										<p class="text-xs text-muted-foreground">
-											{selectedLengthOption.label} stories are approximately a {selectedLengthOption.description}.
-										</p>
-									</div>
+								<!-- Story Length -->
+								<div class="space-y-2">
+									<Label>Story Length</Label>
+									<SegmentedControl
+										options={WORLD_LENGTH_OPTIONS}
+										value={worldLength}
+										onValueChange={(v) => (worldLength = v as WorldLength)}
+										disabled={loading}
+										label="Story length"
+									/>
+									<p class="text-xs text-muted-foreground">
+										{selectedLengthOption.label} stories are approximately a {selectedLengthOption.description}.
+									</p>
+								</div>
 
-									<!-- Vocabulary Level -->
-									<div class="space-y-2">
-										<Label>Vocabulary Level</Label>
-										<div
-											class="inline-flex w-full rounded-lg border border-border bg-muted/50 p-1"
-											role="radiogroup"
-											aria-label="Vocabulary level"
-										>
-											{#each VOCAB_LEVEL_OPTIONS as option (option.value)}
-												<button
-													type="button"
-													role="radio"
-													aria-checked={vocabLevel === option.value}
-													disabled={loading}
-													onclick={() => (vocabLevel = option.value)}
-													class="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-all
-														{vocabLevel === option.value
-														? 'bg-background text-foreground shadow-sm'
-														: 'text-muted-foreground hover:text-foreground'}"
-												>
-													{option.label}
-												</button>
-											{/each}
-										</div>
-										<p class="text-xs text-muted-foreground">
-											{selectedVocabOption.description}
-										</p>
-									</div>
+								<!-- Vocabulary Level -->
+								<div class="space-y-2">
+									<Label>Vocabulary Level</Label>
+									<SegmentedControl
+										options={VOCAB_LEVEL_OPTIONS}
+										value={vocabLevel}
+										onValueChange={(v) => (vocabLevel = v as VocabLevel)}
+										disabled={loading}
+										label="Vocabulary level"
+									/>
+									<p class="text-xs text-muted-foreground">
+										{selectedVocabOption.description}
+									</p>
+								</div>
 
-									<!-- Content Filter -->
-									<div class="space-y-2">
-										<Label>Content Filter</Label>
-										<div
-											class="inline-flex w-full rounded-lg border border-border bg-muted/50 p-1"
-											role="radiogroup"
-											aria-label="Content filter"
-										>
-											{#each CONTENT_FILTER_OPTIONS as option (option.value)}
-												<button
-													type="button"
-													role="radio"
-													aria-checked={contentFilter === option.value}
-													disabled={loading}
-													onclick={() => (contentFilter = option.value)}
-													class="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-all
-														{contentFilter === option.value
-														? 'bg-background text-foreground shadow-sm'
-														: 'text-muted-foreground hover:text-foreground'}"
-												>
-													{option.label}
-												</button>
-											{/each}
-										</div>
-										<p class="text-xs text-muted-foreground">
-											{selectedFilterOption.description}
-										</p>
-									</div>
+								<!-- Content Filter -->
+								<div class="space-y-2">
+									<Label>Content Filter</Label>
+									<SegmentedControl
+										options={CONTENT_FILTER_OPTIONS}
+										value={contentFilter}
+										onValueChange={(v) => (contentFilter = v as ContentFilter)}
+										disabled={loading}
+										label="Content filter"
+									/>
+									<p class="text-xs text-muted-foreground">
+										{selectedFilterOption.description}
+									</p>
+								</div>
 								</div>
 							</Accordion.Content>
 						</Accordion.Item>
