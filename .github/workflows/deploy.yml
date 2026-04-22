@@ -50,6 +50,8 @@ jobs:
             echo "PUBLIC_ENV=dev" >> $GITHUB_ENV
           fi
           echo "PUBLIC_SENTRY_RELEASE=${{ github.sha }}" >> $GITHUB_ENV
+          echo "PUBLIC_POSTHOG_HOST=https://us.i.posthog.com" >> $GITHUB_ENV
+          echo "PUBLIC_POSTHOG_PROJECT_TOKEN=phc_tZwyBfSZQFAsGkPyRVstpwe4rRU2rmvHhhD4XDxfiQyS" >> $GITHUB_ENV
 
       - name: Build
         run: npm run build
@@ -64,6 +66,8 @@ jobs:
           PUBLIC_AWS_REGION: us-east-2
           PUBLIC_ENV: ${{ env.PUBLIC_ENV }}
           PUBLIC_SENTRY_RELEASE: ${{ env.PUBLIC_SENTRY_RELEASE }}
+          PUBLIC_POSTHOG_HOST: ${{ env.PUBLIC_POSTHOG_HOST }}
+          PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ env.PUBLIC_POSTHOG_PROJECT_TOKEN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
