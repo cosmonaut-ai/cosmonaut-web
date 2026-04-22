@@ -11,6 +11,9 @@ const config = {
 		}),
 		version: {
 			pollInterval: 15_000
+		},
+		paths: {
+			relative: false
 		}
 	}
 };

@@ -1,5 +1,5 @@
 import { useAuth, SignUpNotConfirmedError } from '$lib/auth/auth.svelte';
-import { trackEvent } from '$lib/utils/analytics';
+import { trackEvent, identifyUser } from '$lib/utils/analytics';
 import { formatAuthError } from '$lib/auth/errors';
 import { goto } from '$app/navigation';
 
@@ -54,6 +54,7 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 		try {
 			await auth.signInWithEmail(email, password);
 			trackEvent('login', { method: 'email' });
+			if (auth.user?.sub) identifyUser(auth.user.sub, { email: auth.user.email });
 			goto(getRedirectDestination());
 		} catch (error) {
 			if (error instanceof SignUpNotConfirmedError) {
@@ -82,6 +83,7 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 		try {
 			const result = await auth.signUpWithEmail(email, password);
 			trackEvent('sign_up', { method: 'email' });
+			identifyUser(email, { email });
 			if (result.isConfirmationRequired) {
 				view = 'verify';
 				successMessage = 'Check your email for a verification code.';
@@ -103,6 +105,7 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 			await auth.confirmSignUpWithCode(email, verificationCode);
 			trackEvent('email_verified');
 			await auth.signInWithEmail(email, password);
+			if (auth.user?.sub) identifyUser(auth.user.sub, { email: auth.user.email });
 			goto(getRedirectDestination());
 		} catch (error) {
 			errorMessage = formatAuthError(error);

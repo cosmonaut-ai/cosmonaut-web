@@ -10,6 +10,7 @@
 	import { useSetUsername, useUser } from '$lib/queries/subscription';
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import { showSuccess } from '$lib/utils/toast';
+	import { trackEvent, identifyUser } from '$lib/utils/analytics';
 
 	const auth = useAuth();
 	const userQuery = useUser();
@@ -86,6 +87,8 @@
 				if (optIn) {
 					void updateNewsletter(true);
 				}
+				trackEvent('onboarding_completed', { newsletter_opt_in: optIn });
+				if (auth.user?.sub) identifyUser(auth.user.sub, { username: name, email: auth.user.email });
 				showSuccess(`You're all set, ${name}!`, 'Go conquer the cosmos!');
 				goto('/dashboard');
 			},
