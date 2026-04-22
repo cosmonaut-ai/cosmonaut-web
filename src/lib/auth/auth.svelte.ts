@@ -22,6 +22,7 @@ import { goto } from '$app/navigation';
 import { setItem, removeItem } from '$lib/utils/storage';
 import { queryClient } from '$lib/queries/client';
 import { logger } from '$lib/utils/logger';
+import { identifyUser, resetUser } from '$lib/utils/analytics';
 
 // Auth state using Svelte 5 runes
 let isAuthenticated = $state(false);
@@ -100,6 +101,7 @@ export async function checkAuthState(): Promise<void> {
 
 			isAuthenticated = true;
 			Sentry.setUser({ id: user.sub, email: user.email, username: user.name });
+			identifyUser(user.sub, { email: user.email, name: user.name });
 		} else {
 			// No valid tokens
 			isAuthenticated = false;
@@ -296,6 +298,7 @@ export async function logout(): Promise<void> {
 	authReadyPromise = null;
 	_streamingSessionValidUntil = 0;
 	Sentry.setUser(null);
+	resetUser();
 
 	queryClient.clear();
 

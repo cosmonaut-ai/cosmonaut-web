@@ -1,4 +1,6 @@
 import * as Sentry from '@sentry/sveltekit';
+import posthog from 'posthog-js';
+import { PUBLIC_POSTHOG_PROJECT_TOKEN, PUBLIC_POSTHOG_HOST } from '$env/static/public';
 import { ENV, SENTRY_RELEASE, isLocalEnvironment } from '$lib/config';
 
 function reloadIfStale(key: string) {
@@ -40,6 +42,15 @@ if (!isLocalEnvironment) {
 			Sentry.replayIntegration(),
 			Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] })
 		]
+	});
+}
+
+export async function init() {
+	posthog.init(PUBLIC_POSTHOG_PROJECT_TOKEN, {
+		api_host: PUBLIC_POSTHOG_HOST,
+		ui_host: 'https://us.posthog.com',
+		defaults: '2026-01-30',
+		capture_exceptions: true
 	});
 }
 

@@ -8,6 +8,7 @@
 	import { untrack } from 'svelte';
 	import type { Component } from 'svelte';
 	import { useAudioPlayer } from './useAudioPlayer.svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let AudioPlayerBar = $state<Component<any> | null>(null);
@@ -78,6 +79,7 @@
 		if (!voiceId) return; // Voices haven't loaded yet
 
 		playerVisible = true;
+		trackEvent('narration_started', { world_id: worldId, node_id: nodeId });
 
 		if (hasAudio) {
 			// Audio already cached - show player and play immediately
