@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import type { NodeTypes } from '@xyflow/svelte';
 	import { useWorld, useWorldNodes } from '$lib/queries';
 	import { transformNodesToFlow } from '$lib/utils/nodeTransform';
@@ -10,8 +11,10 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { BookOpen, Rocket } from '@lucide/svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	const worldId = $derived(page.params.worldId!);
+	onMount(() => trackEvent('map_viewed', { world_id: worldId }));
 	const worldQuery = useWorld(() => worldId);
 	const nodesQuery = useWorldNodes(() => worldId);
 	const rootNodeId = $derived(worldQuery.data?.root_node_id ?? null);

@@ -51,7 +51,7 @@
 		if (targetRank === currentRank) return;
 
 		if (currentTier === 'FREE') {
-			trackEvent('begin_checkout', { tier });
+			trackEvent('checkout_initiated', { tier });
 			checkoutMutation.mutate({
 				tier: tier as 'EXPLORER' | 'COSMONAUT',
 				success_url: `${window.location.origin}/pricing?checkout=success`,

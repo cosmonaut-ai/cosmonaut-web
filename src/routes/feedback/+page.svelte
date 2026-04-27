@@ -25,7 +25,6 @@
 		MessageCircleQuestionMark
 	} from '@lucide/svelte';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { trackEvent } from '$lib/utils/analytics';
 
 	const categoryOptions: { value: FeedbackCategory; label: string; icon: typeof Bug }[] = [
 		{ value: 'bug', label: 'Bug Report', icon: Bug },
@@ -56,7 +55,6 @@
 		rateLimited = false;
 		try {
 			await feedbackMutation.mutateAsync({ category, message: message.trim() });
-			trackEvent('feedback_submitted', { category });
 			submitted = true;
 		} catch (error) {
 			if (error instanceof ApiError && error.status === 429) {

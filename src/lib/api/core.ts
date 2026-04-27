@@ -3,6 +3,7 @@ import { ApiError } from '$lib/types/api';
 import { isLocalEnvironment } from '$lib/config';
 import { logger } from '$lib/utils/logger';
 import { getAuthToken } from '$lib/auth/auth.svelte';
+import { getPostHogDistinctId, getPostHogSessionId } from '$lib/utils/analytics';
 import { fetchWithAuthRetry } from './fetchWithAuthRetry';
 
 /** Delay after streaming completes to ensure server-side persistence before re-fetching */
@@ -36,7 +37,7 @@ export async function parseApiError(response: Response): Promise<ApiError> {
  */
 export async function getAuthHeaders(forceRefresh = false): Promise<HeadersInit> {
 	const token = await getAuthToken(forceRefresh);
-	const headers: HeadersInit = {
+	const headers: Record<string, string> = {
 		'Content-Type': 'application/json'
 	};
 
@@ -45,6 +46,12 @@ export async function getAuthHeaders(forceRefresh = false): Promise<HeadersInit>
 	} else if (!isLocalEnvironment) {
 		logger.warn('No auth token available for API request');
 	}
+
+	const phDistinctId = getPostHogDistinctId();
+	if (phDistinctId) headers['X-PostHog-Distinct-Id'] = phDistinctId;
+
+	const phSessionId = getPostHogSessionId();
+	if (phSessionId) headers['X-PostHog-Session-Id'] = phSessionId;
 
 	return headers;
 }

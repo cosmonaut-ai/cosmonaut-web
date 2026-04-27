@@ -44,14 +44,22 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 		if (!node.parent_id) {
 			trackEvent('story_started', { world_id: options.worldId() });
 		}
-		trackEvent('choice_made', { world_id: options.worldId(), choice_type: 'preset' });
+		trackEvent('story_choice_made', {
+			world_id: options.worldId(),
+			choice_type: 'preset',
+			source: 'client'
+		});
 		await executeChoice({ targetId });
 	}
 
 	async function handleCustomChoice(text: string) {
 		const node = options.currentNode();
 		if (!node || options.loading() || options.isProcessingChoice()) return;
-		trackEvent('custom_choice_made', { world_id: options.worldId(), choice_type: 'custom' });
+		trackEvent('story_choice_made', {
+			world_id: options.worldId(),
+			choice_type: 'custom',
+			source: 'client'
+		});
 		await executeChoice({ customChoice: text });
 	}
 

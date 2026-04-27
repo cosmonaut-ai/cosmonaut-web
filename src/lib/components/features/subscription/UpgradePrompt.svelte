@@ -126,6 +126,7 @@
 			{/if}
 			<Button
 				onclick={() => {
+					trackEvent('upgrade_prompt_clicked', { resource });
 					onOpenChange(false);
 					goto('/pricing');
 				}}

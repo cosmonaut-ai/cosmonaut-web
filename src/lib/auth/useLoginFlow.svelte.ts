@@ -61,6 +61,7 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 				view = 'verify';
 				successMessage = 'Please enter the verification code sent to your email.';
 			} else {
+				trackEvent('auth_failed', { method: 'email', action: 'sign_in' });
 				errorMessage = formatAuthError(error);
 			}
 		} finally {
@@ -83,7 +84,6 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 		try {
 			const result = await auth.signUpWithEmail(email, password);
 			trackEvent('sign_up', { method: 'email' });
-			identifyUser(email, { email });
 			if (result.isConfirmationRequired) {
 				view = 'verify';
 				successMessage = 'Check your email for a verification code.';
@@ -91,6 +91,7 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 				goto(getRedirectDestination());
 			}
 		} catch (error) {
+			trackEvent('auth_failed', { method: 'email', action: 'sign_up' });
 			errorMessage = formatAuthError(error);
 		} finally {
 			isSubmitting = false;
@@ -172,6 +173,7 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 			trackEvent('login', { method: 'google' });
 			await auth.loginWithGoogle();
 		} catch (error) {
+			trackEvent('auth_failed', { method: 'google', action: 'sign_in' });
 			errorMessage = formatAuthError(error);
 			isSubmitting = false;
 		}

@@ -5,6 +5,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Sparkles, ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	const featuredQuery = useFeaturedWorlds();
 
@@ -98,7 +99,10 @@
 						type="button"
 						data-card
 						class="group w-64 shrink-0 cursor-pointer text-left sm:w-72"
-						onclick={() => goto(`/worlds/${world.id}`)}
+						onclick={() => {
+							trackEvent('featured_world_clicked', { world_id: world.id });
+							goto(`/worlds/${world.id}`);
+						}}
 					>
 						<Card class="h-full overflow-hidden transition-colors group-hover:border-primary/40">
 							<div class="relative h-36 w-full overflow-hidden bg-muted">

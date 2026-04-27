@@ -193,12 +193,6 @@
 			},
 			{
 				onSuccess: (world) => {
-					trackEvent('world_created', {
-						visibility,
-						world_length: worldLength,
-						vocab_level: vocabLevel,
-						content_filter: contentFilter
-					});
 					goto(`/worlds/${world.id}`);
 				}
 			}

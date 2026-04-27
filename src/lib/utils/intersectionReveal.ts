@@ -10,10 +10,7 @@ interface IntersectionRevealOptions {
  * Svelte use:action that fires `onReveal` when the element scrolls into view.
  * Immediately reveals if the user prefers reduced motion.
  */
-export function intersectionReveal(
-	node: HTMLElement,
-	options: IntersectionRevealOptions
-) {
+export function intersectionReveal(node: HTMLElement, options: IntersectionRevealOptions) {
 	const { onReveal, threshold = 0.15, once = true } = options;
 
 	if (prefersReducedMotion) {
