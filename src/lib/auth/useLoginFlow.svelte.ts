@@ -5,6 +5,14 @@ import { goto } from '$app/navigation';
 
 type AuthView = 'signin' | 'signup' | 'verify' | 'forgot' | 'reset';
 
+function isAccountSuspendedError(error: unknown): boolean {
+	if (error instanceof Error) {
+		const msg = error.message;
+		return msg.includes('NotAuthorizedException') && msg.toLowerCase().includes('disabled');
+	}
+	return false;
+}
+
 export function useLoginFlow(getRedirectDestination: () => string) {
 	const auth = useAuth();
 
@@ -18,6 +26,7 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 	let showPassword = $state(false);
 	let showConfirmPassword = $state(false);
 	let isSubmitting = $state(false);
+	let isSuspended = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
 
@@ -38,6 +47,7 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 	const passwordsMatch = $derived(password === confirmPassword && confirmPassword.length > 0);
 
 	function clearMessages() {
+		isSuspended = false;
 		errorMessage = '';
 		successMessage = '';
 	}
@@ -60,6 +70,8 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 			if (error instanceof SignUpNotConfirmedError) {
 				view = 'verify';
 				successMessage = 'Please enter the verification code sent to your email.';
+			} else if (isAccountSuspendedError(error)) {
+				isSuspended = true;
 			} else {
 				trackEvent('auth_failed', { method: 'email', action: 'sign_in' });
 				errorMessage = formatAuthError(error);
@@ -245,6 +257,9 @@ export function useLoginFlow(getRedirectDestination: () => string) {
 		},
 		get isSubmitting() {
 			return isSubmitting;
+		},
+		get isSuspended() {
+			return isSuspended;
 		},
 		get errorMessage() {
 			return errorMessage;

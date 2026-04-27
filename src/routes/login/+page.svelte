@@ -107,7 +107,9 @@
 					<span class="font-orbitron text-xl font-semibold text-foreground">Cosmonaut</span>
 				</a>
 				<p class="text-sm text-muted-foreground">
-					{#if hasRedirect && (flow.view === 'signin' || flow.view === 'signup')}
+					{#if flow.isSuspended}
+						Your account has been suspended
+					{:else if hasRedirect && (flow.view === 'signin' || flow.view === 'signup')}
 						Sign in or create an account to continue
 					{:else if flow.view === 'signin'}
 						Sign in to continue your adventures
@@ -143,7 +145,22 @@
 							</div>
 						{/if}
 
-						{#if flow.view === 'signin'}
+						{#if flow.isSuspended}
+							<div
+								class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-4 text-sm text-destructive"
+							>
+								<p class="font-medium">Account suspended</p>
+								<p class="mt-1.5 leading-relaxed">
+									This account has been suspended due to a violation of our <a
+										href="/terms"
+										class="underline hover:opacity-80">Terms of Service</a
+									>. If you have questions, please email <a
+										href="mailto:support@cosmonaut-ai.com"
+										class="underline hover:opacity-80">support@cosmonaut-ai.com</a
+									>.
+								</p>
+							</div>
+						{:else if flow.view === 'signin'}
 							<SignInForm
 								email={flow.email}
 								password={flow.password}
