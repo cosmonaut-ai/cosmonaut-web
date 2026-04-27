@@ -130,16 +130,17 @@
 
 		<!-- Story content - no absolute positioning -->
 		{#key currentNodeId}
-			<div
-				in:fade={{ duration: fadeDuration, delay: fadeDelay }}
-				out:fade={{ duration: prefersReducedMotion ? 0 : 150 }}
-				class={isTransitioning ? 'opacity-50' : ''}
-			>
-				<Card class="demo-card border-l-4 border-l-primary bg-card">
-					<CardContent class="p-6 sm:p-8">
+			<div class="-mx-6 sm:mx-0">
+				<div
+					in:fade={{ duration: fadeDuration, delay: fadeDelay }}
+					out:fade={{ duration: prefersReducedMotion ? 0 : 150 }}
+					class={isTransitioning ? 'opacity-50' : ''}
+				>
+					<Card class="demo-card rounded-none bg-card py-0 sm:rounded-lg">
+					<CardContent class="p-3 sm:p-6 lg:p-8">
 						<!-- Story text -->
 						<div
-							class="prose prose-lg max-w-none font-mono leading-relaxed text-card-foreground prose-invert"
+							class="prose prose-base max-w-none leading-relaxed text-card-foreground prose-invert sm:prose-lg"
 							aria-live="polite"
 							aria-busy={isTyping}
 						>
@@ -203,7 +204,9 @@
 						{/if}
 					</CardContent>
 				</Card>
+				</div>
 			</div>
+
 		{/key}
 
 		<!-- Restart button -->
@@ -219,9 +222,13 @@
 </section>
 
 <style>
-	/* ── Card left border glow ── */
+	/* ── Card background ── */
 	:global(.demo-card) {
-		box-shadow: -2px 0 16px oklch(from var(--primary) l c h / 0.08);
+		background: linear-gradient(
+			135deg,
+			var(--card) 0%,
+			oklch(from var(--primary) l c h / 0.02) 100%
+		);
 	}
 
 	/* ── Typing cursor - gold glow caret ── */

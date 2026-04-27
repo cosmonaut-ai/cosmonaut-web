@@ -137,7 +137,7 @@
 </script>
 
 <Card
-	class="story-card rounded-none border-l-0 border-l-primary bg-card py-0 sm:rounded-lg sm:border-l-4"
+	class="story-card rounded-none bg-card py-0 sm:rounded-lg"
 >
 	<CardContent class="p-3 sm:p-6 lg:p-8">
 		<!-- Parent choice context -->
@@ -270,20 +270,13 @@
 		}
 	}
 
-	/* ── Story card left border glow ── */
+	/* ── Story card background ── */
 	:global(.story-card) {
-		border-left-color: var(--primary) !important;
 		background: linear-gradient(
 			135deg,
 			var(--card) 0%,
 			oklch(from var(--primary) l c h / 0.02) 100%
 		);
-	}
-
-	@media (min-width: 640px) {
-		:global(.story-card) {
-			box-shadow: -2px 0 16px oklch(from var(--primary) l c h / 0.08);
-		}
 	}
 
 	/* ── Ending star flourish ── */

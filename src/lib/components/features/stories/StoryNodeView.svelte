@@ -295,7 +295,7 @@
 		</div>
 	{:else if isLoading}
 		<!-- Loading state -->
-		<Card class="border-l-4 border-l-primary">
+		<Card>
 			<CardContent class="flex items-center justify-center py-16">
 				<div class="flex items-center gap-3 text-muted-foreground">
 					<Spinner class="h-4 w-4" />

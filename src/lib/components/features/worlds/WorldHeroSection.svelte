@@ -71,16 +71,18 @@
 	></div>
 	<div class="hero-nebula pointer-events-none absolute inset-0" aria-hidden="true"></div>
 
-	<div class="absolute top-4 left-4 z-20">
-		<Button
-			variant="ghost"
-			size="sm"
-			class="gap-2 bg-background/30 backdrop-blur-sm hover:bg-background/50"
-			onclick={() => goto('/dashboard')}
-		>
-			<ArrowLeft class="h-4 w-4" />
-			Dashboard
-		</Button>
+	<div class="absolute inset-x-0 top-4 z-20">
+		<div class="mx-auto max-w-4xl px-6">
+			<Button
+				variant="ghost"
+				size="sm"
+				class="gap-2 bg-background/30 backdrop-blur-sm hover:bg-background/50"
+				onclick={() => goto('/dashboard')}
+			>
+				<ArrowLeft class="h-4 w-4" />
+				Dashboard
+			</Button>
+		</div>
 	</div>
 
 	<div class="relative z-10 mx-auto w-full max-w-4xl px-6 pt-24 pb-8">
