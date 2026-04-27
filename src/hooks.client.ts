@@ -39,6 +39,19 @@ if (!isLocalEnvironment) {
 		tracesSampleRate: 0.1,
 		replaysSessionSampleRate: 0.1,
 		replaysOnErrorSampleRate: 1.0,
+		ignoreErrors: [
+			/runtime\.sendMessage/,
+			/extension\//i,
+			/^chrome-extension:\/\//,
+			/^moz-extension:\/\//,
+			/^safari-web-extension:\/\//
+		],
+		denyUrls: [
+			/extensions\//i,
+			/^chrome-extension:\/\//,
+			/^moz-extension:\/\//,
+			/^safari-web-extension:\/\//
+		],
 		integrations: [
 			Sentry.replayIntegration(),
 			Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] })

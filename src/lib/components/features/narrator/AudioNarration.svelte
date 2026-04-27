@@ -258,9 +258,16 @@
 						{...props}
 						aria-label="Narration unavailable"
 						class="inline-flex shrink-0 cursor-not-allowed"
-						onmouseenter={() => { isHovering = true; tooltipOpen = true; }}
-						onmouseleave={() => { isHovering = false; }}
-						onclick={() => { tooltipOpen = !tooltipOpen; }}
+						onmouseenter={() => {
+							isHovering = true;
+							tooltipOpen = true;
+						}}
+						onmouseleave={() => {
+							isHovering = false;
+						}}
+						onclick={() => {
+							tooltipOpen = !tooltipOpen;
+						}}
 					>
 						<Button
 							variant="ghost"
