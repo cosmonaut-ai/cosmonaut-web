@@ -124,9 +124,10 @@
 			{ visibility, shared_with: sharedWith },
 			{
 				onSuccess: (updatedWorld) => {
-					trackEvent('share_settings_saved', {
+					trackEvent('world_shared', {
 						visibility,
-						shared_count: sharedWith.length
+						shared_count: sharedWith.length,
+						source: 'client'
 					});
 					onWorldUpdate?.(updatedWorld);
 					autosave.markSaved();

@@ -14,7 +14,6 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Trash2 } from '@lucide/svelte';
-	import { trackEvent } from '$lib/utils/analytics';
 
 	const auth = useAuth();
 
@@ -30,7 +29,6 @@
 		isDeleting = true;
 		try {
 			await auth.deleteAccount();
-			trackEvent('account_deleted');
 			goto('/');
 		} catch (error) {
 			deleteError = error instanceof Error ? error.message : 'Account deletion failed.';

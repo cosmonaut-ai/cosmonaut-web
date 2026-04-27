@@ -14,7 +14,6 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Plus } from '@lucide/svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
-	import { trackEvent } from '$lib/utils/analytics';
 
 	const auth = useAuth();
 	const worldsQuery = useWorlds();
@@ -30,7 +29,6 @@
 	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
 
 	function handleDeleteWorld(worldId: string) {
-		trackEvent('world_deleted');
 		deletingWorldId = worldId;
 		deleteMutation.mutate(worldId, {
 			onSettled: () => {
