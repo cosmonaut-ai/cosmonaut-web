@@ -136,9 +136,7 @@
 	});
 </script>
 
-<Card
-	class="story-card rounded-none bg-card py-0 sm:rounded-lg"
->
+<Card class="story-card rounded-none bg-card py-0 sm:rounded-lg">
 	<CardContent class="p-3 sm:p-6 lg:p-8">
 		<!-- Parent choice context -->
 		{#if parentChoice}

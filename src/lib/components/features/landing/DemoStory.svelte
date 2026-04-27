@@ -137,76 +137,77 @@
 					class={isTransitioning ? 'opacity-50' : ''}
 				>
 					<Card class="demo-card rounded-none bg-card py-0 sm:rounded-lg">
-					<CardContent class="p-3 sm:p-6 lg:p-8">
-						<!-- Story text -->
-						<div
-							class="prose prose-base max-w-none leading-relaxed text-card-foreground prose-invert sm:prose-lg"
-							aria-live="polite"
-							aria-busy={isTyping}
-						>
-							{#each displayedText.split('\n\n') as paragraph, i (i)}
-								<p class="mb-4 last:mb-0">
-									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-									{@html formatText(paragraph)}
-								</p>
-							{/each}
-							{#if isTyping}
-								<span class="demo-cursor" aria-hidden="true"></span>
-							{/if}
-						</div>
-
-						<!-- Choices -->
-						{#if !isTyping && currentNode?.choices && currentNode.choices.length > 0}
+						<CardContent class="p-3 sm:p-6 lg:p-8">
+							<!-- Story text -->
 							<div
-								class="mt-8 space-y-3 border-t border-border pt-8"
-								in:fade={{ duration: fadeDuration, delay: choiceFadeDelay }}
+								class="prose prose-base max-w-none leading-relaxed text-card-foreground prose-invert sm:prose-lg"
+								aria-live="polite"
+								aria-busy={isTyping}
 							>
-								<p class="mb-4 text-sm font-medium tracking-wider text-muted-foreground uppercase">
-									What do you do?
-								</p>
-								{#each currentNode.choices as choice, i (choice.targetId)}
-									<button
-										onclick={() => selectChoice(choice.targetId)}
-										disabled={isTransitioning}
-										class="demo-choice group flex w-full items-center gap-4 rounded-lg border border-border bg-background/50 p-4 text-left disabled:opacity-50"
-										style="--choice-delay: {i * 70}ms"
-									>
-										<span
-											class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 text-sm font-medium text-primary transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground"
-										>
-											{i + 1}
-										</span>
-										<span class="text-foreground">{choice.label}</span>
-										<ChevronRight
-											class="ml-auto h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary"
-										/>
-									</button>
+								{#each displayedText.split('\n\n') as paragraph, i (i)}
+									<p class="mb-4 last:mb-0">
+										<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+										{@html formatText(paragraph)}
+									</p>
 								{/each}
+								{#if isTyping}
+									<span class="demo-cursor" aria-hidden="true"></span>
+								{/if}
 							</div>
-						{/if}
 
-						<!-- Ending state -->
-						{#if !isTyping && isEnding}
-							<div
-								class="mt-8 border-t border-border pt-8 text-center"
-								in:fade={{ duration: fadeDuration, delay: choiceFadeDelay }}
-							>
-								<p class="demo-ending mb-6 text-muted-foreground">
-									<span class="demo-star demo-star-1">✦</span>
-									This path has reached its destination
-									<span class="demo-star demo-star-2">✦</span>
-								</p>
-								<Button variant="outline" onclick={restart} class="gap-2">
-									<RotateCcw class="h-4 w-4" />
-									Chart a New Course
-								</Button>
-							</div>
-						{/if}
-					</CardContent>
-				</Card>
+							<!-- Choices -->
+							{#if !isTyping && currentNode?.choices && currentNode.choices.length > 0}
+								<div
+									class="mt-8 space-y-3 border-t border-border pt-8"
+									in:fade={{ duration: fadeDuration, delay: choiceFadeDelay }}
+								>
+									<p
+										class="mb-4 text-sm font-medium tracking-wider text-muted-foreground uppercase"
+									>
+										What do you do?
+									</p>
+									{#each currentNode.choices as choice, i (choice.targetId)}
+										<button
+											onclick={() => selectChoice(choice.targetId)}
+											disabled={isTransitioning}
+											class="demo-choice group flex w-full items-center gap-4 rounded-lg border border-border bg-background/50 p-4 text-left disabled:opacity-50"
+											style="--choice-delay: {i * 70}ms"
+										>
+											<span
+												class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 text-sm font-medium text-primary transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground"
+											>
+												{i + 1}
+											</span>
+											<span class="text-foreground">{choice.label}</span>
+											<ChevronRight
+												class="ml-auto h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary"
+											/>
+										</button>
+									{/each}
+								</div>
+							{/if}
+
+							<!-- Ending state -->
+							{#if !isTyping && isEnding}
+								<div
+									class="mt-8 border-t border-border pt-8 text-center"
+									in:fade={{ duration: fadeDuration, delay: choiceFadeDelay }}
+								>
+									<p class="demo-ending mb-6 text-muted-foreground">
+										<span class="demo-star demo-star-1">✦</span>
+										This path has reached its destination
+										<span class="demo-star demo-star-2">✦</span>
+									</p>
+									<Button variant="outline" onclick={restart} class="gap-2">
+										<RotateCcw class="h-4 w-4" />
+										Chart a New Course
+									</Button>
+								</div>
+							{/if}
+						</CardContent>
+					</Card>
 				</div>
 			</div>
-
 		{/key}
 
 		<!-- Restart button -->
