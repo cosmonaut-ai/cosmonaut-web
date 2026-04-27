@@ -45,6 +45,30 @@
 	const MAX_NARRATION_CHARS = 3000;
 	const isTooLong = $derived(nodeTextLength > MAX_NARRATION_CHARS);
 
+	// Returns a human-readable reason why narration is disabled, or null if enabled.
+	const narrationDisabledMessage = $derived<string | null>(
+		isTooLong
+			? `Too long for audio narration (${nodeTextLength.toLocaleString()} / ${MAX_NARRATION_CHARS.toLocaleString()} chars)`
+			: !isNodeCompleted
+				? 'Audio narration is available once the story is generated'
+				: null
+	);
+
+	// ── Disabled-state tooltip (hover + click, auto-dismiss) ──
+	let tooltipOpen = $state(false);
+	let isHovering = $state(false);
+
+	// When opened via tap/click (isHovering=false), auto-dismiss after 2s.
+	// Effect cleanup cancels the timer when hover or open state changes.
+	$effect(() => {
+		if (tooltipOpen && !isHovering) {
+			const timer = setTimeout(() => {
+				tooltipOpen = false;
+			}, 2000);
+			return () => clearTimeout(timer);
+		}
+	});
+
 	const voicesQuery = useVoices();
 	const voices = $derived(voicesQuery.data ?? []);
 
@@ -225,28 +249,33 @@
 {/if}
 
 <!-- Speaker icon toggle (always visible, disabled until node text is ready) -->
-{#if isTooLong}
+{#if narrationDisabledMessage}
 	<Tooltip.Provider>
-		<Tooltip.Root>
+		<Tooltip.Root bind:open={tooltipOpen} delayDuration={0}>
 			<Tooltip.Trigger>
 				{#snippet child({ props })}
-					<Button
+					<span
 						{...props}
-						variant="ghost"
-						size="icon-sm"
-						disabled
 						aria-label="Narration unavailable"
-						class="shrink-0"
+						class="inline-flex shrink-0 cursor-not-allowed"
+						onmouseenter={() => { isHovering = true; tooltipOpen = true; }}
+						onmouseleave={() => { isHovering = false; }}
+						onclick={() => { tooltipOpen = !tooltipOpen; }}
 					>
-						<Volume2 class="h-4 w-4" />
-					</Button>
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							disabled
+							aria-hidden="true"
+							class="pointer-events-none"
+						>
+							<Volume2 class="h-4 w-4" />
+						</Button>
+					</span>
 				{/snippet}
 			</Tooltip.Trigger>
 			<Tooltip.Content>
-				<p>
-					Too long for audio narration ({nodeTextLength.toLocaleString()} / {MAX_NARRATION_CHARS.toLocaleString()}
-					chars)
-				</p>
+				<p>{narrationDisabledMessage}</p>
 			</Tooltip.Content>
 		</Tooltip.Root>
 	</Tooltip.Provider>
@@ -255,7 +284,7 @@
 		variant="ghost"
 		size="icon-sm"
 		onclick={handleToggle}
-		disabled={!isNodeCompleted || !effectiveVoiceId}
+		disabled={!effectiveVoiceId}
 		aria-label={playerVisible ? 'Close narration' : 'Play narration'}
 		class="shrink-0"
 	>
