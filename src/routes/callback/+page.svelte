@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { checkAuthState, getIsAuthenticated } from '$lib/auth/auth.svelte';
 	import { logger } from '$lib/utils/logger';
@@ -7,11 +8,20 @@
 	import { Button } from '$lib/components/ui/button';
 	import { TriangleAlert } from '@lucide/svelte';
 	import { consumeRedirectUrl } from '$lib/auth/redirect';
+	import AccountSuspendedNotice from '$lib/components/features/auth/AccountSuspendedNotice.svelte';
 
 	let error = $state<string | null>(null);
 	let checking = $state(true);
+	let suspended = $state(false);
 
 	onMount(async () => {
+		const errorDescription = page.url.searchParams.get('error_description') ?? '';
+		if (errorDescription.toLowerCase().includes('not enabled')) {
+			suspended = true;
+			checking = false;
+			return;
+		}
+
 		try {
 			await checkAuthState();
 
@@ -54,6 +64,8 @@
 					<p class="text-xs text-muted-foreground">Just a moment...</p>
 				</div>
 			</div>
+		{:else if suspended}
+			<AccountSuspendedNotice />
 		{:else if error}
 			<div class="flex w-full flex-col items-center">
 				<div
