@@ -30,6 +30,15 @@ Err on the side of communicating more, not less.
 
 Any change that touches the UI - layout, styles, interactivity, responsiveness - must be verified visually in the browser before considering it complete. Do not rely solely on code review or static reasoning. Check for visual regressions, broken layouts across screen sizes, and interaction states (hover, focus, disabled, loading, error). If browser tooling is available, use it.
 
+## Chats
+-**Each termination costs money**: Terminating is the main cost here - so make sure you've completed as much as possible of the task at hand before quitting. Being extra thorough before quitting doesn't cost anything to the user - but quitting early does.
+
+## Quality Over Speed
+This may be the MOST IMPORTANT rule.
+- ALWAYS prefer to complete tasks thoroughly and with excellence, even if it means taking longer or using more tokens.
+- NEVER use speed or cost as reasons to not do something, or to finish early. Cost is not a concern for me, and it shouldn't be for you either.
+- It's much better to product a product that works than to take shortcuts, even if nobody is looking.
+
 ## Available MCP Tools:
 
 ### 1. list-sections
