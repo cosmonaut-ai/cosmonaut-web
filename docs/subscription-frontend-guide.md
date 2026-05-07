@@ -4,11 +4,11 @@
 
 The backend now enforces per-user subscription tiers with usage quotas. Three tiers exist:
 
-| Tier      | Worlds/period | Nodes/period | Reset Period |
-| --------- | ------------- | ------------ | ------------ |
-| FREE      | 3             | 30           | 7 days       |
-| EXPLORER  | 20            | 500          | 30 days      |
-| COSMONAUT | 100           | 2,000        | 30 days      |
+| Tier      | Worlds/period | Nodes/period | Audio              | Reset Period |
+| --------- | ------------- | ------------ | ------------------ | ------------ |
+| FREE      | 3             | 30           | 10 (lifetime)      | 7 days       |
+| EXPLORER  | 20            | 200          | 10 (lifetime)      | 30 days      |
+| COSMONAUT | 100           | 2,000        | 150/month          | 30 days      |
 
 **World creation limit:** **Worlds/period** is a rate limit on how many worlds can be _created_ within a single billing period. Resets when the period ends.
 

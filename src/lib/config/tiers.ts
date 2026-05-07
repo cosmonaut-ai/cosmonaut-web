@@ -41,18 +41,18 @@ export const TIER_CONFIG: TierConfig[] = [
 	{
 		key: 'EXPLORER',
 		name: 'Explorer',
-		price: '$10',
+		price: '$3',
 		priceDetail: 'per month',
 		worldsLimit: 20,
-		nodesLimit: 500,
-		audioNarrationsLimit: 30,
+		nodesLimit: 200,
+		audioNarrationsLimit: 10,
 		resetPeriod: '30 days',
 		highlighted: true,
 		features: [
 			'20 stories per month',
-			'500 story nodes per month',
+			'200 story nodes per month',
 			'Unlimited saved stories',
-			'30 audio narrations / month',
+			'10 audio narrations (one-time)',
 			'Full story graph visualization',
 			'Community sharing'
 		]
