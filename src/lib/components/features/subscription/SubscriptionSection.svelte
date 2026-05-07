@@ -133,11 +133,11 @@
 				used={usage.audio_narrations_used}
 				limit={usage.audio_narrations_limit}
 			/>
-			{#if isFree}
+			{#if usage.tier !== 'COSMONAUT'}
 				<div class="rounded-lg border border-border bg-muted/50 px-4 py-3">
 					<p class="text-sm text-muted-foreground">
-						Free audio narrations are a one-time allowance and do not reset. Upgrade for monthly
-						narrations.
+						Audio narrations are a one-time allowance and do not reset. Upgrade to Cosmonaut for
+						monthly narrations.
 					</p>
 				</div>
 			{/if}
