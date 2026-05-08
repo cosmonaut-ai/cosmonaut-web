@@ -66,14 +66,11 @@
 	noindex
 />
 
-<div class="flex min-h-full flex-col bg-background md:flex-row">
+<div class="flex flex-1 flex-col bg-background md:flex-row">
 	<!-- Left panel: Illustration (desktop only) -->
 	<div
-		class="login-panel relative hidden flex-col items-center justify-center overflow-hidden md:flex md:flex-1"
+		class="login-panel relative hidden flex-col items-end justify-center overflow-hidden pr-12 md:flex md:flex-1 lg:pr-20"
 	>
-		<!-- Ambient glow -->
-		<div class="login-glow" aria-hidden="true"></div>
-
 		<!-- Astronaut + Doorway composition -->
 		<div class="relative z-10 flex h-[clamp(240px,35vh,400px)] items-center justify-center">
 			<img
@@ -96,7 +93,7 @@
 
 	<!-- Right panel: Form -->
 	<div
-		class="flex w-full flex-col items-center justify-center px-4 py-8 md:flex-1 md:border-l md:border-border/30 md:py-12"
+		class="flex w-full flex-col items-center justify-center px-4 py-8 md:flex-1 md:items-start md:border-l md:border-border/30 md:py-12 md:pl-12 lg:pl-20"
 	>
 		<div class="w-full max-w-sm">
 			<!-- Logo -->

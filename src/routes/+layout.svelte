@@ -31,14 +31,10 @@
 		return PUBLIC_ROUTES.includes(normalized);
 	}
 
-	// Check if we're on the landing page - it has its own header
 	const isLandingPage = $derived(page.url.pathname === '/');
-
 	const isOnboardingPage = $derived(page.url.pathname.startsWith('/onboarding'));
-	const isLoginPage = $derived(page.url.pathname.startsWith('/login'));
 
-	// Show header on non-landing, non-onboarding pages
-	const showGlobalHeader = $derived(!isLandingPage && !isOnboardingPage && !isLoginPage);
+	const showGlobalHeader = $derived(!isOnboardingPage);
 
 	const showFooter = $derived(
 		!page.url.pathname.startsWith('/login') &&
@@ -100,9 +96,9 @@
 			Skip to main content
 		</a>
 		<div class="flex min-h-dvh flex-col">
-			<!-- Global Header for authenticated pages -->
+			<!-- Global Header -->
 			{#if showGlobalHeader}
-				<header class="border-b border-border bg-card">
+				<header class="border-b border-border bg-card {isLandingPage ? 'sticky top-0 z-50' : ''}">
 					<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
 						<a href={auth.isAuthenticated ? '/dashboard' : '/'} class="flex items-center gap-2">
 							<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
@@ -111,7 +107,7 @@
 							<span class="font-orbitron font-semibold text-foreground">Cosmonaut</span>
 						</a>
 
-						<div class="flex items-center gap-3">
+						<div class="flex items-center gap-1">
 							{#if auth.isLoading}
 								<div class="flex items-center gap-3">
 									<Skeleton class="h-8 w-8 rounded-full" />
@@ -124,8 +120,19 @@
 									variant="ghost"
 									size="sm"
 									class="text-muted-foreground hover:text-foreground"
-									onclick={handleSignIn}
+									onclick={() => goto('/about')}
 								>
+									About
+								</Button>
+								<Button
+									variant="ghost"
+									size="sm"
+									class="text-muted-foreground hover:text-foreground"
+									onclick={() => goto('/pricing')}
+								>
+									Pricing
+								</Button>
+								<Button size="sm" class="ml-2" onclick={handleSignIn}>
 									<LogIn class="h-4 w-4" />
 									Sign In
 								</Button>
@@ -139,7 +146,7 @@
 				<OnboardingGuard />
 			{/if}
 
-			<div id="main-content" class="relative flex-1">
+			<div id="main-content" class="relative flex flex-1 flex-col">
 				{@render children()}
 			</div>
 			{#if showFooter}

@@ -12,8 +12,6 @@
 
 	const auth = useAuth();
 
-	let isScrolled = $state(false);
-
 	/** Scroll-triggered visibility for the final CTA section */
 	let ctaVisible = $state(false);
 
@@ -33,14 +31,7 @@
 			goto('/login');
 		}
 	}
-
-	// Track scroll for navbar
-	function handleScroll() {
-		isScrolled = window.scrollY > 50;
-	}
 </script>
-
-<svelte:window onscroll={handleScroll} />
 
 <SEO
 	title="Cosmonaut - Custom interactive stories for you & your family"
@@ -72,38 +63,6 @@
 	<Starfield />
 {/await}
 
-<!-- Navigation header -->
-<header
-	class="fixed top-0 right-0 left-0 z-50 transition-all duration-300 {isScrolled
-		? 'border-b border-border/50 bg-background/80 backdrop-blur-md'
-		: 'bg-transparent'}"
->
-	<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-		<!-- Logo -->
-		<a href="/" class="flex items-center gap-2">
-			<div
-				class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 transition-colors"
-			>
-				<img src="/logo.png" alt="Cosmonaut logo" class="h-6 w-6" />
-			</div>
-			<span class="font-orbitron font-semibold text-foreground">Cosmonaut</span>
-		</a>
-
-		<!-- Nav actions -->
-		<div class="flex items-center gap-3">
-			{#if auth.isAuthenticated}
-				<Button variant="ghost" size="sm" onclick={() => goto('/dashboard')}>Dashboard</Button>
-			{:else}
-				<Button size="sm" onclick={() => handleGetStarted('nav')}>
-					<Rocket class="h-4 w-4" />
-					Get Started
-				</Button>
-			{/if}
-		</div>
-	</div>
-</header>
-
-<!-- Main content -->
 <main>
 	<!-- Hero section -->
 	<Hero onGetStarted={() => handleGetStarted('hero')} onSignIn={handleSignIn} isLoading={false} />
