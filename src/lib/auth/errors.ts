@@ -17,6 +17,11 @@ export function formatAuthError(error: unknown): string {
 			return 'Verification code has expired. Please request a new one.';
 		if (msg.includes('LimitExceededException'))
 			return 'Too many attempts. Please wait a moment and try again.';
+		if (
+			msg.includes('InvalidParameterException') ||
+			msg.includes('One or more parameters are incorrect')
+		)
+			return 'Unable to process this request. If you signed in with Google, try using Google Sign-In instead.';
 		if (msg.includes('UserNotConfirmedException')) return 'Please verify your email first.';
 		if (msg.includes('AccountAlreadyExists'))
 			return 'An account with this email already exists. Please sign in with your existing method.';
