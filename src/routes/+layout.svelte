@@ -13,7 +13,8 @@
 	import { ModeWatcher, setMode } from 'mode-watcher';
 	import { QueryClientProvider } from '@tanstack/svelte-query';
 	import { queryClient } from '$lib/queries/client';
-	import { LogIn } from '@lucide/svelte';
+	import { LogIn, Menu } from '@lucide/svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import UserMenu from '$lib/components/shared/UserMenu.svelte';
 	import AppFooter from '$lib/components/shared/AppFooter.svelte';
 	import OnboardingGuard from '$lib/components/shared/OnboardingGuard.svelte';
@@ -116,26 +117,54 @@
 							{:else if auth.isAuthenticated && auth.user}
 								<UserMenu />
 							{:else}
-								<Button
-									variant="ghost"
-									size="sm"
-									class="text-muted-foreground hover:text-foreground"
-									onclick={() => goto('/about')}
-								>
-									About
-								</Button>
-								<Button
-									variant="ghost"
-									size="sm"
-									class="text-muted-foreground hover:text-foreground"
-									onclick={() => goto('/pricing')}
-								>
-									Pricing
-								</Button>
-								<Button size="sm" class="ml-2" onclick={handleSignIn}>
-									<LogIn class="h-4 w-4" />
-									Sign In
-								</Button>
+								<!-- Desktop: inline buttons -->
+								<div class="hidden items-center gap-1 sm:flex">
+									<Button
+										variant="ghost"
+										size="sm"
+										class="text-muted-foreground hover:text-foreground"
+										onclick={() => goto('/about')}
+									>
+										About
+									</Button>
+									<Button
+										variant="ghost"
+										size="sm"
+										class="text-muted-foreground hover:text-foreground"
+										onclick={() => goto('/pricing')}
+									>
+										Pricing
+									</Button>
+									<Button size="sm" class="ml-2" onclick={handleSignIn}>
+										<LogIn class="h-4 w-4" />
+										Sign In
+									</Button>
+								</div>
+
+								<!-- Mobile: hamburger dropdown -->
+								<div class="sm:hidden">
+									<DropdownMenu.Root>
+										<DropdownMenu.Trigger
+											class="grid h-9 w-9 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+											aria-label="Navigation menu"
+										>
+											<Menu class="h-5 w-5 text-muted-foreground" />
+										</DropdownMenu.Trigger>
+										<DropdownMenu.Content align="end" class="w-44">
+											<DropdownMenu.Item onclick={() => goto('/about')} class="cursor-pointer">
+												About
+											</DropdownMenu.Item>
+											<DropdownMenu.Item onclick={() => goto('/pricing')} class="cursor-pointer">
+												Pricing
+											</DropdownMenu.Item>
+											<DropdownMenu.Separator />
+											<DropdownMenu.Item onclick={handleSignIn} class="cursor-pointer">
+												<LogIn class="h-4 w-4" />
+												Sign In
+											</DropdownMenu.Item>
+										</DropdownMenu.Content>
+									</DropdownMenu.Root>
+								</div>
 							{/if}
 						</div>
 					</div>
