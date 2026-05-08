@@ -1,9 +1,10 @@
 import { goto } from '$app/navigation';
 import { retryNodeProcessing } from '$lib/api/nodes';
-import { useChooseOption, type ChoiceOption } from '$lib/queries';
+import { useChooseOption, queryKeys, type ChoiceOption } from '$lib/queries';
 import { showError } from '$lib/utils/toast';
 import { ApiError, type StoryNode } from '$lib/types/api';
 import { trackEvent } from '$lib/utils/analytics';
+import { useQueryClient } from '@tanstack/svelte-query';
 
 interface UseChoiceExecutionOptions {
 	worldId: () => string;
@@ -22,11 +23,13 @@ interface UseChoiceExecutionOptions {
 		) => Promise<StoryNode | void>;
 		abortStream: () => void;
 		isStreaming: boolean;
+		showQuotaPrompt: boolean;
 	};
 	nodeQueryRefetch: () => void;
 }
 
 export function useChoiceExecution(options: UseChoiceExecutionOptions) {
+	const queryClient = useQueryClient();
 	const chooseMutation = useChooseOption(options.worldId);
 	let executionController: AbortController | null = null;
 
@@ -97,6 +100,8 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 			if (controller.signal.aborted) return;
 
 			if (err instanceof ApiError && err.isQuotaExceeded) {
+				options.stream.showQuotaPrompt = true;
+				queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
 				goto(`/worlds/${options.worldId()}/nodes/${node.id}`, {
 					replaceState: true,
 					noScroll: true
