@@ -96,6 +96,14 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 		} catch (err) {
 			if (controller.signal.aborted) return;
 
+			if (err instanceof ApiError && err.isQuotaExceeded) {
+				goto(`/worlds/${options.worldId()}/nodes/${node.id}`, {
+					replaceState: true,
+					noScroll: true
+				});
+				return;
+			}
+
 			if (err instanceof ApiError && err.isNodeProcessingConflict) {
 				try {
 					await retryNodeProcessing(options.worldId(), node.id);
