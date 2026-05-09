@@ -1,0 +1,22 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.cosmonaut.app",
+      "sha256_cert_fingerprints": [
+        "REPLACE_WITH_PLAY_APP_SIGNING_SHA256_FINGERPRINT"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.cosmonaut.app.dev",
+      "sha256_cert_fingerprints": [
+        "35:0E:78:58:E8:7D:74:9C:E7:81:BD:B7:96:86:9F:7B:BE:92:8D:36:B1:94:D0:0A:33:4F:72:35:62:9B:9C:AF"
+      ]
+    }
+  }
+]
