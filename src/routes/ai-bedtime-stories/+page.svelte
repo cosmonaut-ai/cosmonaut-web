@@ -1,34 +1,36 @@
 <script lang="ts">
 	import SEO from '$lib/components/shared/SEO.svelte';
-	import ConstellationDivider from '$lib/components/shared/ConstellationDivider.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Moon, Rocket, Volume2, ShieldCheck } from '@lucide/svelte';
+	import { ArrowRight } from '@lucide/svelte';
 
 	const jsonLd = {
 		'@context': 'https://schema.org',
 		'@graph': [
 			{
-				'@type': 'WebPage',
-				'@id': 'https://cosmonaut-ai.com/ai-bedtime-stories/#webpage',
-				url: 'https://cosmonaut-ai.com/ai-bedtime-stories/',
-				name: 'AI Bedtime Stories - Custom Stories for Families to Read Together',
+				'@type': 'Article',
+				'@id': 'https://cosmonaut-ai.com/ai-bedtime-stories/#article',
+				headline: 'A bedtime story that gets to know your kid',
 				description:
-					'Generate custom AI bedtime stories for your child, built to be read together with a parent. Branching, family-friendly, with optional audio narration on the Cosmonaut tier.',
-				about: { '@id': 'https://cosmonaut-ai.com/#webapp' },
-				isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' }
+					'A short essay on custom AI bedtime stories, what one looks like in practice, and how Cosmonaut writes them.',
+				url: 'https://cosmonaut-ai.com/ai-bedtime-stories/',
+				inLanguage: 'en',
+				isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' },
+				author: { '@id': 'https://cosmonaut-ai.com/#organization' },
+				publisher: { '@id': 'https://cosmonaut-ai.com/#organization' }
 			},
 			{
 				'@type': 'BreadcrumbList',
 				itemListElement: [
-					{
-						'@type': 'ListItem',
-						position: 1,
-						name: 'Home',
-						item: 'https://cosmonaut-ai.com/'
-					},
+					{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cosmonaut-ai.com/' },
 					{
 						'@type': 'ListItem',
 						position: 2,
+						name: 'Guides',
+						item: 'https://cosmonaut-ai.com/guides/'
+					},
+					{
+						'@type': 'ListItem',
+						position: 3,
 						name: 'AI Bedtime Stories',
 						item: 'https://cosmonaut-ai.com/ai-bedtime-stories/'
 					}
@@ -39,124 +41,173 @@
 </script>
 
 <SEO
-	title="AI Bedtime Stories - Custom Stories for Families to Read Together | Cosmonaut"
-	description="Generate custom AI bedtime stories for your child, built to be read together with a parent. Family-friendly, branching, with optional audio narration on the Cosmonaut tier."
+	title="A bedtime story that gets to know your kid | Cosmonaut Guides"
+	description="A short essay on custom AI bedtime stories - what one looks like in practice, how Cosmonaut writes them, and why we build for families to read together."
 	path="/ai-bedtime-stories"
 	ogImageAlt="AI bedtime stories from Cosmonaut - for parents and kids to read together"
 	{jsonLd}
 />
 
 <div class="h-full overflow-y-auto bg-background">
-	<main class="mx-auto max-w-3xl px-6 py-12">
-		<header class="mb-8 text-center">
-			<div
-				class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10"
+	<article class="mx-auto max-w-2xl px-6 py-16">
+		<!-- Eyebrow + crumb -->
+		<nav
+			class="mb-10 flex items-center gap-2 text-xs text-muted-foreground/80"
+			aria-label="Breadcrumb"
+		>
+			<a href="/guides" class="transition-colors hover:text-foreground">Guides</a>
+			<span aria-hidden="true">/</span>
+			<span class="text-foreground/70">Family</span>
+		</nav>
+
+		<header class="mb-12">
+			<h1
+				class="font-serif text-4xl leading-[1.15] font-semibold text-foreground sm:text-[2.75rem]"
 			>
-				<Moon class="h-8 w-8 text-primary" />
-			</div>
-			<h1 class="text-4xl font-bold text-foreground sm:text-5xl">
-				AI Bedtime Stories, Made for Your Family
+				A bedtime story that gets to know your kid.
 			</h1>
-			<p class="mt-4 text-lg text-muted-foreground">
-				Custom AI bedtime stories built to be read together with your child - calm, age-appropriate,
-				and different every night.
+			<p class="mt-5 text-base text-muted-foreground/80">
+				On custom AI bedtime stories, and what one actually looks like in practice.
 			</p>
-			<div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-				<Button size="lg" class="gap-2" href="/login">
-					<Rocket class="h-5 w-5" />
-					Write tonight's story
-				</Button>
-				<Button variant="ghost" size="lg" href="/faq">Read the FAQ</Button>
-			</div>
 		</header>
 
-		<ConstellationDivider />
+		<div
+			class="prose prose-lg max-w-none font-serif text-foreground/90 prose-invert prose-headings:font-serif prose-headings:text-foreground prose-p:leading-[1.7] prose-p:text-foreground/85 prose-strong:text-foreground"
+		>
+			<p>
+				It is 7:42 on a Tuesday. The kid has had a long day - a tooth came out at lunch, there was a
+				problem at recess, the bath was negotiated rather than given. On the way upstairs she picks
+				a topic out of the air: a fox who can't find their den.
+			</p>
+			<p>
+				You open Cosmonaut on your phone. You type four words. By the time the lamp is on and the
+				covers are turned down, the story is waiting.
+			</p>
 
-		<article class="mx-auto prose mt-8 max-w-none text-muted-foreground prose-invert">
-			<section class="mb-10">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">
-					Custom bedtime stories, on the fly
-				</h2>
-				<p class="leading-relaxed">
-					Some nights your child wants a story about a brave young fox. Some nights it has to
-					involve dragons and a missing crown. Cosmonaut writes a custom AI bedtime story to match -
-					tailored to the topic, the reading level, and the mood. Tell it what your kid loves, and
-					the story arrives in seconds.
-				</p>
-				<p class="mt-4 leading-relaxed">
-					Each story is original, written as proper prose, and shaped by the choices you and your
-					child make together. No two bedtimes are the same.
-				</p>
-			</section>
+			<p class="text-foreground/70">Here is what one of those stories sounds like.</p>
+		</div>
 
-			<section class="mb-10">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">Listen, don't just read</h2>
-				<div class="flex items-start gap-4 rounded-xl border border-border/50 bg-card/50 p-6">
-					<Volume2 class="mt-1 h-6 w-6 shrink-0 text-primary" />
-					<div>
-						<p class="leading-relaxed">
-							On the Cosmonaut tier, every chapter can be narrated aloud with warm, natural voices.
-							Read the opening together, then let narration carry the story while you sit alongside
-							your child. It is the audiobook experience, but for stories that are written
-							specifically for your family, tonight.
-						</p>
-					</div>
-				</div>
-			</section>
-
-			<section class="mb-10">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">Bedtime story prompts to try</h2>
-				<ul class="space-y-3">
-					<li class="rounded-lg border border-border/50 bg-card/50 p-4 text-foreground">
-						"A bedtime story about a small dragon who is afraid of the dark and meets a firefly."
-					</li>
-					<li class="rounded-lg border border-border/50 bg-card/50 p-4 text-foreground">
-						"A calm undersea adventure for a kindergartener who loves whales."
-					</li>
-					<li class="rounded-lg border border-border/50 bg-card/50 p-4 text-foreground">
-						"A bedtime story like Winnie-the-Pooh, but with a curious raccoon as the hero."
-					</li>
-					<li class="rounded-lg border border-border/50 bg-card/50 p-4 text-foreground">
-						"A gentle space story where an astronaut tucks the planets in for the night."
-					</li>
-				</ul>
-			</section>
-
-			<section class="mb-10">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">
-					Tuned for the right reading level
-				</h2>
-				<p class="leading-relaxed">
-					Cosmonaut lets you set a vocabulary level so the prose matches your child. Simpler,
-					sing-song sentences for early readers. Richer, more descriptive prose for older kids who
-					want to be challenged. The same story idea can be told two completely different ways.
-				</p>
-			</section>
-
-			<aside
-				class="my-12 flex flex-col items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-8 text-center"
+		<!-- Story excerpt -->
+		<figure class="my-14">
+			<div
+				class="relative rounded-lg border-l-2 border-primary/40 bg-card/40 px-6 py-8 sm:px-10 sm:py-10"
 			>
-				<ShieldCheck class="h-8 w-8 text-primary" />
-				<h2 class="text-xl font-semibold text-foreground">A together-time platform</h2>
-				<p class="max-w-xl text-sm text-muted-foreground">
-					Cosmonaut is built to be used by parents and kids together, not handed off as solo screen
-					time. Children under 13 should always use Cosmonaut with a parent or guardian. Parents
-					control vocabulary level and content sensitivity, and Cosmonaut never produces scary,
-					adult, or roleplay content for bedtime stories.
+				<p class="mb-1 text-[10px] font-medium tracking-[0.2em] text-primary/70 uppercase">
+					From the story
 				</p>
-			</aside>
+				<p class="mb-6 font-serif text-xl text-foreground/85 italic">
+					The Fox Who Couldn't Find Their Den
+				</p>
+				<div
+					class="space-y-4 font-serif text-base leading-[1.75] text-foreground/85 sm:text-[17px]"
+				>
+					<p>
+						The snow had been falling since just after lunch, and by the time the small fox realized
+						she could no longer see the shape of the cedar tree she usually turned at, the world had
+						become a single soft, white room with no walls.
+					</p>
+					<p>
+						She sat down. The snow was the cold kind that did not melt under her, only got colder.
+					</p>
+					<p>
+						"I'll just wait," she said out loud, mostly so she would have a voice nearby. The wind
+						did not answer. A wren did, somewhere overhead, but the wren did not know where her den
+						was either.
+					</p>
+					<p>
+						After a while, the fox stood up. She decided she would walk - not because she knew which
+						way to walk, but because sitting down had not been useful, and sometimes you have to try
+						the next thing.
+					</p>
+					<p>
+						She walked until she came to a place where the snow had been disturbed. Tracks - but not
+						her own. They were larger than hers. They were shaped a little like hers. They led in
+						two different directions.
+					</p>
+				</div>
 
-			<section class="text-center">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">Try it tonight</h2>
-				<p class="mx-auto mb-6 max-w-xl leading-relaxed text-muted-foreground">
-					The free tier is enough for a bedtime story or two. The Cosmonaut tier adds audio
-					narration and a much larger monthly story allowance.
-				</p>
-				<Button size="lg" class="gap-2" href="/login">
-					<Rocket class="h-5 w-5" />
-					Start a bedtime story
-				</Button>
-			</section>
-		</article>
-	</main>
+				<div class="mt-8 border-t border-border/50 pt-6">
+					<p
+						class="mb-3 text-[10px] font-medium tracking-[0.2em] text-muted-foreground/70 uppercase"
+					>
+						What does the fox do?
+					</p>
+					<ul class="space-y-2 font-serif text-[15px] text-foreground/80">
+						<li class="flex gap-3">
+							<span class="text-primary/60">›</span>
+							<span>Follow the larger tracks deeper into the woods.</span>
+						</li>
+						<li class="flex gap-3">
+							<span class="text-primary/60">›</span>
+							<span>Call out, in case someone is nearby.</span>
+						</li>
+						<li class="flex gap-3">
+							<span class="text-primary/60">›</span>
+							<span>Turn around and look for her own tracks under the new snow.</span>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<figcaption class="mt-3 text-xs text-muted-foreground/60">
+				A representative excerpt. Each story Cosmonaut writes is unique to the prompt and the
+				reader's choices.
+			</figcaption>
+		</figure>
+
+		<div
+			class="prose prose-lg max-w-none font-serif text-foreground/90 prose-invert prose-headings:font-serif prose-headings:text-foreground prose-p:leading-[1.7] prose-p:text-foreground/85 prose-strong:text-foreground"
+		>
+			<p>Three things are quietly happening on that page.</p>
+			<p>
+				The first is that the story knows your child. You typed four words, but Cosmonaut also knows
+				the reading level you set, the kinds of stories your family tends toward, and the content
+				filters you've turned on. A six-year-old gets the prose you just read. A nine-year-old gets
+				a richer version with longer sentences and more weather in it. The hook is the same; the
+				cloth is different.
+			</p>
+			<p>
+				The second is that the choices matter. They are not three flavors of the same outcome.
+				Following the larger tracks goes somewhere; calling out goes somewhere else; turning back
+				goes somewhere else again. Cosmonaut remembers what your child picked, so a choice made on
+				page three is still true on page seven. That is the difference between a branching story and
+				a chat transcript.
+			</p>
+			<p>
+				The third is harder to put in a feature list. Bedtime stories work when they have a shape -
+				when there is a problem and a search and an ending. We tune Cosmonaut for that shape, so the
+				story your kid hears tonight is the kind of story you would have wanted someone to tell you.
+			</p>
+
+			<h2 class="mt-12 mb-4 text-xl font-semibold">A few practical notes</h2>
+			<p>
+				The free tier is enough to try a bedtime story or two; the Explorer tier opens up more
+				stories per month; the top Cosmonaut tier adds audio narration, with warm, natural voices
+				that can carry a chapter while you sit alongside your child. Vocabulary level and content
+				filters are settings, not paid features - they're available from the moment you sign up.
+			</p>
+
+			<h2 class="mt-10 mb-4 text-xl font-semibold">A note on how we mean this to be used</h2>
+			<p>
+				Cosmonaut is built to be used together. It is a thing parents and kids do side by side at
+				bedtime, not a thing a child uses alone with a screen. Children under 13 should always read
+				on Cosmonaut with a parent or guardian. We don't autoplay the next chapter, we don't push
+				notifications, and there's no feed to scroll past your kid's choice. The story waits. That
+				is on purpose.
+			</p>
+		</div>
+
+		<!-- Soft CTA -->
+		<footer class="mt-16 flex flex-col items-start gap-4 border-t border-border/60 pt-10">
+			<Button href="/login" class="gap-2">
+				Start a bedtime story
+				<ArrowRight class="h-4 w-4" />
+			</Button>
+			<p class="text-sm text-muted-foreground">
+				Or
+				<a href="/guides" class="text-primary underline underline-offset-4 hover:text-primary/80">
+					read another guide
+				</a>.
+			</p>
+		</footer>
+	</article>
 </div>

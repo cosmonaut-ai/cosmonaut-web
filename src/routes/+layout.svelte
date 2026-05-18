@@ -33,6 +33,7 @@
 		'/pricing',
 		'/about',
 		'/faq',
+		'/guides',
 		'/ai-choose-your-own-adventure',
 		'/ai-bedtime-stories',
 		'/ai-interactive-fiction'

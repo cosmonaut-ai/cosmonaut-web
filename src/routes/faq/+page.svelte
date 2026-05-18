@@ -1,8 +1,7 @@
 <script lang="ts">
 	import SEO from '$lib/components/shared/SEO.svelte';
-	import ConstellationDivider from '$lib/components/shared/ConstellationDivider.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { HelpCircle, Rocket } from '@lucide/svelte';
+	import { ArrowRight } from '@lucide/svelte';
 
 	// Single source of truth for both the rendered FAQ list and the FAQPage JSON-LD,
 	// so the structured data Google/Claude/Gemini see always matches the visible page.
@@ -81,45 +80,40 @@
 />
 
 <div class="h-full overflow-y-auto bg-background">
-	<main class="mx-auto max-w-3xl px-6 py-12">
-		<header class="mb-8 text-center">
-			<div
-				class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10"
+	<main class="mx-auto max-w-2xl px-6 py-16">
+		<header class="mb-12">
+			<p class="mb-3 text-xs font-medium tracking-[0.2em] text-primary uppercase">FAQ</p>
+			<h1
+				class="font-serif text-4xl leading-[1.15] font-semibold text-foreground sm:text-[2.75rem]"
 			>
-				<HelpCircle class="h-8 w-8 text-primary" />
-			</div>
-			<h1 class="text-4xl font-bold text-foreground">Frequently Asked Questions</h1>
-			<p class="mt-4 text-lg text-muted-foreground">
-				Everything you might want to know about AI choose-your-own-adventure stories, AI bedtime
-				stories, and using Cosmonaut with your family.
+				Frequently asked questions.
+			</h1>
+			<p class="mt-5 text-base text-muted-foreground/80">
+				About AI choose-your-own-adventure stories, custom bedtime stories, and using Cosmonaut with
+				your family.
 			</p>
 		</header>
 
-		<ConstellationDivider />
-
-		<section class="mt-8 space-y-8" aria-label="Frequently asked questions">
+		<section
+			class="divide-y divide-border/60 border-y border-border/60"
+			aria-label="Frequently asked questions"
+		>
 			{#each faqs as faq, i (i)}
-				<article class="rounded-lg border border-border/50 bg-card/50 p-6">
-					<h2 class="mb-3 text-xl font-semibold text-foreground">
+				<article class="py-8">
+					<h2 class="mb-3 font-serif text-xl font-semibold text-foreground">
 						{faq.question}
 					</h2>
-					<p class="leading-relaxed text-muted-foreground">{faq.answer}</p>
+					<p class="leading-[1.7] text-foreground/80">{faq.answer}</p>
 				</article>
 			{/each}
 		</section>
 
-		<ConstellationDivider class="mt-12" />
-
-		<section class="mt-8 text-center">
-			<h2 class="mb-3 text-2xl font-semibold text-foreground">Ready to start a story?</h2>
-			<p class="mx-auto mb-6 max-w-xl text-muted-foreground">
-				Describe a world, step inside, and see where your choices take you.
-			</p>
-			<Button size="lg" class="gap-2" href="/login">
-				<Rocket class="h-5 w-5" />
+		<footer class="mt-12 flex flex-col items-start gap-4 border-t border-border/60 pt-10">
+			<Button href="/login" class="gap-2">
 				Begin Your Journey
+				<ArrowRight class="h-4 w-4" />
 			</Button>
-			<p class="mt-6 text-sm text-muted-foreground">
+			<p class="text-sm text-muted-foreground">
 				Still have a question? Email
 				<a
 					href="mailto:support@cosmonaut-ai.com"
@@ -129,6 +123,6 @@
 				</a>
 				- we read every message.
 			</p>
-		</section>
+		</footer>
 	</main>
 </div>
