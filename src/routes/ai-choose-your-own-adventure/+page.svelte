@@ -2,65 +2,6 @@
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowRight } from '@lucide/svelte';
-	import { onMount } from 'svelte';
-	import type { Component } from 'svelte';
-
-	// Mock story map: a small kid-friendly mystery used to illustrate branching.
-	const mapNodes = [
-		{
-			id: 'n1',
-			title: 'The Letter in the Attic',
-			summary: 'A folded envelope, dated 1923.',
-			isRoot: true
-		},
-		{ id: 'n2', title: 'Read it carefully', summary: 'It is from a lighthouse keeper.' },
-		{ id: 'n3', title: 'Take it to your grandmother', summary: 'She goes very quiet.' },
-		{
-			id: 'n4',
-			title: 'Find the lighthouse on a map',
-			summary: 'It is still standing.',
-			isLeaf: true
-		},
-		{
-			id: 'n5',
-			title: 'Sit with her until she speaks',
-			summary: '"I was waiting for this."',
-			isLeaf: true
-		},
-		{
-			id: 'n6',
-			title: 'Ask why she went so still',
-			summary: 'She does not answer right away.',
-			isLeaf: true
-		}
-	];
-	const mapEdges = [
-		{ source: 'n1', target: 'n2' },
-		{ source: 'n1', target: 'n3' },
-		{ source: 'n2', target: 'n4' },
-		{ source: 'n3', target: 'n5' },
-		{ source: 'n3', target: 'n6' }
-	];
-	const mapPositions = {
-		n1: { x: 200, y: 0 },
-		n2: { x: 0, y: 130 },
-		n3: { x: 400, y: 130 },
-		n4: { x: 0, y: 280 },
-		n5: { x: 320, y: 280 },
-		n6: { x: 540, y: 280 }
-	};
-
-	// SvelteFlow uses browser-only APIs; lazy-load on the client.
-	let StoryMapPreview = $state<Component<{
-		nodes: typeof mapNodes;
-		edges: typeof mapEdges;
-		positions: typeof mapPositions;
-	}> | null>(null);
-
-	onMount(async () => {
-		const mod = await import('$lib/components/shared/StoryMapPreview.svelte');
-		StoryMapPreview = mod.default as never;
-	});
 
 	const jsonLd = {
 		'@context': 'https://schema.org',
@@ -178,19 +119,16 @@
 			<p class="mb-3 text-[10px] font-medium tracking-[0.2em] text-primary/70 uppercase">
 				What a small story looks like
 			</p>
-			{#if StoryMapPreview}
-				<StoryMapPreview nodes={mapNodes} edges={mapEdges} positions={mapPositions} />
-			{:else}
-				<div
-					class="flex h-[420px] w-full items-center justify-center rounded-lg border border-border/60 bg-card/30 text-sm text-muted-foreground"
-					aria-hidden="true"
-				>
-					Loading story map…
-				</div>
-			{/if}
+			<img
+				src="/art/story-map.webp"
+				alt="A six-node story map showing a mystery branching from 'The Stolen Logbook' into two paths, then three endings."
+				class="w-full rounded-lg border border-border/60"
+				loading="lazy"
+				decoding="async"
+			/>
 			<figcaption class="mt-3 text-xs text-muted-foreground/60">
-				A real story map from a six-node mystery for ages 8 and up. Every story you start with
-				Cosmonaut grows into a map like this one - and you can see it whole at any time.
+				A real story map from a six-node mystery. Every story you start with Cosmonaut grows into a
+				map like this one - and you can see it whole at any time.
 			</figcaption>
 		</figure>
 
