@@ -17,7 +17,7 @@
 		<div class="mb-20 text-center">
 			<p class="mb-3 text-sm font-medium tracking-widest text-primary uppercase">How it works</p>
 			<h2 class="text-3xl font-bold text-foreground sm:text-4xl">
-				Three steps to infinite stories
+				Three steps to your own interactive story
 			</h2>
 		</div>
 
@@ -35,8 +35,8 @@
 				</div>
 				<h3 class="mb-3 text-xl font-semibold text-foreground">Describe your story</h3>
 				<p class="leading-relaxed text-muted-foreground">
-					"A noir mystery in 1940s Chicago" or "A space station hiding dark secrets"-you set the
-					stage, the AI fills in the details.
+					"A bedtime story about a brave fox" or "A space station hiding dark secrets" — you set the
+					stage, the AI writes the chapters.
 				</p>
 			</div>
 

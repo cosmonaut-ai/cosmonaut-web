@@ -34,28 +34,69 @@
 </script>
 
 <SEO
-	title="Cosmonaut - Custom interactive stories for you & your family"
-	description="Describe any story and Cosmonaut builds it into a branching narrativeshaped by your choices. Interactive storytelling for families, built with care."
+	title="Cosmonaut — AI Choose-Your-Own-Adventure Stories for Families"
+	description="Create AI choose-your-own-adventure stories and narrated bedtime tales the whole family can read together. Describe any world; Cosmonaut writes a branching, family-friendly story shaped by your choices."
 	path="/"
+	ogImageAlt="Cosmonaut — AI choose-your-own-adventure stories for families"
 	jsonLd={{
 		'@context': 'https://schema.org',
-		'@type': 'WebApplication',
-		name: 'Cosmonaut',
-		url: 'https://cosmonaut-ai.com',
-		description:
-			'Describe any story and Cosmonaut builds it into a branching narrative shaped by your choices. Interactive storytelling for families, built with care.',
-		applicationCategory: 'Entertainment',
-		operatingSystem: 'Web',
-		offers: {
-			'@type': 'Offer',
-			price: '0',
-			priceCurrency: 'USD'
-		},
-		creator: {
-			'@type': 'Organization',
-			name: 'Matson Software LLC',
-			url: 'https://cosmonaut-ai.com'
-		}
+		'@graph': [
+			{
+				'@type': 'WebApplication',
+				'@id': 'https://cosmonaut-ai.com/#webapp',
+				name: 'Cosmonaut',
+				alternateName: 'Cosmonaut AI',
+				url: 'https://cosmonaut-ai.com',
+				description:
+					'AI-powered choose-your-own-adventure platform for families. Create branching, narrated interactive stories from a single prompt — built for kids, parents, and lifelong readers.',
+				applicationCategory: 'EntertainmentApplication',
+				applicationSubCategory: 'Interactive Fiction',
+				operatingSystem: 'Web',
+				inLanguage: 'en',
+				audience: {
+					'@type': 'Audience',
+					audienceType: 'Families with children, parents, readers of interactive fiction'
+				},
+				featureList: [
+					'AI-generated choose-your-own-adventure stories',
+					'Custom AI bedtime stories with audio narration',
+					'Family-friendly content filters and vocabulary controls',
+					'Branching storylines with a visual story map',
+					'Parental controls for age-appropriate content'
+				],
+				offers: {
+					'@type': 'Offer',
+					price: '0',
+					priceCurrency: 'USD'
+				},
+				creator: {
+					'@id': 'https://cosmonaut-ai.com/#organization'
+				}
+			},
+			{
+				'@type': 'Organization',
+				'@id': 'https://cosmonaut-ai.com/#organization',
+				name: 'Matson Software LLC',
+				legalName: 'Matson Software LLC',
+				url: 'https://cosmonaut-ai.com',
+				logo: 'https://cosmonaut-ai.com/logo.png',
+				email: 'support@cosmonaut-ai.com',
+				brand: {
+					'@type': 'Brand',
+					name: 'Cosmonaut',
+					description:
+						'Family-friendly AI choose-your-own-adventure and narrated bedtime story platform.'
+				}
+			},
+			{
+				'@type': 'WebSite',
+				'@id': 'https://cosmonaut-ai.com/#website',
+				url: 'https://cosmonaut-ai.com',
+				name: 'Cosmonaut',
+				publisher: { '@id': 'https://cosmonaut-ai.com/#organization' },
+				inLanguage: 'en'
+			}
+		]
 	}}
 />
 

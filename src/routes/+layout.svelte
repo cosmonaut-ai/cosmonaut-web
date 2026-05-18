@@ -24,7 +24,19 @@
 	const auth = useAuth();
 
 	// Routes that do not require authentication
-	const PUBLIC_ROUTES = ['/', '/login', '/callback', '/terms', '/privacy', '/pricing', '/about'];
+	const PUBLIC_ROUTES = [
+		'/',
+		'/login',
+		'/callback',
+		'/terms',
+		'/privacy',
+		'/pricing',
+		'/about',
+		'/faq',
+		'/ai-choose-your-own-adventure',
+		'/ai-bedtime-stories',
+		'/ai-interactive-fiction'
+	];
 
 	function isPublicRoute(pathname: string): boolean {
 		const normalized =
