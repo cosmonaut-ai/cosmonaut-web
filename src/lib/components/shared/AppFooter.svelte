@@ -82,6 +82,45 @@
 									Pricing
 								</a>
 							</li>
+							<li>
+								<a
+									href="/faq"
+									class="text-sm text-muted-foreground transition-colors hover:text-primary"
+								>
+									FAQ
+								</a>
+							</li>
+						</ul>
+					</div>
+					<div>
+						<h3 class="mb-3 text-xs font-semibold tracking-wider text-foreground/80 uppercase">
+							Discover
+						</h3>
+						<ul class="space-y-2.5">
+							<li>
+								<a
+									href="/ai-choose-your-own-adventure"
+									class="text-sm text-muted-foreground transition-colors hover:text-primary"
+								>
+									AI Choose-Your-Own-Adventure
+								</a>
+							</li>
+							<li>
+								<a
+									href="/ai-bedtime-stories"
+									class="text-sm text-muted-foreground transition-colors hover:text-primary"
+								>
+									AI Bedtime Stories
+								</a>
+							</li>
+							<li>
+								<a
+									href="/ai-interactive-fiction"
+									class="text-sm text-muted-foreground transition-colors hover:text-primary"
+								>
+									AI Interactive Fiction
+								</a>
+							</li>
 						</ul>
 					</div>
 					<div>
@@ -113,14 +152,7 @@
 									Terms
 								</a>
 							</li>
-						</ul>
-					</div>
-					{#if isAuthenticated}
-						<div class="col-span-2 sm:col-span-1">
-							<h3 class="mb-3 text-xs font-semibold tracking-wider text-foreground/80 uppercase">
-								Explore
-							</h3>
-							<ul class="space-y-2.5">
+							{#if isAuthenticated}
 								<li>
 									<a
 										href="/worlds/new"
@@ -132,9 +164,9 @@
 										Create a Story
 									</a>
 								</li>
-							</ul>
-						</div>
-					{/if}
+							{/if}
+						</ul>
+					</div>
 				</div>
 			</div>
 		</div>

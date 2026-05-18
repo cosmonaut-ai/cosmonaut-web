@@ -67,24 +67,28 @@
 		<div class="text-center md:text-left">
 			<!-- Decorative stars -->
 
-			<!-- Main title with glow effect -->
+			<!-- Main title with glow effect. The visually-displayed brand wordmark is the H1,
+			     with a screen-reader-only line that carries the keyword-rich semantic heading. -->
 			<h1 class="hero-title hero-enter hero-enter-2 mb-3 font-bold tracking-tight md:mb-6">
-				<span class="font-orbitron text-xl tracking-widest text-foreground md:text-2xl lg:text-3xl"
-					>WELCOME TO</span
+				<span
+					class="font-orbitron text-xl tracking-widest text-foreground md:text-2xl lg:text-3xl"
+					aria-hidden="true">WELCOME TO</span
 				>
 				<br />
 				<span
 					class="font-orbitron text-4xl font-bold tracking-widest text-primary md:text-5xl lg:text-6xl"
-					>COSMONAUT</span
+					aria-hidden="true">COSMONAUT</span
 				>
+				<span class="sr-only">Cosmonaut: AI choose-your-own-adventure stories for families</span>
 			</h1>
 
 			<!-- Subtitle -->
 			<p
 				class="hero-enter hero-enter-3 mx-auto mb-6 max-w-2xl text-sm text-muted-foreground md:mx-0 md:mb-12 md:text-base lg:text-lg"
 			>
-				Describe any world - a mystery, a kingdom, a spaceship with a secret - and Cosmonaut builds
-				it into a branching story shaped by your choices.
+				AI choose-your-own-adventure stories, written for families. Describe any world — a mystery,
+				a kingdom, a spaceship with a secret — and Cosmonaut writes a branching, narrated story
+				shaped by your choices.
 			</p>
 
 			<!-- CTA Buttons -->

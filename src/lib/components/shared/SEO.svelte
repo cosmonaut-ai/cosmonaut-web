@@ -25,7 +25,7 @@
 		ogImage = DEFAULT_OG_IMAGE,
 		ogImageWidth = DEFAULT_OG_IMAGE_WIDTH,
 		ogImageHeight = DEFAULT_OG_IMAGE_HEIGHT,
-		ogImageAlt = `${SITE_NAME} - Explore Infinite Story Worlds`,
+		ogImageAlt = `${SITE_NAME} — AI choose-your-own-adventure stories for families`,
 		ogType = 'website',
 		noindex = false,
 		jsonLd

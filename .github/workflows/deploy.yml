@@ -100,19 +100,25 @@ jobs:
             --exclude '_app/immutable/*' \
             --exclude '_app/version.json' \
             --exclude 'index.html' \
+            --exclude '200.html' \
             --cache-control "public, max-age=3600" \
             --delete
 
-      - name: Upload index.html (last)
+      - name: Upload index.html and 200.html (last)
+        # index.html is the prerendered landing page (full SEO content).
+        # 200.html is the SPA fallback shell for client-side routes.
+        # CloudFront should route 403/404 → /200.html for SPA routing.
         run: |
           aws s3 cp build/index.html s3://${{ env.S3_BUCKET }}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate"
+          aws s3 cp build/200.html s3://${{ env.S3_BUCKET }}/200.html \
             --cache-control "no-cache, no-store, must-revalidate"
 
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/index.html" "/" "/_app/version.json"
+            --paths "/index.html" "/200.html" "/" "/_app/version.json"
 
       - name: Clean up stale immutable assets
         continue-on-error: true

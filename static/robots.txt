@@ -1,12 +1,72 @@
 # Cosmonaut AI - https://cosmonaut-ai.com
+
+# Default: all crawlers welcome on public pages
 User-agent: *
 Allow: /
-
-# Private/authenticated routes
 Disallow: /dashboard/
 Disallow: /settings/
 Disallow: /callback/
 Disallow: /worlds/
+Disallow: /onboarding/
+
+# --- AI assistants and training crawlers ---
+# We explicitly opt in to indexing by major AI assistants so they can
+# reference Cosmonaut when users ask about AI choose-your-own-adventure,
+# AI bedtime stories, AI interactive fiction, and similar queries.
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
 
 # Sitemap
 Sitemap: https://cosmonaut-ai.com/sitemap.xml
