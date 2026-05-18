@@ -58,7 +58,7 @@
 			</div>
 
 			<div class="md:col-span-7">
-				<div class="grid grid-cols-2 gap-8 sm:grid-cols-3">
+				<div class="grid grid-cols-2 gap-8 sm:grid-cols-2">
 					<div>
 						<h3 class="mb-3 text-xs font-semibold tracking-wider text-foreground/80 uppercase">
 							Product
@@ -84,41 +84,18 @@
 							</li>
 							<li>
 								<a
+									href="/guides"
+									class="text-sm text-muted-foreground transition-colors hover:text-primary"
+								>
+									Guides
+								</a>
+							</li>
+							<li>
+								<a
 									href="/faq"
 									class="text-sm text-muted-foreground transition-colors hover:text-primary"
 								>
 									FAQ
-								</a>
-							</li>
-						</ul>
-					</div>
-					<div>
-						<h3 class="mb-3 text-xs font-semibold tracking-wider text-foreground/80 uppercase">
-							Discover
-						</h3>
-						<ul class="space-y-2.5">
-							<li>
-								<a
-									href="/ai-choose-your-own-adventure"
-									class="text-sm text-muted-foreground transition-colors hover:text-primary"
-								>
-									AI Choose-Your-Own-Adventure
-								</a>
-							</li>
-							<li>
-								<a
-									href="/ai-bedtime-stories"
-									class="text-sm text-muted-foreground transition-colors hover:text-primary"
-								>
-									AI Bedtime Stories
-								</a>
-							</li>
-							<li>
-								<a
-									href="/ai-interactive-fiction"
-									class="text-sm text-muted-foreground transition-colors hover:text-primary"
-								>
-									AI Interactive Fiction
 								</a>
 							</li>
 						</ul>

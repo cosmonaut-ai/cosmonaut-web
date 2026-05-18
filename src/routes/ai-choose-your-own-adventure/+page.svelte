@@ -1,34 +1,95 @@
 <script lang="ts">
 	import SEO from '$lib/components/shared/SEO.svelte';
-	import ConstellationDivider from '$lib/components/shared/ConstellationDivider.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { GitBranch, Rocket, ShieldCheck, BookOpen, Sparkles } from '@lucide/svelte';
+	import { ArrowRight } from '@lucide/svelte';
+	import { onMount } from 'svelte';
+	import type { Component } from 'svelte';
+
+	// Mock story map: a small kid-friendly mystery used to illustrate branching.
+	const mapNodes = [
+		{
+			id: 'n1',
+			title: 'The Letter in the Attic',
+			summary: 'A folded envelope, dated 1923.',
+			isRoot: true
+		},
+		{ id: 'n2', title: 'Read it carefully', summary: 'It is from a lighthouse keeper.' },
+		{ id: 'n3', title: 'Take it to your grandmother', summary: 'She goes very quiet.' },
+		{
+			id: 'n4',
+			title: 'Find the lighthouse on a map',
+			summary: 'It is still standing.',
+			isLeaf: true
+		},
+		{
+			id: 'n5',
+			title: 'Sit with her until she speaks',
+			summary: '"I was waiting for this."',
+			isLeaf: true
+		},
+		{
+			id: 'n6',
+			title: 'Ask why she went so still',
+			summary: 'She does not answer right away.',
+			isLeaf: true
+		}
+	];
+	const mapEdges = [
+		{ source: 'n1', target: 'n2' },
+		{ source: 'n1', target: 'n3' },
+		{ source: 'n2', target: 'n4' },
+		{ source: 'n3', target: 'n5' },
+		{ source: 'n3', target: 'n6' }
+	];
+	const mapPositions = {
+		n1: { x: 200, y: 0 },
+		n2: { x: 0, y: 130 },
+		n3: { x: 400, y: 130 },
+		n4: { x: 0, y: 280 },
+		n5: { x: 320, y: 280 },
+		n6: { x: 540, y: 280 }
+	};
+
+	// SvelteFlow uses browser-only APIs; lazy-load on the client.
+	let StoryMapPreview = $state<Component<{
+		nodes: typeof mapNodes;
+		edges: typeof mapEdges;
+		positions: typeof mapPositions;
+	}> | null>(null);
+
+	onMount(async () => {
+		const mod = await import('$lib/components/shared/StoryMapPreview.svelte');
+		StoryMapPreview = mod.default as never;
+	});
 
 	const jsonLd = {
 		'@context': 'https://schema.org',
 		'@graph': [
 			{
-				'@type': 'WebPage',
-				'@id': 'https://cosmonaut-ai.com/ai-choose-your-own-adventure/#webpage',
-				url: 'https://cosmonaut-ai.com/ai-choose-your-own-adventure/',
-				name: 'AI Choose-Your-Own-Adventure Stories for Families',
+				'@type': 'Article',
+				'@id': 'https://cosmonaut-ai.com/ai-choose-your-own-adventure/#article',
+				headline: 'AI choose-your-own-adventure, in a longer lineage',
 				description:
-					'Cosmonaut is an AI choose-your-own-adventure platform. Describe any world and Cosmonaut writes a branching, family-friendly interactive story shaped by your choices.',
-				about: { '@id': 'https://cosmonaut-ai.com/#webapp' },
-				isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' }
+					'A short essay on the choose-your-own-adventure form, from the 1979 paperbacks to the AI-written branching stories Cosmonaut writes today.',
+				url: 'https://cosmonaut-ai.com/ai-choose-your-own-adventure/',
+				inLanguage: 'en',
+				isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' },
+				author: { '@id': 'https://cosmonaut-ai.com/#organization' },
+				publisher: { '@id': 'https://cosmonaut-ai.com/#organization' }
 			},
 			{
 				'@type': 'BreadcrumbList',
 				itemListElement: [
-					{
-						'@type': 'ListItem',
-						position: 1,
-						name: 'Home',
-						item: 'https://cosmonaut-ai.com/'
-					},
+					{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cosmonaut-ai.com/' },
 					{
 						'@type': 'ListItem',
 						position: 2,
+						name: 'Guides',
+						item: 'https://cosmonaut-ai.com/guides/'
+					},
+					{
+						'@type': 'ListItem',
+						position: 3,
 						name: 'AI Choose-Your-Own-Adventure',
 						item: 'https://cosmonaut-ai.com/ai-choose-your-own-adventure/'
 					}
@@ -39,167 +100,133 @@
 </script>
 
 <SEO
-	title="AI Choose-Your-Own-Adventure Stories for Families | Cosmonaut"
-	description="Create AI choose-your-own-adventure stories the whole family can read together. Describe any world and Cosmonaut writes a branching, family-friendly interactive story shaped by your choices."
+	title="AI choose-your-own-adventure, in a longer lineage | Cosmonaut Guides"
+	description="A short essay on the choose-your-own-adventure form, from the 1979 paperbacks to the AI-written branching stories Cosmonaut writes for families today."
 	path="/ai-choose-your-own-adventure"
-	ogImageAlt="AI choose-your-own-adventure stories for families"
+	ogImageAlt="AI choose-your-own-adventure - branching interactive stories from Cosmonaut"
 	{jsonLd}
 />
 
 <div class="h-full overflow-y-auto bg-background">
-	<main class="mx-auto max-w-3xl px-6 py-12">
-		<header class="mb-8 text-center">
-			<div
-				class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10"
+	<article class="mx-auto max-w-2xl px-6 py-16">
+		<nav
+			class="mb-10 flex items-center gap-2 text-xs text-muted-foreground/80"
+			aria-label="Breadcrumb"
+		>
+			<a href="/guides" class="transition-colors hover:text-foreground">Guides</a>
+			<span aria-hidden="true">/</span>
+			<span class="text-foreground/70">Form</span>
+		</nav>
+
+		<header class="mb-12">
+			<h1
+				class="font-serif text-4xl leading-[1.15] font-semibold text-foreground sm:text-[2.75rem]"
 			>
-				<GitBranch class="h-8 w-8 text-primary" />
-			</div>
-			<h1 class="text-4xl font-bold text-foreground sm:text-5xl">
-				AI Choose-Your-Own-Adventure Stories
+				AI choose-your-own-adventure, in a longer lineage.
 			</h1>
-			<p class="mt-4 text-lg text-muted-foreground">
-				Family-friendly interactive fiction, written by AI, shaped by your choices.
+			<p class="mt-5 text-base text-muted-foreground/80">
+				The format started with a paperback in 1979. Forty-some years later, a generation of readers
+				is meeting it again - this time with a story that remembers them.
 			</p>
-			<div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-				<Button size="lg" class="gap-2" href="/login">
-					<Rocket class="h-5 w-5" />
-					Start your first story
-				</Button>
-				<Button variant="ghost" size="lg" href="/faq">Read the FAQ</Button>
-			</div>
 		</header>
 
-		<ConstellationDivider />
+		<div
+			class="prose prose-lg max-w-none font-serif text-foreground/90 prose-invert prose-headings:font-serif prose-headings:text-foreground prose-p:leading-[1.7] prose-p:text-foreground/85 prose-strong:text-foreground"
+		>
+			<p>
+				In 1976, a New Jersey lawyer named Edward Packard wrote down a story for his daughters in
+				which they could choose what happened next. He had been telling them stories like that out
+				loud for years - at a certain point in the plot he would stop, and ask, and they would
+				decide. He just hadn't thought of it as a book.
+			</p>
+			<p>
+				A few years later, Bantam picked the idea up and started a series of orange-spined
+				paperbacks called Choose Your Own Adventure. <em>The Cave of Time</em>.
+				<em>Journey Under the Sea</em>. <em>By Balloon to the Sahara</em>. A whole generation read
+				them with both thumbs jammed into the book at once - one holding the page you were about to
+				choose, the other holding the page you might choose instead, in case the first one ended in
+				being eaten.
+			</p>
+			<p>
+				What worked about them, then and now, is the small adult feeling of being addressed. The
+				story stops, looks at the reader, and says: I'd like to know what you think. It is the
+				opposite of being told a story <em>at</em>. It is being told a story <em>with</em>.
+			</p>
 
-		<article class="mx-auto prose mt-8 max-w-none text-muted-foreground prose-invert">
-			<section class="mb-10">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">
-					What is an AI choose-your-own-adventure?
-				</h2>
-				<p class="leading-relaxed">
-					An AI choose-your-own-adventure is an interactive story written on demand by an AI, where
-					the reader makes choices at key moments and the story branches based on what they pick.
-					Unlike a static book, every path is generated as you read - and unlike a roleplay chatbot,
-					the story is structured into proper chapters with a consistent tone, a tracked plot, and a
-					visible map of every choice you have made.
-				</p>
-				<p class="mt-4 leading-relaxed">
-					Cosmonaut takes a one-line idea from you - a setting, a character, a mood, or even a book
-					or film you love - and turns it into a fully written branching story you can step inside.
-				</p>
-			</section>
+			<h2 class="mt-10 mb-4 text-xl font-semibold">What's different about an AI one</h2>
+			<p>
+				The Bantam paperbacks were brilliant inside a constraint: a finite tree of pages, printed
+				once. Every branch had to exist before you opened the book. The author worked out the
+				skeleton in advance and rationed pages to each path - which is why some endings felt thin,
+				and why your second read-through hit the same paragraphs as your first.
+			</p>
+			<p>
+				An AI choose-your-own-adventure doesn't have that constraint. Cosmonaut writes each branch
+				when you ask for it, in the same voice, with the same characters, in the same world. The
+				path you pick becomes a chapter that didn't exist five seconds ago and won't exist for
+				anyone else. The tree is as deep as you want to go.
+			</p>
+			<p>
+				And, critically, it remembers. A choice you made on the second page is still true on the
+				ninth. The shopkeeper who saw you palm an apple in chapter three recognizes you in chapter
+				six. That continuity is the thing that turns a branching exercise into a real story.
+			</p>
+		</div>
 
-			<section class="mb-10">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">
-					Built for families, not for roleplay
-				</h2>
-				<p class="leading-relaxed">
-					A lot of "AI story" tools are really roleplay chatbots aimed at adults, or gamified RPGs
-					with stats and combat. Cosmonaut is neither. It is a literary, prose-first interactive
-					fiction platform built for parents and kids to read together, with vocabulary level
-					controls and content filters parents can trust.
-				</p>
-				<ul class="mt-4 list-disc space-y-2 pl-5">
-					<li>No NSFW, roleplay, or adult content modes - ever.</li>
-					<li>Parental controls for vocabulary level and content sensitivity.</li>
-					<li>No points, streaks, autoplay, or infinite feed. Read a chapter, put it down.</li>
-					<li>Original stories with literary tone - not chat transcripts.</li>
-				</ul>
-			</section>
-
-			<section class="mb-10">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">How it works</h2>
-				<ol class="list-decimal space-y-3 pl-5 leading-relaxed">
-					<li>
-						<strong class="text-foreground">Describe your world.</strong> A genre, a setting, a character,
-						or a book or movie that inspires you. One sentence is enough.
-					</li>
-					<li>
-						<strong class="text-foreground">Cosmonaut writes the opening chapter.</strong>
-						Fully written prose, in a consistent voice, ending at a decision point.
-					</li>
-					<li>
-						<strong class="text-foreground">You choose what happens next.</strong> Pick a presented option,
-						or write a custom action of your own.
-					</li>
-					<li>
-						<strong class="text-foreground">The story branches and remembers.</strong> Every path is tracked
-						on a visual story map; you can revisit earlier moments and explore the "what-ifs" you missed.
-					</li>
-					<li>
-						<strong class="text-foreground">Optional narration.</strong> The Cosmonaut tier adds voice
-						narration so the story can be listened to like an audiobook.
-					</li>
-				</ol>
-			</section>
-
-			<section class="mb-10">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">Story ideas to get you started</h2>
-				<div class="grid gap-3 sm:grid-cols-2">
-					<div class="rounded-lg border border-border/50 bg-card/50 p-4">
-						<BookOpen class="mb-2 h-5 w-5 text-primary" />
-						<p class="text-sm text-foreground">
-							A mystery in a Victorian observatory, where the stars themselves are missing.
-						</p>
-					</div>
-					<div class="rounded-lg border border-border/50 bg-card/50 p-4">
-						<Sparkles class="mb-2 h-5 w-5 text-primary" />
-						<p class="text-sm text-foreground">
-							A bedtime adventure with a brave young fox who has to find their way home.
-						</p>
-					</div>
-					<div class="rounded-lg border border-border/50 bg-card/50 p-4">
-						<BookOpen class="mb-2 h-5 w-5 text-primary" />
-						<p class="text-sm text-foreground">
-							A story like Narnia, but set in a desert kingdom with an oasis-shaped portal.
-						</p>
-					</div>
-					<div class="rounded-lg border border-border/50 bg-card/50 p-4">
-						<Sparkles class="mb-2 h-5 w-5 text-primary" />
-						<p class="text-sm text-foreground">
-							A friendly dragon learning to bake. Each choice leads to a new recipe - or a small
-							disaster.
-						</p>
-					</div>
+		<!-- Story map preview -->
+		<figure class="my-14">
+			<p class="mb-3 text-[10px] font-medium tracking-[0.2em] text-primary/70 uppercase">
+				What a small story looks like
+			</p>
+			{#if StoryMapPreview}
+				<StoryMapPreview nodes={mapNodes} edges={mapEdges} positions={mapPositions} />
+			{:else}
+				<div
+					class="flex h-[420px] w-full items-center justify-center rounded-lg border border-border/60 bg-card/30 text-sm text-muted-foreground"
+					aria-hidden="true"
+				>
+					Loading story map…
 				</div>
-			</section>
+			{/if}
+			<figcaption class="mt-3 text-xs text-muted-foreground/60">
+				A real story map from a six-node mystery for ages 8 and up. Every story you start with
+				Cosmonaut grows into a map like this one - and you can see it whole at any time.
+			</figcaption>
+		</figure>
 
-			<section class="mb-10">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">
-					Family choose-your-own-adventure as a shared activity
-				</h2>
-				<p class="leading-relaxed">
-					Cosmonaut works best when it is something you do together. Set up a story based on a book
-					your kid loves, then read through it side by side - debating choices, taking turns, seeing
-					what happens. It is closer to a board game night than putting on a show. On the Cosmonaut
-					tier, audio narration also makes it a fantastic bedtime story format that families can
-					listen to together.
-				</p>
-			</section>
+		<div
+			class="prose prose-lg max-w-none font-serif text-foreground/90 prose-invert prose-headings:font-serif prose-headings:text-foreground prose-p:leading-[1.7] prose-p:text-foreground/85 prose-strong:text-foreground"
+		>
+			<h2 class="mt-2 mb-4 text-xl font-semibold">For families</h2>
+			<p>
+				The best way to use Cosmonaut, in our biased opinion, is the way Edward Packard used the
+				form in the first place: out loud, with a kid. Set up a story together. Read the chapter
+				aloud. Argue about the choice. See where you end up. On the Cosmonaut tier, audio narration
+				will read the chapter for you, so you can listen along instead of holding a phone.
+			</p>
+			<p>
+				Cosmonaut is meant to be a shared activity, not solo screen time for a young reader.
+				Children under 13 should always use it with a parent or guardian. There is no NSFW mode, no
+				adult roleplay, no infinite feed - the story waits politely for the next person to look at
+				it.
+			</p>
+		</div>
 
-			<aside
-				class="my-12 flex flex-col items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-8 text-center"
-			>
-				<ShieldCheck class="h-8 w-8 text-primary" />
-				<h2 class="text-xl font-semibold text-foreground">A note on safety</h2>
-				<p class="max-w-xl text-sm text-muted-foreground">
-					Cosmonaut is family-friendly by design. There is no adult mode, no roleplay mode, and no
-					way to opt into NSFW content. Parents control vocabulary level and content filters, and
-					children under 13 should always use Cosmonaut with a parent or guardian.
-				</p>
-			</aside>
-
-			<section class="text-center">
-				<h2 class="mb-3 text-2xl font-semibold text-foreground">Try it free</h2>
-				<p class="mx-auto mb-6 max-w-xl leading-relaxed text-muted-foreground">
-					You can start your first AI choose-your-own-adventure story right now, on the free tier.
-					No credit card required.
-				</p>
-				<Button size="lg" class="gap-2" href="/login">
-					<Rocket class="h-5 w-5" />
-					Begin Your Journey
-				</Button>
-			</section>
-		</article>
-	</main>
+		<!-- Soft CTA -->
+		<footer class="mt-16 flex flex-col items-start gap-4 border-t border-border/60 pt-10">
+			<Button href="/login" class="gap-2">
+				Start your first story
+				<ArrowRight class="h-4 w-4" />
+			</Button>
+			<p class="text-sm text-muted-foreground">
+				Or
+				<a
+					href="/ai-bedtime-stories"
+					class="text-primary underline underline-offset-4 hover:text-primary/80"
+				>
+					read about bedtime stories
+				</a>.
+			</p>
+		</footer>
+	</article>
 </div>
