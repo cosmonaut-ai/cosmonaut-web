@@ -35,7 +35,7 @@
 				</div>
 				<h3 class="mb-3 text-xl font-semibold text-foreground">Describe your story</h3>
 				<p class="leading-relaxed text-muted-foreground">
-					"A bedtime story about a brave fox" or "A space station hiding dark secrets" — you set the
+					"A bedtime story about a brave fox" or "A space station hiding dark secrets" - you set the
 					stage, the AI writes the chapters.
 				</p>
 			</div>

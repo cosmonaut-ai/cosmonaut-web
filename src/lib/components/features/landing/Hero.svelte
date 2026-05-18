@@ -86,9 +86,9 @@
 			<p
 				class="hero-enter hero-enter-3 mx-auto mb-6 max-w-2xl text-sm text-muted-foreground md:mx-0 md:mb-12 md:text-base lg:text-lg"
 			>
-				AI choose-your-own-adventure stories, written for families. Describe any world — a mystery,
-				a kingdom, a spaceship with a secret — and Cosmonaut writes a branching, narrated story
-				shaped by your choices.
+				AI choose-your-own-adventure stories, written for families. Describe any world - a mystery,
+				a kingdom, a spaceship with a secret - and Cosmonaut writes a branching story shaped by your
+				choices.
 			</p>
 
 			<!-- CTA Buttons -->

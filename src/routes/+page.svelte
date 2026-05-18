@@ -34,10 +34,10 @@
 </script>
 
 <SEO
-	title="Cosmonaut — AI Choose-Your-Own-Adventure Stories for Families"
-	description="Create AI choose-your-own-adventure stories and narrated bedtime tales the whole family can read together. Describe any world; Cosmonaut writes a branching, family-friendly story shaped by your choices."
+	title="Cosmonaut - AI Choose-Your-Own-Adventure Stories for Families"
+	description="Create AI choose-your-own-adventure stories and custom bedtime tales the whole family can read together. Describe any world; Cosmonaut writes a branching, family-friendly story shaped by your choices."
 	path="/"
-	ogImageAlt="Cosmonaut — AI choose-your-own-adventure stories for families"
+	ogImageAlt="Cosmonaut - AI choose-your-own-adventure stories for families"
 	jsonLd={{
 		'@context': 'https://schema.org',
 		'@graph': [
@@ -48,7 +48,7 @@
 				alternateName: 'Cosmonaut AI',
 				url: 'https://cosmonaut-ai.com',
 				description:
-					'AI-powered choose-your-own-adventure platform for families. Create branching, narrated interactive stories from a single prompt — built for kids, parents, and lifelong readers.',
+					'AI-powered choose-your-own-adventure platform for families. Create branching interactive stories from a single prompt - built for parents and kids to read together, with optional audio narration on the Cosmonaut tier.',
 				applicationCategory: 'EntertainmentApplication',
 				applicationSubCategory: 'Interactive Fiction',
 				operatingSystem: 'Web',
@@ -59,7 +59,8 @@
 				},
 				featureList: [
 					'AI-generated choose-your-own-adventure stories',
-					'Custom AI bedtime stories with audio narration',
+					'Custom AI bedtime stories for families to read together',
+					'Audio narration available on the Cosmonaut tier',
 					'Family-friendly content filters and vocabulary controls',
 					'Branching storylines with a visual story map',
 					'Parental controls for age-appropriate content'
@@ -85,7 +86,7 @@
 					'@type': 'Brand',
 					name: 'Cosmonaut',
 					description:
-						'Family-friendly AI choose-your-own-adventure and narrated bedtime story platform.'
+						'Family-friendly AI choose-your-own-adventure and bedtime story platform for parents and kids to read together.'
 				}
 			},
 			{

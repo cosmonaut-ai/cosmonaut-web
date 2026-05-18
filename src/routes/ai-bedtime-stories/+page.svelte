@@ -11,9 +11,9 @@
 				'@type': 'WebPage',
 				'@id': 'https://cosmonaut-ai.com/ai-bedtime-stories/#webpage',
 				url: 'https://cosmonaut-ai.com/ai-bedtime-stories/',
-				name: 'AI Bedtime Stories — Custom Narrated Stories for Kids',
+				name: 'AI Bedtime Stories - Custom Stories for Families to Read Together',
 				description:
-					'Generate custom AI bedtime stories tailored to your child, with optional audio narration. Family-friendly, branching, and built to be read together.',
+					'Generate custom AI bedtime stories for your child, built to be read together with a parent. Branching, family-friendly, with optional audio narration on the Cosmonaut tier.',
 				about: { '@id': 'https://cosmonaut-ai.com/#webapp' },
 				isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' }
 			},
@@ -39,10 +39,10 @@
 </script>
 
 <SEO
-	title="AI Bedtime Stories — Custom Narrated Stories for Kids | Cosmonaut"
-	description="Generate custom AI bedtime stories tailored to your child, with optional audio narration. Family-friendly, branching, and built to be read together."
+	title="AI Bedtime Stories - Custom Stories for Families to Read Together | Cosmonaut"
+	description="Generate custom AI bedtime stories for your child, built to be read together with a parent. Family-friendly, branching, with optional audio narration on the Cosmonaut tier."
 	path="/ai-bedtime-stories"
-	ogImageAlt="AI bedtime stories for kids — custom narrated stories from Cosmonaut"
+	ogImageAlt="AI bedtime stories from Cosmonaut - for parents and kids to read together"
 	{jsonLd}
 />
 
@@ -55,11 +55,11 @@
 				<Moon class="h-8 w-8 text-primary" />
 			</div>
 			<h1 class="text-4xl font-bold text-foreground sm:text-5xl">
-				AI Bedtime Stories, Made for Your Kid
+				AI Bedtime Stories, Made for Your Family
 			</h1>
 			<p class="mt-4 text-lg text-muted-foreground">
-				Custom AI bedtime stories with optional narration — calm, age-appropriate, and different
-				every night.
+				Custom AI bedtime stories built to be read together with your child - calm, age-appropriate,
+				and different every night.
 			</p>
 			<div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
 				<Button size="lg" class="gap-2" href="/login">
@@ -79,7 +79,7 @@
 				</h2>
 				<p class="leading-relaxed">
 					Some nights your child wants a story about a brave young fox. Some nights it has to
-					involve dragons and a missing crown. Cosmonaut writes a custom AI bedtime story to match —
+					involve dragons and a missing crown. Cosmonaut writes a custom AI bedtime story to match -
 					tailored to the topic, the reading level, and the mood. Tell it what your kid loves, and
 					the story arrives in seconds.
 				</p>
@@ -95,10 +95,10 @@
 					<Volume2 class="mt-1 h-6 w-6 shrink-0 text-primary" />
 					<div>
 						<p class="leading-relaxed">
-							On paid tiers, Cosmonaut narrates every chapter with warm, natural voices. Start the
-							story together, turn off the light, and let narration take over while your child
-							drifts off. It is the audiobook experience — but for stories that are written
-							specifically for your kid, tonight.
+							On the Cosmonaut tier, every chapter can be narrated aloud with warm, natural voices.
+							Read the opening together, then let narration carry the story while you sit alongside
+							your child. It is the audiobook experience, but for stories that are written
+							specifically for your family, tonight.
 						</p>
 					</div>
 				</div>
@@ -137,19 +137,20 @@
 				class="my-12 flex flex-col items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-8 text-center"
 			>
 				<ShieldCheck class="h-8 w-8 text-primary" />
-				<h2 class="text-xl font-semibold text-foreground">Family-safe by default</h2>
+				<h2 class="text-xl font-semibold text-foreground">A together-time platform</h2>
 				<p class="max-w-xl text-sm text-muted-foreground">
-					Cosmonaut never produces scary, adult, or roleplay content for bedtime stories. Parents
-					control vocabulary level and content sensitivity. It is the kind of platform you can hand
-					to your child without checking over their shoulder.
+					Cosmonaut is built to be used by parents and kids together, not handed off as solo screen
+					time. Children under 13 should always use Cosmonaut with a parent or guardian. Parents
+					control vocabulary level and content sensitivity, and Cosmonaut never produces scary,
+					adult, or roleplay content for bedtime stories.
 				</p>
 			</aside>
 
 			<section class="text-center">
 				<h2 class="mb-3 text-2xl font-semibold text-foreground">Try it tonight</h2>
 				<p class="mx-auto mb-6 max-w-xl leading-relaxed text-muted-foreground">
-					The free tier is enough for a bedtime story or two. Upgrade later if you want audio
-					narration or more stories per month.
+					The free tier is enough for a bedtime story or two. The Cosmonaut tier adds audio
+					narration and a much larger monthly story allowance.
 				</p>
 				<Button size="lg" class="gap-2" href="/login">
 					<Rocket class="h-5 w-5" />
