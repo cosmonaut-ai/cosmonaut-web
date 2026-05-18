@@ -11,7 +11,7 @@
 				'@type': 'WebPage',
 				'@id': 'https://cosmonaut-ai.com/ai-interactive-fiction/#webpage',
 				url: 'https://cosmonaut-ai.com/ai-interactive-fiction/',
-				name: 'AI Interactive Fiction — Literary Branching Stories',
+				name: 'AI Interactive Fiction - Literary Branching Stories',
 				description:
 					'Cosmonaut is a literary, prose-first AI interactive fiction platform. Branching stories with consistent tone and a visible map of every choice you have made.',
 				about: { '@id': 'https://cosmonaut-ai.com/#webapp' },
@@ -39,10 +39,10 @@
 </script>
 
 <SEO
-	title="AI Interactive Fiction — Literary Branching Stories | Cosmonaut"
+	title="AI Interactive Fiction - Literary Branching Stories | Cosmonaut"
 	description="Cosmonaut is a literary, prose-first AI interactive fiction platform. Branching stories with consistent tone, custom actions, and a visible map of every choice you've made."
 	path="/ai-interactive-fiction"
-	ogImageAlt="AI interactive fiction — literary branching stories from Cosmonaut"
+	ogImageAlt="AI interactive fiction - literary branching stories from Cosmonaut"
 	{jsonLd}
 />
 
@@ -58,7 +58,7 @@
 				AI Interactive Fiction, Written Like a Novel
 			</h1>
 			<p class="mt-4 text-lg text-muted-foreground">
-				Prose-first branching stories with a consistent voice — a literary alternative to chatbot
+				Prose-first branching stories with a consistent voice - a literary alternative to chatbot
 				roleplay and gamified RPGs.
 			</p>
 			<div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -81,7 +81,7 @@
 					Most AI story tools are really chatbots in disguise. You type, the model replies, and what
 					you end up with reads like a transcript. Cosmonaut is different: it writes proper chapters
 					of prose, with a consistent narrative voice, paced toward meaningful decision points. The
-					choices you make branch the story — but between choices, you are reading written fiction,
+					choices you make branch the story - but between choices, you are reading written fiction,
 					not a conversation.
 				</p>
 			</section>
@@ -127,7 +127,7 @@
 			<section class="mb-10">
 				<h2 class="mb-3 text-2xl font-semibold text-foreground">Who Cosmonaut is for</h2>
 				<p class="leading-relaxed">
-					Cosmonaut is built for readers who want a literary experience — people who grew up on
+					Cosmonaut is built for readers who want a literary experience - people who grew up on
 					choose-your-own-adventure paperbacks, who like Tolkien more than Twitch, and who want
 					their AI to write something they would actually want to read. It is family-friendly by
 					default, so adults can use it for their own stories and parents can use it with their kids
@@ -138,19 +138,19 @@
 			<section class="mb-10">
 				<h2 class="mb-3 text-2xl font-semibold text-foreground">Genres that work well</h2>
 				<ul class="list-disc space-y-2 pl-5 leading-relaxed">
-					<li>Cozy mystery — a small village, a strange disappearance, a curious narrator.</li>
-					<li>Historical fiction — a 1920s Paris adventure, a Victorian observatory mystery.</li>
-					<li>Soft science fiction — a generation ship with a quiet secret in its archive.</li>
-					<li>Literary fantasy — an empire built on the bones of a sleeping god.</li>
-					<li>Coming-of-age — a teen apprentice mapmaker on a first commission.</li>
+					<li>Cozy mystery - a small village, a strange disappearance, a curious narrator.</li>
+					<li>Historical fiction - a 1920s Paris adventure, a Victorian observatory mystery.</li>
+					<li>Soft science fiction - a generation ship with a quiet secret in its archive.</li>
+					<li>Literary fantasy - an empire built on the bones of a sleeping god.</li>
+					<li>Coming-of-age - a teen apprentice mapmaker on a first commission.</li>
 				</ul>
 			</section>
 
 			<section class="text-center">
 				<h2 class="mb-3 text-2xl font-semibold text-foreground">Read your way into a story</h2>
 				<p class="mx-auto mb-6 max-w-xl leading-relaxed text-muted-foreground">
-					The free tier is enough to explore. Upgrade for more stories per month and audio
-					narration.
+					The free tier is enough to explore. The Cosmonaut tier adds audio narration and a much
+					larger monthly story allowance.
 				</p>
 				<Button size="lg" class="gap-2" href="/login">
 					<Rocket class="h-5 w-5" />

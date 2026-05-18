@@ -79,13 +79,13 @@
 				<p class="leading-relaxed">
 					An AI choose-your-own-adventure is an interactive story written on demand by an AI, where
 					the reader makes choices at key moments and the story branches based on what they pick.
-					Unlike a static book, every path is generated as you read — and unlike a roleplay chatbot,
+					Unlike a static book, every path is generated as you read - and unlike a roleplay chatbot,
 					the story is structured into proper chapters with a consistent tone, a tracked plot, and a
 					visible map of every choice you have made.
 				</p>
 				<p class="mt-4 leading-relaxed">
-					Cosmonaut takes a one-line idea from you — a setting, a character, a mood, or even a book
-					or film you love — and turns it into a fully written branching story you can step inside.
+					Cosmonaut takes a one-line idea from you - a setting, a character, a mood, or even a book
+					or film you love - and turns it into a fully written branching story you can step inside.
 				</p>
 			</section>
 
@@ -100,10 +100,10 @@
 					controls and content filters parents can trust.
 				</p>
 				<ul class="mt-4 list-disc space-y-2 pl-5">
-					<li>No NSFW, roleplay, or adult content modes — ever.</li>
+					<li>No NSFW, roleplay, or adult content modes - ever.</li>
 					<li>Parental controls for vocabulary level and content sensitivity.</li>
 					<li>No points, streaks, autoplay, or infinite feed. Read a chapter, put it down.</li>
-					<li>Original stories with literary tone — not chat transcripts.</li>
+					<li>Original stories with literary tone - not chat transcripts.</li>
 				</ul>
 			</section>
 
@@ -127,8 +127,8 @@
 						on a visual story map; you can revisit earlier moments and explore the "what-ifs" you missed.
 					</li>
 					<li>
-						<strong class="text-foreground">Optional narration.</strong> Paid tiers add voice narration
-						so the story can be listened to like an audiobook.
+						<strong class="text-foreground">Optional narration.</strong> The Cosmonaut tier adds voice
+						narration so the story can be listened to like an audiobook.
 					</li>
 				</ol>
 			</section>
@@ -157,7 +157,7 @@
 					<div class="rounded-lg border border-border/50 bg-card/50 p-4">
 						<Sparkles class="mb-2 h-5 w-5 text-primary" />
 						<p class="text-sm text-foreground">
-							A friendly dragon learning to bake. Each choice leads to a new recipe — or a small
+							A friendly dragon learning to bake. Each choice leads to a new recipe - or a small
 							disaster.
 						</p>
 					</div>
@@ -170,9 +170,10 @@
 				</h2>
 				<p class="leading-relaxed">
 					Cosmonaut works best when it is something you do together. Set up a story based on a book
-					your kid loves, then read through it side by side — debating choices, taking turns, seeing
-					what happens. It is closer to a board game night than putting on a show. With audio
-					narration, it also makes a fantastic bedtime story format for younger kids.
+					your kid loves, then read through it side by side - debating choices, taking turns, seeing
+					what happens. It is closer to a board game night than putting on a show. On the Cosmonaut
+					tier, audio narration also makes it a fantastic bedtime story format that families can
+					listen to together.
 				</p>
 			</section>
 
@@ -183,7 +184,8 @@
 				<h2 class="text-xl font-semibold text-foreground">A note on safety</h2>
 				<p class="max-w-xl text-sm text-muted-foreground">
 					Cosmonaut is family-friendly by design. There is no adult mode, no roleplay mode, and no
-					way to opt into NSFW content. Parents control vocabulary level and content filters.
+					way to opt into NSFW content. Parents control vocabulary level and content filters, and
+					children under 13 should always use Cosmonaut with a parent or guardian.
 				</p>
 			</aside>
 
