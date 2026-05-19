@@ -2,21 +2,27 @@
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowRight } from '@lucide/svelte';
+	import { getGuide, BLOG_ID, ORG_ID } from '$lib/seo/guides';
+
+	const guide = getGuide('ai-choose-your-own-adventure');
 
 	const jsonLd = {
 		'@context': 'https://schema.org',
 		'@graph': [
 			{
-				'@type': 'Article',
-				'@id': 'https://cosmonaut-ai.com/ai-choose-your-own-adventure/#article',
-				headline: 'AI choose-your-own-adventure, in a longer lineage',
-				description:
-					'A short essay on the choose-your-own-adventure form, from the 1979 paperbacks to the AI-written branching stories Cosmonaut writes today.',
-				url: 'https://cosmonaut-ai.com/ai-choose-your-own-adventure/',
+				'@type': 'BlogPosting',
+				'@id': guide.id,
+				headline: guide.headline,
+				description: guide.description,
+				url: guide.url,
+				datePublished: guide.datePublished,
+				dateModified: guide.dateModified,
 				inLanguage: 'en',
-				isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' },
-				author: { '@id': 'https://cosmonaut-ai.com/#organization' },
-				publisher: { '@id': 'https://cosmonaut-ai.com/#organization' }
+				image: 'https://cosmonaut-ai.com/art/story-map.webp',
+				isPartOf: { '@id': BLOG_ID },
+				mainEntityOfPage: guide.url,
+				author: { '@id': ORG_ID },
+				publisher: { '@id': ORG_ID }
 			},
 			{
 				'@type': 'BreadcrumbList',
@@ -32,7 +38,7 @@
 						'@type': 'ListItem',
 						position: 3,
 						name: 'AI Choose-Your-Own-Adventure',
-						item: 'https://cosmonaut-ai.com/ai-choose-your-own-adventure/'
+						item: guide.url
 					}
 				]
 			}
