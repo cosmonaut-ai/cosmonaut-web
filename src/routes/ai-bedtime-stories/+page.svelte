@@ -2,21 +2,27 @@
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowRight } from '@lucide/svelte';
+	import { getGuide, BLOG_ID, ORG_ID } from '$lib/seo/guides';
+
+	const guide = getGuide('ai-bedtime-stories');
 
 	const jsonLd = {
 		'@context': 'https://schema.org',
 		'@graph': [
 			{
-				'@type': 'Article',
-				'@id': 'https://cosmonaut-ai.com/ai-bedtime-stories/#article',
-				headline: 'A bedtime story that gets to know your kid',
-				description:
-					'A short essay on custom AI bedtime stories, what one looks like in practice, and how Cosmonaut writes them.',
-				url: 'https://cosmonaut-ai.com/ai-bedtime-stories/',
+				'@type': 'BlogPosting',
+				'@id': guide.id,
+				headline: guide.headline,
+				description: guide.description,
+				url: guide.url,
+				datePublished: guide.datePublished,
+				dateModified: guide.dateModified,
 				inLanguage: 'en',
-				isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' },
-				author: { '@id': 'https://cosmonaut-ai.com/#organization' },
-				publisher: { '@id': 'https://cosmonaut-ai.com/#organization' }
+				image: 'https://cosmonaut-ai.com/og-image.png',
+				isPartOf: { '@id': BLOG_ID },
+				mainEntityOfPage: guide.url,
+				author: { '@id': ORG_ID },
+				publisher: { '@id': ORG_ID }
 			},
 			{
 				'@type': 'BreadcrumbList',
@@ -32,7 +38,7 @@
 						'@type': 'ListItem',
 						position: 3,
 						name: 'AI Bedtime Stories',
-						item: 'https://cosmonaut-ai.com/ai-bedtime-stories/'
+						item: guide.url
 					}
 				]
 			}

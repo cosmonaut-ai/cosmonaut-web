@@ -7,6 +7,18 @@
 	title="About Cosmonaut - Interactive Storytelling Platform"
 	description="Cosmonaut AI is an interactive storytelling platform where every choice shapes the narrative. Built for families, powered by AI."
 	path="/about"
+	jsonLd={{
+		'@context': 'https://schema.org',
+		'@type': 'AboutPage',
+		'@id': 'https://cosmonaut-ai.com/about/#aboutpage',
+		url: 'https://cosmonaut-ai.com/about/',
+		name: 'About Cosmonaut',
+		description:
+			'About Cosmonaut: an AI interactive storytelling platform where every choice shapes the narrative, built for families by Matson Software LLC.',
+		inLanguage: 'en',
+		isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' },
+		mainEntity: { '@id': 'https://cosmonaut-ai.com/#organization' }
+	}}
 />
 
 <div class="h-full overflow-y-auto bg-background">
