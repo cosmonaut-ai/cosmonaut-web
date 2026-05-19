@@ -40,64 +40,40 @@
 	ogImageAlt="Cosmonaut - AI choose-your-own-adventure stories for families"
 	jsonLd={{
 		'@context': 'https://schema.org',
-		'@graph': [
-			{
-				'@type': 'WebApplication',
-				'@id': 'https://cosmonaut-ai.com/#webapp',
-				name: 'Cosmonaut',
-				alternateName: 'Cosmonaut AI',
-				url: 'https://cosmonaut-ai.com',
-				description:
-					'AI-powered choose-your-own-adventure platform for families. Create branching interactive stories from a single prompt - built for parents and kids to read together, with optional audio narration on the Cosmonaut tier.',
-				applicationCategory: 'EntertainmentApplication',
-				applicationSubCategory: 'Interactive Fiction',
-				operatingSystem: 'Web',
-				inLanguage: 'en',
-				audience: {
-					'@type': 'Audience',
-					audienceType: 'Families with children, parents, readers of interactive fiction'
-				},
-				featureList: [
-					'AI-generated choose-your-own-adventure stories',
-					'Custom AI bedtime stories for families to read together',
-					'Audio narration available on the Cosmonaut tier',
-					'Family-friendly content filters and vocabulary controls',
-					'Branching storylines with a visual story map',
-					'Parental controls for age-appropriate content'
-				],
-				offers: {
-					'@type': 'Offer',
-					price: '0',
-					priceCurrency: 'USD'
-				},
-				creator: {
-					'@id': 'https://cosmonaut-ai.com/#organization'
-				}
-			},
-			{
-				'@type': 'Organization',
-				'@id': 'https://cosmonaut-ai.com/#organization',
-				name: 'Matson Software LLC',
-				legalName: 'Matson Software LLC',
-				url: 'https://cosmonaut-ai.com',
-				logo: 'https://cosmonaut-ai.com/logo.png',
-				email: 'support@cosmonaut-ai.com',
-				brand: {
-					'@type': 'Brand',
-					name: 'Cosmonaut',
-					description:
-						'Family-friendly AI choose-your-own-adventure and bedtime story platform for parents and kids to read together.'
-				}
-			},
-			{
-				'@type': 'WebSite',
-				'@id': 'https://cosmonaut-ai.com/#website',
-				url: 'https://cosmonaut-ai.com',
-				name: 'Cosmonaut',
-				publisher: { '@id': 'https://cosmonaut-ai.com/#organization' },
-				inLanguage: 'en'
-			}
-		]
+		'@type': 'SoftwareApplication',
+		'@id': 'https://cosmonaut-ai.com/#software',
+		name: 'Cosmonaut',
+		alternateName: 'Cosmonaut AI',
+		url: 'https://cosmonaut-ai.com/',
+		description:
+			'AI-powered choose-your-own-adventure platform for families. Create branching interactive stories from a single prompt - built for parents and kids to read together, with optional audio narration on the Cosmonaut tier.',
+		applicationCategory: 'GameApplication',
+		applicationSubCategory: 'Interactive Fiction',
+		operatingSystem: 'Web',
+		inLanguage: 'en',
+		image: 'https://cosmonaut-ai.com/og-image.png',
+		audience: {
+			'@type': 'PeopleAudience',
+			suggestedMinAge: 6,
+			audienceType: 'Families with children, parents, readers of interactive fiction'
+		},
+		featureList: [
+			'AI-generated choose-your-own-adventure stories',
+			'Custom AI bedtime stories for families to read together',
+			'Audio narration available on the Cosmonaut tier',
+			'Family-friendly content filters and vocabulary controls',
+			'Branching storylines with a visual story map',
+			'Parental controls for age-appropriate content'
+		],
+		offers: {
+			'@type': 'AggregateOffer',
+			priceCurrency: 'USD',
+			lowPrice: '0',
+			highPrice: '25',
+			offerCount: 3
+		},
+		isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' },
+		publisher: { '@id': 'https://cosmonaut-ai.com/#organization' }
 	}}
 />
 

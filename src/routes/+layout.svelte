@@ -18,8 +18,44 @@
 	import UserMenu from '$lib/components/shared/UserMenu.svelte';
 	import AppFooter from '$lib/components/shared/AppFooter.svelte';
 	import OnboardingGuard from '$lib/components/shared/OnboardingGuard.svelte';
+	import JsonLd from '$lib/components/shared/JsonLd.svelte';
 
 	let { children } = $props();
+
+	// Site-wide structured data: Organization (the company) and WebSite (the
+	// site itself), cross-referenced by stable @id so per-page schemas (about,
+	// guides, software application) can reference them without re-declaring.
+	const siteJsonLd = {
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'Organization',
+				'@id': 'https://cosmonaut-ai.com/#organization',
+				name: 'Matson Software LLC',
+				legalName: 'Matson Software LLC',
+				url: 'https://cosmonaut-ai.com/',
+				logo: 'https://cosmonaut-ai.com/logo.png',
+				email: 'support@cosmonaut-ai.com',
+				description:
+					'Maker of Cosmonaut, a family-friendly AI choose-your-own-adventure and interactive bedtime story platform.',
+				brand: {
+					'@type': 'Brand',
+					'@id': 'https://cosmonaut-ai.com/#brand',
+					name: 'Cosmonaut',
+					description:
+						'Family-friendly AI choose-your-own-adventure and bedtime story platform for parents and kids to read together.'
+				}
+			},
+			{
+				'@type': 'WebSite',
+				'@id': 'https://cosmonaut-ai.com/#website',
+				url: 'https://cosmonaut-ai.com/',
+				name: 'Cosmonaut',
+				inLanguage: 'en',
+				publisher: { '@id': 'https://cosmonaut-ai.com/#organization' }
+			}
+		]
+	};
 
 	const auth = useAuth();
 
@@ -98,6 +134,8 @@
 		goto('/login');
 	}
 </script>
+
+<JsonLd schema={siteJsonLd} />
 
 <ModeWatcher defaultMode="dark" track={false} />
 <Toaster richColors />

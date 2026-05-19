@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { ArrowRight } from '@lucide/svelte';
+	import { GUIDES, BLOG_ID, ORG_ID, WEBSITE_ID } from '$lib/seo/guides';
 
 	const guides = [
 		{
@@ -25,6 +26,32 @@
 			readTime: '7 min read'
 		}
 	];
+
+	const blogJsonLd = {
+		'@context': 'https://schema.org',
+		'@type': 'Blog',
+		'@id': BLOG_ID,
+		url: 'https://cosmonaut-ai.com/guides/',
+		name: 'Cosmonaut Guides',
+		description:
+			'Essays on AI choose-your-own-adventure stories, custom AI bedtime stories, and interactive fiction for readers - from the team behind Cosmonaut.',
+		inLanguage: 'en',
+		isPartOf: { '@id': WEBSITE_ID },
+		publisher: { '@id': ORG_ID },
+		blogPost: GUIDES.map((g) => ({
+			'@type': 'BlogPosting',
+			'@id': g.id,
+			url: g.url,
+			headline: g.headline,
+			description: g.description,
+			datePublished: g.datePublished,
+			dateModified: g.dateModified,
+			inLanguage: 'en',
+			author: { '@id': ORG_ID },
+			publisher: { '@id': ORG_ID },
+			mainEntityOfPage: g.url
+		}))
+	};
 </script>
 
 <SEO
@@ -32,6 +59,7 @@
 	description="Essays on AI choose-your-own-adventure stories, custom AI bedtime stories, and interactive fiction for readers - from the team behind Cosmonaut."
 	path="/guides"
 	ogImageAlt="Cosmonaut Guides - essays on AI interactive fiction and family storytelling"
+	jsonLd={blogJsonLd}
 />
 
 <div class="h-full overflow-y-auto bg-background">
