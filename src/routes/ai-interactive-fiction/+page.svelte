@@ -2,21 +2,27 @@
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowRight } from '@lucide/svelte';
+	import { getGuide, BLOG_ID, ORG_ID } from '$lib/seo/guides';
+
+	const guide = getGuide('ai-interactive-fiction');
 
 	const jsonLd = {
 		'@context': 'https://schema.org',
 		'@graph': [
 			{
-				'@type': 'Article',
-				'@id': 'https://cosmonaut-ai.com/ai-interactive-fiction/#article',
-				headline: 'Interactive fiction for readers',
-				description:
-					'An essay on AI interactive fiction as a literary form, why Cosmonaut is prose-first rather than chat-first, and what makes a branching story worth reading.',
-				url: 'https://cosmonaut-ai.com/ai-interactive-fiction/',
+				'@type': 'BlogPosting',
+				'@id': guide.id,
+				headline: guide.headline,
+				description: guide.description,
+				url: guide.url,
+				datePublished: guide.datePublished,
+				dateModified: guide.dateModified,
 				inLanguage: 'en',
-				isPartOf: { '@id': 'https://cosmonaut-ai.com/#website' },
-				author: { '@id': 'https://cosmonaut-ai.com/#organization' },
-				publisher: { '@id': 'https://cosmonaut-ai.com/#organization' }
+				image: 'https://cosmonaut-ai.com/og-image.png',
+				isPartOf: { '@id': BLOG_ID },
+				mainEntityOfPage: guide.url,
+				author: { '@id': ORG_ID },
+				publisher: { '@id': ORG_ID }
 			},
 			{
 				'@type': 'BreadcrumbList',
@@ -32,7 +38,7 @@
 						'@type': 'ListItem',
 						position: 3,
 						name: 'AI Interactive Fiction',
-						item: 'https://cosmonaut-ai.com/ai-interactive-fiction/'
+						item: guide.url
 					}
 				]
 			}
