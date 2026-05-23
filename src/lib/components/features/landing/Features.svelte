@@ -76,7 +76,7 @@
 				use:intersectionReveal={{ onReveal: () => (visible[1] = true), threshold: 0.15 }}
 			>
 				{#each promptScraps as scrap, i (scrap.label)}
-					<article class="prompt-scrap" style="--tilt: {(i - 1) * 1.5}deg">
+					<article class="prompt-scrap" style="--tilt: {(i - 1) * 0.6}deg">
 						<p class="mb-3 text-xs font-medium tracking-widest text-primary/80 uppercase">
 							{scrap.label}
 						</p>
@@ -153,25 +153,20 @@
 <style>
 	.landing-band {
 		background:
-			linear-gradient(90deg, oklch(from var(--primary) l c h / 0.07), transparent 46%),
-			linear-gradient(
-				180deg,
-				oklch(from var(--card) l c h / 0.52),
-				oklch(from var(--card) l c h / 0.36)
-			);
+			linear-gradient(90deg, oklch(from var(--primary) l c h / 0.08), transparent 46%),
+			linear-gradient(180deg, oklch(from var(--card) l c h / 1), oklch(from var(--card) l c h / 1));
 	}
 
 	.prompt-stack {
 		display: grid;
-		gap: 1rem;
+		gap: 1.35rem;
 	}
 
 	.prompt-scrap {
 		transform: rotate(var(--tilt));
 		border: 1px solid oklch(from var(--border) l c h / 0.8);
 		border-radius: 0.5rem;
-		background:
-			linear-gradient(135deg, oklch(from var(--card) l c h / 0.92), var(--background)), var(--card);
+		background: var(--background);
 		padding: 1.25rem;
 		box-shadow: 0 16px 40px oklch(0 0 0 / 0.18);
 	}
@@ -180,7 +175,7 @@
 		min-height: 100%;
 		border: 1px solid oklch(from var(--border) l c h / 0.8);
 		border-radius: 0.5rem;
-		background: oklch(from var(--card) l c h / 0.58);
+		background: var(--card);
 		padding: 1.5rem;
 		transition-delay: var(--delay);
 	}
@@ -188,8 +183,8 @@
 	.family-note {
 		background: linear-gradient(
 			180deg,
-			oklch(from var(--card) l c h / 0.42),
-			oklch(from var(--primary) l c h / 0.06)
+			oklch(from var(--card) l c h / 1),
+			oklch(from var(--card) l c h / 1)
 		);
 	}
 

@@ -10,8 +10,6 @@
 	let currentNodeId = $state(startNodeId);
 	let visitedPath = $state<string[]>([startNodeId]);
 	let isTransitioning = $state(false);
-	let displayedText = $state('');
-	let isTyping = $state(true);
 
 	/** Transition durations that respect motion preference */
 	const fadeDuration = prefersReducedMotion ? 0 : 300;
@@ -22,37 +20,8 @@
 	const currentNode = $derived(demoStory[currentNodeId]);
 	const isEnding = $derived(!currentNode?.choices || currentNode.choices.length === 0);
 
-	// Typewriter effect (instant reveal when reduced motion is preferred)
-	$effect(() => {
-		const text = currentNode?.text || '';
-		displayedText = '';
-		isTyping = true;
-
-		if (prefersReducedMotion) {
-			// Instant reveal -- skip typewriter
-			displayedText = text;
-			isTyping = false;
-			return;
-		}
-
-		let index = 0;
-		const speed = 8;
-
-		const interval = setInterval(() => {
-			if (index < text.length) {
-				displayedText = text.slice(0, index + 1);
-				index++;
-			} else {
-				clearInterval(interval);
-				isTyping = false;
-			}
-		}, speed);
-
-		return () => clearInterval(interval);
-	});
-
 	function selectChoice(targetId: string) {
-		if (isTransitioning || isTyping) return;
+		if (isTransitioning) return;
 		trackEvent('demo_choice_made');
 
 		isTransitioning = true;
@@ -102,15 +71,10 @@
 	<div class="relative mx-auto max-w-4xl px-6">
 		<!-- Section header -->
 		<div class="mb-12 text-center">
-			<p class="mb-3 text-sm font-medium tracking-widest text-primary uppercase">
-				A tiny bedtime test flight
-			</p>
-			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
-				The Moon Has Misplaced Its Name
-			</h2>
+			<p class="mb-3 text-sm font-medium tracking-widest text-primary uppercase">Try it yourself</p>
+			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">Step Into a Story</h2>
 			<p class="mx-auto max-w-xl text-muted-foreground">
-				A strange little branch from an ordinary evening: toothbrushes, rain on the skylight, and
-				two kids trying to help the moon remember what it is called.
+				A branching sci-fi scene for readers of any age. Make a choice and see how the path changes.
 			</p>
 		</div>
 
@@ -119,7 +83,7 @@
 			{#each visitedPath as nodeId, i (nodeId + i)}
 				<span
 					class="rounded-full px-3 py-1 transition-colors duration-300 {i === visitedPath.length - 1
-						? 'bg-primary/20 text-primary'
+						? 'bg-primary text-primary-foreground'
 						: 'bg-muted text-muted-foreground'}"
 				>
 					{i === 0 ? 'Start' : `Choice ${i}`}
@@ -147,21 +111,17 @@
 							<div
 								class="prose prose-base max-w-none leading-relaxed text-card-foreground prose-invert sm:prose-lg"
 								aria-live="polite"
-								aria-busy={isTyping}
 							>
-								{#each displayedText.split('\n\n') as paragraph, i (i)}
+								{#each (currentNode?.text || '').split('\n\n') as paragraph, i (i)}
 									<p class="mb-4 last:mb-0">
 										<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 										{@html formatText(paragraph)}
 									</p>
 								{/each}
-								{#if isTyping}
-									<span class="demo-cursor" aria-hidden="true"></span>
-								{/if}
 							</div>
 
 							<!-- Choices -->
-							{#if !isTyping && currentNode?.choices && currentNode.choices.length > 0}
+							{#if currentNode?.choices && currentNode.choices.length > 0}
 								<div
 									class="mt-8 space-y-3 border-t border-border pt-8"
 									in:fade={{ duration: fadeDuration, delay: choiceFadeDelay }}
@@ -175,7 +135,7 @@
 										<button
 											onclick={() => selectChoice(choice.targetId)}
 											disabled={isTransitioning}
-											class="demo-choice group flex w-full items-center gap-4 rounded-lg border border-border bg-background/50 p-4 text-left disabled:opacity-50"
+											class="demo-choice group flex w-full items-center gap-4 rounded-lg border border-border bg-background p-4 text-left disabled:opacity-50"
 											style="--choice-delay: {i * 70}ms"
 										>
 											<span
@@ -193,7 +153,7 @@
 							{/if}
 
 							<!-- Ending state -->
-							{#if !isTyping && isEnding}
+							{#if isEnding}
 								<div
 									class="mt-8 border-t border-border pt-8 text-center"
 									in:fade={{ duration: fadeDuration, delay: choiceFadeDelay }}
@@ -235,29 +195,6 @@
 			var(--card) 0%,
 			oklch(from var(--primary) l c h / 0.02) 100%
 		);
-	}
-
-	/* ── Typing cursor - gold glow caret ── */
-	.demo-cursor {
-		display: inline-block;
-		width: 2.5px;
-		height: 1.15em;
-		vertical-align: text-bottom;
-		background: var(--primary);
-		border-radius: 1px;
-		animation: cursor-blink 1s steps(2) infinite;
-		box-shadow:
-			0 0 6px oklch(from var(--primary) l c h / 0.6),
-			0 0 14px oklch(from var(--primary) l c h / 0.25);
-	}
-
-	@keyframes cursor-blink {
-		0% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0;
-		}
 	}
 
 	/* ── Choice button stagger ── */
@@ -332,10 +269,6 @@
 
 	/* ── Reduced motion ── */
 	@media (prefers-reduced-motion: reduce) {
-		.demo-cursor {
-			animation: none;
-			opacity: 1;
-		}
 		.demo-choice {
 			animation: none;
 			opacity: 1;
