@@ -1,90 +1,204 @@
 <script lang="ts">
-	import { Sparkles, GitBranch, Eye } from '@lucide/svelte';
+	import { BookOpen, GitBranch, Map, Moon, PencilLine, Users } from '@lucide/svelte';
 	import { intersectionReveal } from '$lib/utils/intersectionReveal';
 
-	// Track visibility for each feature card
-	let visible = $state([false, false, false]);
+	const promptScraps = [
+		{
+			label: 'Tuesday, 8:17 PM',
+			prompt: 'A mystery about the sock that vanished from the dryer',
+			note: 'Good for one more chapter before lights out.'
+		},
+		{
+			label: 'Saturday couch fort',
+			prompt: 'Grandma has a vegetable garden on Mars',
+			note: 'Let the brave tomato captain make one terrible joke.'
+		},
+		{
+			label: 'Rainy train ride',
+			prompt: 'A polite dragon learns how to apologize',
+			note: 'No fighting. Big feelings allowed.'
+		}
+	];
+
+	const storyPrinciples = [
+		{
+			icon: BookOpen,
+			title: 'Chapters, not chat bubbles',
+			description:
+				'Cosmonaut writes in scenes with atmosphere, pauses, and endings you can actually read aloud.'
+		},
+		{
+			icon: GitBranch,
+			title: 'Choices worth debating',
+			description:
+				'Branches are framed like little family arguments: brave, cautious, funny, curious, or kind.'
+		},
+		{
+			icon: Map,
+			title: 'A map you can come back to',
+			description:
+				"The story keeps its shape, so yesterday's odd choice can become tomorrow's favorite path."
+		}
+	];
+
+	let visible = $state([false, false, false, false]);
 </script>
 
-<section class="relative py-24">
+<section class="relative overflow-hidden py-24">
 	<!-- Top gradient from DemoStory -->
 	<div
 		class="pointer-events-none absolute inset-x-0 top-0 h-100 bg-linear-to-b from-background via-background/50 to-transparent"
 	></div>
 
-	<div class="relative mx-auto max-w-5xl px-6">
-		<!-- Section intro -->
-		<div class="mb-20 text-center">
-			<p class="mb-3 text-sm font-medium tracking-widest text-primary uppercase">How it works</p>
-			<h2 class="text-3xl font-bold text-foreground sm:text-4xl">
-				Three steps to your own interactive story
-			</h2>
-		</div>
-
-		<!-- Three focused features -->
-		<div class="grid gap-12 md:grid-cols-3">
-			<!-- Feature 1: Describe -->
+	<div class="relative mx-auto max-w-6xl px-6">
+		<div
+			class="landing-band grid gap-10 border-y border-border/60 px-4 py-14 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16"
+		>
 			<div
-				class="feature-card text-center {visible[0] ? 'feature-visible' : 'feature-hidden'}"
+				class="feature-card {visible[0] ? 'feature-visible' : 'feature-hidden'}"
 				use:intersectionReveal={{ onReveal: () => (visible[0] = true), threshold: 0.2 }}
 			>
-				<div
-					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 hover:scale-110 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
-				>
-					<Sparkles class="h-8 w-8 text-primary" />
-				</div>
-				<h3 class="mb-3 text-xl font-semibold text-foreground">Describe your story</h3>
-				<p class="leading-relaxed text-muted-foreground">
-					"A bedtime story about a brave fox" or "A space station hiding dark secrets" - you set the
-					stage, the AI writes the chapters.
+				<p class="mb-3 text-sm font-medium tracking-widest text-primary uppercase">
+					Not another prompt machine
+				</p>
+				<h2 class="mb-5 max-w-xl text-3xl font-bold text-foreground sm:text-4xl">
+					Made for the part of the day when everyone is a little tired.
+				</h2>
+				<p class="max-w-2xl leading-relaxed text-muted-foreground">
+					The best stories do not start with a polished brief. They start with a kid saying, "make
+					it about the laundry basket," or a parent remembering the book everyone loved last month.
+					Cosmonaut is built around those small, specific sparks.
 				</p>
 			</div>
 
-			<!-- Feature 2: Branch -->
 			<div
-				class="feature-card text-center {visible[1] ? 'feature-visible' : 'feature-hidden'}"
-				use:intersectionReveal={{ onReveal: () => (visible[1] = true), threshold: 0.2 }}
+				class="prompt-stack feature-card {visible[1] ? 'feature-visible' : 'feature-hidden'}"
+				use:intersectionReveal={{ onReveal: () => (visible[1] = true), threshold: 0.15 }}
 			>
-				<div
-					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 hover:scale-110 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
-				>
-					<GitBranch class="h-8 w-8 text-primary" />
-				</div>
-				<h3 class="mb-3 text-xl font-semibold text-foreground">Every choice branches</h3>
-				<p class="leading-relaxed text-muted-foreground">
-					Decisions create new paths. Write custom actions, explore unexpected directions. Your
-					story grows with every click.
-				</p>
-			</div>
-
-			<!-- Feature 3: See -->
-			<div
-				class="feature-card text-center {visible[2] ? 'feature-visible' : 'feature-hidden'}"
-				use:intersectionReveal={{ onReveal: () => (visible[2] = true), threshold: 0.2 }}
-			>
-				<div
-					class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 hover:scale-110 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
-				>
-					<Eye class="h-8 w-8 text-primary" />
-				</div>
-				<h3 class="mb-3 text-xl font-semibold text-foreground">See the whole picture</h3>
-				<p class="leading-relaxed text-muted-foreground">
-					A visual map shows every path through your story. Jump between branches, discover
-					what-ifs, find the endings you missed.
-				</p>
+				{#each promptScraps as scrap, i (scrap.label)}
+					<article class="prompt-scrap" style="--tilt: {(i - 1) * 1.5}deg">
+						<p class="mb-3 text-xs font-medium tracking-widest text-primary/80 uppercase">
+							{scrap.label}
+						</p>
+						<p class="mb-4 text-lg font-semibold text-foreground">"{scrap.prompt}"</p>
+						<p class="text-sm leading-relaxed text-muted-foreground">{scrap.note}</p>
+					</article>
+				{/each}
 			</div>
 		</div>
 
-		<!-- Bottom note -->
-		<div class="mt-20 text-center">
-			<p class="text-sm text-muted-foreground/70">
-				Multiplayer adventures coming soon-explore stories together with friends.
-			</p>
+		<div class="grid gap-6 py-16 md:grid-cols-3">
+			{#each storyPrinciples as principle, i (principle.title)}
+				{@const Icon = principle.icon}
+				<article
+					class="feature-card principle-tile {visible[2] ? 'feature-visible' : 'feature-hidden'}"
+					style="--delay: {i * 80}ms"
+					use:intersectionReveal={{ onReveal: () => (visible[2] = true), threshold: 0.15 }}
+				>
+					<div
+						class="mb-5 flex h-11 w-11 items-center justify-center rounded-lg border border-primary/25 bg-primary/10"
+					>
+						<Icon class="h-5 w-5 text-primary" />
+					</div>
+					<h3 class="mb-3 text-lg font-semibold text-foreground">{principle.title}</h3>
+					<p class="leading-relaxed text-muted-foreground">{principle.description}</p>
+				</article>
+			{/each}
+		</div>
+
+		<div
+			class="feature-card family-note grid gap-8 border-t border-border/60 p-6 sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center {visible[3]
+				? 'feature-visible'
+				: 'feature-hidden'}"
+			use:intersectionReveal={{ onReveal: () => (visible[3] = true), threshold: 0.2 }}
+		>
+			<div>
+				<p class="mb-3 text-sm font-medium tracking-widest text-primary uppercase">House rules</p>
+				<h2 class="mb-5 text-3xl font-bold text-foreground sm:text-4xl">
+					Quiet by design, weird on purpose.
+				</h2>
+				<p class="leading-relaxed text-muted-foreground">
+					No streaks, loot boxes, or endless feed. Cosmonaut is meant to make a room lean in for a
+					few minutes, then let everyone close the laptop and keep talking about the story.
+				</p>
+			</div>
+
+			<div class="grid gap-4 sm:grid-cols-3">
+				<div class="house-rule">
+					<Moon class="mb-4 h-5 w-5 text-primary" />
+					<p class="font-medium text-foreground">Bedtime pace</p>
+					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+						Short chapters that can stop cleanly.
+					</p>
+				</div>
+				<div class="house-rule">
+					<Users class="mb-4 h-5 w-5 text-primary" />
+					<p class="font-medium text-foreground">Shared reading</p>
+					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+						Choices are made together, not autoplayed.
+					</p>
+				</div>
+				<div class="house-rule">
+					<PencilLine class="mb-4 h-5 w-5 text-primary" />
+					<p class="font-medium text-foreground">Room for odd ideas</p>
+					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+						The best prompt might be four messy words.
+					</p>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>
 
 <style>
+	.landing-band {
+		background:
+			linear-gradient(90deg, oklch(from var(--primary) l c h / 0.07), transparent 46%),
+			linear-gradient(
+				180deg,
+				oklch(from var(--card) l c h / 0.52),
+				oklch(from var(--card) l c h / 0.36)
+			);
+	}
+
+	.prompt-stack {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.prompt-scrap {
+		transform: rotate(var(--tilt));
+		border: 1px solid oklch(from var(--border) l c h / 0.8);
+		border-radius: 0.5rem;
+		background:
+			linear-gradient(135deg, oklch(from var(--card) l c h / 0.92), var(--background)), var(--card);
+		padding: 1.25rem;
+		box-shadow: 0 16px 40px oklch(0 0 0 / 0.18);
+	}
+
+	.principle-tile {
+		min-height: 100%;
+		border: 1px solid oklch(from var(--border) l c h / 0.8);
+		border-radius: 0.5rem;
+		background: oklch(from var(--card) l c h / 0.58);
+		padding: 1.5rem;
+		transition-delay: var(--delay);
+	}
+
+	.family-note {
+		background: linear-gradient(
+			180deg,
+			oklch(from var(--card) l c h / 0.42),
+			oklch(from var(--primary) l c h / 0.06)
+		);
+	}
+
+	.house-rule {
+		min-height: 100%;
+		border-left: 1px solid oklch(from var(--primary) l c h / 0.35);
+		padding-left: 1rem;
+	}
+
 	.feature-card {
 		transition:
 			opacity 0.6s ease-out,
@@ -101,7 +215,12 @@
 		transform: translateY(0);
 	}
 
-	/* Respect reduced motion at the CSS level as well */
+	@media (max-width: 640px) {
+		.prompt-scrap {
+			transform: none;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.feature-card {
 			transition: none;
