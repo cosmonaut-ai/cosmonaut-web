@@ -93,15 +93,19 @@
 
 	<!-- Final CTA section -->
 	<section
-		class="cta-section relative py-24 {ctaVisible ? 'cta-visible' : 'cta-hidden'}"
+		class="cta-section relative bg-[#101923] py-24 text-[#f7f1e3] {ctaVisible
+			? 'cta-visible'
+			: 'cta-hidden'}"
 		use:intersectionReveal={{ onReveal: () => (ctaVisible = true), threshold: 0.2 }}
 	>
 		<div class="mx-auto max-w-4xl px-6">
-			<div class="rounded-lg border border-border bg-card px-6 py-12 text-center sm:px-10">
-				<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
+			<div
+				class="rounded-lg border border-[#314354] bg-[#172534] px-6 py-12 text-center shadow-[0_28px_70px_rgba(0,0,0,0.24)] sm:px-10"
+			>
+				<h2 class="mb-4 text-3xl font-semibold text-[#fff8e8] sm:text-4xl">
 					Start with the odd detail they will remember tomorrow.
 				</h2>
-				<p class="mx-auto mb-8 max-w-2xl text-muted-foreground">
+				<p class="mx-auto mb-8 max-w-2xl text-[#b6c4cd]">
 					A missing moon name, a dragon who needs to apologize, a garden on Mars. Give Cosmonaut one
 					small spark and turn it into a story you can read together.
 				</p>
