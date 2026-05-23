@@ -10,119 +10,229 @@ export interface DemoStoryNode {
 export const demoStory: Record<string, DemoStoryNode> = {
 	start: {
 		id: 'start',
-		text: `Mara is brushing her teeth when the bathroom mirror fogs over and writes a sentence by itself:
+		text: `The ancient starship *Wanderer* drifts silently through the void, its hull scarred by centuries of cosmic travel. You've been awakened from cryo-sleep by an automated distress signal-something has gone terribly wrong.
 
-*The moon has misplaced its name.*
+The emergency lights cast long shadows across the empty corridor as you step out of your pod. The ship's AI, ARIA, flickers to life on a nearby terminal.
 
-Her little brother Theo stops humming. The house is quiet except for rain tapping the kitchen skylight and the old radiator knocking like someone polite at a door.
+"Crew member detected. Current status: critical. Primary systems offline. Life support at 23%."
 
-On the windowsill sits a silver thimble that nobody remembers putting there. Inside it is a curled paper ladder, no longer than a shoelace. Outside, the moon hangs low over the alley, pale and worried, as if it has forgotten what to be called.`,
+You notice two corridors branching ahead. To the left, the bridge pulses with faint blue light. To the right, you hear the rhythmic hum of the engine room.`,
 		choices: [
-			{ label: 'Unroll the tiny ladder and see where it reaches', targetId: 'ladder' },
-			{ label: 'Ask the moon what name it remembers first', targetId: 'ask_moon' }
+			{ label: 'Head to the bridge to assess the situation', targetId: 'bridge' },
+			{ label: 'Investigate the engine room', targetId: 'engine' }
 		]
 	},
 
-	ladder: {
-		id: 'ladder',
-		text: `Mara carries the thimble to the kitchen table. Theo brings the jam jar, because every important expedition, he says, needs supplies.
+	bridge: {
+		id: 'bridge',
+		text: `The bridge is a graveyard of shattered screens and twisted metal. Through the fractured viewport, you see something that steals your breath-a massive, bioluminescent structure floats in the void. It pulses with an inner light, organic and alien.
 
-The paper ladder grows when Mara touches it. First the length of a scarf. Then a clothesline. Then it slips out the window and hooks itself to a cloud with the tidy confidence of a librarian shelving a book.
+ARIA's voice crackles through damaged speakers: "Unknown biological entity detected. No match in database. It... it's been following us. For how long, I cannot determine."
 
-Halfway up, they find a post office made from bird nests and brass buttons. A sleepy clerk in a raincoat stamps envelopes with constellations.
-
-"Names go missing all the time," the clerk says. "Usually they hide in places where someone said them with love."`,
+The entity's tendrils begin to move, reaching toward the ship with deliberate grace. One of the intact consoles beeps-there's still power to the weapons array. Another displays escape pod status: one remaining.`,
 		choices: [
-			{ label: 'Search the moon-mail sacks for a familiar name', targetId: 'mail_sacks' },
-			{ label: 'Climb past the post office toward the moon', targetId: 'moon_roof' }
+			{ label: 'Power up the weapons array', targetId: 'weapons' },
+			{ label: 'Make for the escape pod', targetId: 'escape' },
+			{ label: 'Try to communicate with the entity', targetId: 'communicate' }
 		]
 	},
 
-	ask_moon: {
-		id: 'ask_moon',
-		text: `"Do you remember anything?" Mara whispers through the open window.
+	engine: {
+		id: 'engine',
+		text: `The engine room thrums with residual power. Banks of equipment line the walls, most dark and silent. But in the center, bathed in amber warning lights, you find the source of your problems.
 
-The moon lowers itself until its light fills the sink and turns every spoon in the drying rack into a small bright boat.
+A crystalline growth has erupted from the main reactor, its faceted surface refracting the emergency lights into scattered rainbows. It's beautiful-and utterly alien. As you watch, it pulses gently, and you feel a strange warmth in your mind.
 
-*"I remember being called home by wolves,"* says the moon. *"I remember sailors looking up when they were lost. I remember a baby in apartment 4B waving with both hands. But the name itself is gone."*
+*Welcome, traveler.* The thought isn't yours. *We have waited so long for one who could hear.*
 
-Theo pulls his pajama sleeves over his hands. "Maybe names are like socks. They go missing because they are having adventures."
-
-The moon considers this gravely. A single silver thread drops from the sky and lands across the windowsill.`,
+Your hand drifts toward the crystal. Part of you screams to pull back, but another part feels an inexplicable sense of homecoming.`,
 		choices: [
-			{
-				label: 'Follow the silver thread through the sleeping building',
-				targetId: 'silver_thread'
-			},
-			{ label: 'Collect every name the moon can still remember', targetId: 'remembered_names' }
+			{ label: 'Touch the crystal', targetId: 'touch_crystal' },
+			{ label: 'Back away and return to the corridor', targetId: 'retreat' },
+			{ label: 'Try to remove the crystal from the reactor', targetId: 'remove_crystal' }
 		]
 	},
 
-	mail_sacks: {
-		id: 'mail_sacks',
-		text: `The mail sacks are full of names written on things that nearly blew away: a theater ticket, a grocery list, the corner of a birthday card, a napkin with soup on it.
+	weapons: {
+		id: 'weapons',
+		text: `Your fingers fly across the console, rerouting what little power remains to the weapons array. The entity seems to sense your intent-its tendrils pause, hovering just meters from the hull.
 
-Mara finds a blue envelope addressed to "The Light We Leave On." Theo finds one addressed to "Round Lantern, Sky Department." Neither is quite right, but both glow when held near the window.
+The targeting system locks on. One shot. That's all you'll get.
 
-At the bottom of the sack is a note in their mother's handwriting from years ago, written before Theo could read:
+But as your finger hovers over the firing command, something changes. The entity's glow shifts, patterns emerging on its surface. Not random bioluminescence-*language*. It's trying to speak.
 
-*Moon, please watch my children while they sleep.*
+"WAIT." ARIA's voice is different now, touched with something almost like wonder. "I'm detecting a pattern. It's... it's showing us star charts. Coordinates to something called the 'Nexus of Worlds.'"
 
-The letters warm Mara's palm. The post office falls respectfully quiet.`,
-		choices: [{ label: 'Carry the note to the moon', targetId: 'name_returned' }]
+The weapons system hums, ready to fire.`,
+		choices: [
+			{ label: 'Fire the weapons', targetId: 'fire' },
+			{ label: 'Lower weapons and observe', targetId: 'observe' }
+		]
 	},
 
-	moon_roof: {
-		id: 'moon_roof',
-		text: `They climb until the city is a quilt of windows below them. On the roof of the moon, dust rises around their slippers.
+	escape: {
+		id: 'escape',
+		text: `You sprint through the crumbling corridors, emergency lights flickering overhead. Behind you, you hear the hull groaning as the entity's tendrils make contact with the ship.
 
-There is a door there, painted the exact yellow of their hallway light. Behind it they hear every goodnight ever said at once: rushed ones, sleepy ones, sung ones, ones whispered by grandparents over video calls, ones spoken into empty rooms by people who hope they are still heard.
+The escape pod bay is miraculously intact. The single remaining pod glows with green ready-lights. Safety. Survival. Just twenty meters away.
 
-"A name is not just what you call a thing," Mara says slowly. "It is what answers when you need it."
+But then you see it-a child's drawing taped to the wall. A family, crudely rendered in crayon. "CREW MANIFEST" reads a nearby screen. There were others aboard. Families. Children. Where are they now?
 
-The moon brightens, as if it has been holding its breath for a hundred years.`,
-		choices: [{ label: 'Open the yellow door together', targetId: 'name_returned' }]
+The ship shudders violently. You have seconds to decide.`,
+		choices: [
+			{ label: 'Board the escape pod immediately', targetId: 'escape_alone' },
+			{ label: 'Search for other survivors', targetId: 'search_survivors' }
+		]
 	},
 
-	silver_thread: {
-		id: 'silver_thread',
-		text: `The thread leads under their parents' bedroom door, past the laundry basket, and into the hall closet where winter coats sleep through summer.
+	communicate: {
+		id: 'communicate',
+		text: `You approach the viewport and press your palm against the cold glass. The entity's tendrils pause their advance. In the depths of its translucent form, lights begin to dance-a response.
 
-Inside the smallest mitten, Theo finds a pebble. The pebble is warm. When Mara holds it to her ear, she hears their father on a camping trip, pointing upward and saying, "That one keeps watch when we cannot."
+You close your eyes and focus on a simple thought: *We mean no harm.*
 
-The words are not the moon's old name. They are better: a clue left by someone who did not know he was leaving one.
+The response comes not as words, but as images flooding your mind: vast coral-like cities floating between stars, beings of light tending gardens of pure energy, a great darkness consuming world after world. And finally, a single desperate hope-a beacon, lit across the void, searching for allies.
 
-The thread tugs them back toward the window, eager as a kite.`,
-		choices: [{ label: 'Bring the warm pebble back to the moon', targetId: 'name_returned' }]
+*Your kind was not always alone,* the entity communicates. *Your ancestors built bridges between worlds. We seek to rebuild them.*
+
+The entity's form begins to shift, its tendrils weaving together into something new-a doorway, shimmering with possibility.`,
+		choices: [{ label: 'Step through the doorway', targetId: 'doorway_ending' }]
 	},
 
-	remembered_names: {
-		id: 'remembered_names',
-		text: `Mara writes while the moon remembers.
+	touch_crystal: {
+		id: 'touch_crystal',
+		text: `The moment your fingers brush the crystal's surface, the universe unfolds.
 
-Night coin. Tide-puller. Window friend. Silver pancake. The porch lamp of the sea. Theo adds "Big Cheese" and refuses to cross it out.
+You see the Wanderer's true mission-not exploration, but reunion. Your ancestors seeded the stars with pieces of a vast crystalline network, a communication system spanning galaxies. But something went wrong. The network shattered. The connections broke. And humanity forgot.
 
-The list becomes so long it slides off the kitchen table and winds around the chair legs. Each name is wrong by itself, but together they make the room feel less afraid.
+Until now.
 
-At the very end, Mara writes the name her mother uses when she comes in to check on them after bedtime:
+The crystal shows you the way to restore it. Coordinates burn into your memory-the Nexus of Worlds, where the broken pieces might be rejoined. The warmth in your mind blooms into something like joy.
 
-*our old moon.*
+*You remember now,* the presence whispers. *Welcome home, child of the stars.*
 
-Outside, the sky goes still.`,
-		choices: [{ label: 'Read the whole list aloud', targetId: 'name_returned' }]
+You wake in your cryo-pod, the ship humming with renewed power. The crystal pulses gently nearby, no longer a parasite but a compass. And ahead, the first of many journeys awaits.`,
+		choices: []
 	},
 
-	name_returned: {
-		id: 'name_returned',
-		text: `The moon listens.
+	observe: {
+		id: 'observe',
+		text: `You lower your hand from the firing command. The weapons array powers down with a disappointed whine.
 
-Not to one perfect answer, but to all the small almost-answers: the note, the pebble, the silly names, the goodnights caught behind the yellow door. Its light gathers them up the way a blanket gathers knees and feet.
+The entity's communication intensifies. Star charts cascade across every functioning screen-not just coordinates, but *histories*. Civilizations that rose and fell. Worlds that bloomed and died. And connecting them all, like threads in a cosmic tapestry, pathways of light.
 
-*"Yes,"* says the moon at last. *"That is close enough to come home."*
+"The Nexus of Worlds," ARIA breathes, processing faster than you've ever heard. "It's real. A junction point for... for everything. Every world. Every story. Every possibility."
 
-In the morning, the thimble is back in the sewing tin. The mirror is ordinary. Rain slides down the window.
+The entity extends a tendril-not to attack, but to offer. Within its translucent form, a doorway takes shape, glimmering with stars you don't recognize.
 
-But that night, when Mara and Theo look up, the moon is exactly where it should be, wearing every name anyone has ever loved it by.`,
+*Will you explore with us?*
+
+Your answer will echo across the cosmos.`,
+		choices: []
+	},
+
+	fire: {
+		id: 'fire',
+		text: `The weapon fires.
+
+Light erupts across the void as the plasma bolt strikes true. The entity convulses, its bioluminescence flickering erratically. For a moment, you feel a surge of triumph.
+
+Then the sorrow hits you. Not your own-*its*. In its dying moments, the entity broadcasts one final message: an image of the Wanderer surrounded by dozens of vessels just like it, all converging on a point of brilliant light. Your ship wasn't being hunted. It was being guided.
+
+The entity's light fades to nothing. The star charts disappear from your screens. Whatever destination awaited-whatever wonders lay at the Nexus of Worlds-that path is now closed to you.
+
+ARIA's voice is quiet. "Returning to standard navigation. Shall I plot a course for the nearest human colony?"
+
+The stars outside seem colder now. Emptier.`,
+		choices: []
+	},
+
+	doorway_ending: {
+		id: 'doorway_ending',
+		text: `You step through the doorway of light.
+
+Reality bends around you-colors you've never seen, sounds that taste like music, the warmth of a thousand suns filtered through infinite prisms. And then you're standing somewhere else entirely.
+
+A vast chamber stretches before you, its walls alive with constellations. Beings of every imaginable form move through the space: crystalline entities, creatures of pure energy, figures that seem human but shimmer with inner light. And at the center, a great tree of stars grows from the floor to the infinite ceiling-the Nexus of Worlds itself.
+
+An ancient figure approaches, their form shifting between human and something far older.
+
+"Welcome, Wanderer. Your journey through the stories has only begun."
+
+The universe opens before you, infinite and waiting.`,
+		choices: []
+	},
+
+	retreat: {
+		id: 'retreat',
+		text: `You back away from the crystal, its warmth fading from your mind like a half-remembered dream. The presence doesn't pursue you-it simply watches, patient and eternal.
+
+In the corridor, you find ARIA waiting on a terminal screen.
+
+"That crystal is the source of our problems," she says, "but also, perhaps, our salvation. It's not damaging the ship-it's *changing* it. Preparing it for something."
+
+Distant rumbling echoes through the hull. Outside the nearest porthole, you see the void filling with light-other ships emerging from nowhere, all bearing the same crystalline growths.
+
+"We're not alone," ARIA whispers. "We never were. The question is: will you lead them, or run from them?"
+
+The corridor branches once more. One path leads back to the crystal. The other, to the escape pods.`,
+		choices: [
+			{ label: 'Return to the crystal', targetId: 'touch_crystal' },
+			{ label: 'Make for the escape pods', targetId: 'escape' }
+		]
+	},
+
+	remove_crystal: {
+		id: 'remove_crystal',
+		text: `You grasp the crystal and pull. It doesn't budge. You pull harder, bracing your feet against the reactor housing, and feel it begin to give.
+
+*Please,* the voice in your mind pleads. *You don't understand-*
+
+The crystal tears free with a sound like breaking glass and screaming stars. The reactor's amber lights turn red. Alarms blare. And in your hands, the crystal goes dark.
+
+ARIA's voice cuts through the chaos: "Reactor breach imminent. You have ninety seconds to reach an escape pod."
+
+As you run, cradling the dead crystal, you feel an absence where the warmth once lived. Whatever secrets it held, whatever connections it offered-they're gone now, shattered by fear.
+
+The escape pod launches into the void. The Wanderer erupts behind you in a silent flower of fire.
+
+You survived. But at what cost?`,
+		choices: []
+	},
+
+	escape_alone: {
+		id: 'escape_alone',
+		text: `The pod seals behind you with a hiss of pressurized air. Through the tiny viewport, you watch the Wanderer grow smaller, its hull now completely wrapped in the entity's luminous tendrils.
+
+The ship doesn't explode. It *transforms*-flowing into new shapes, melding with the entity until you can't tell where one ends and the other begins. Then, with a flash of light that burns itself into your retinas, they vanish.
+
+Your distress beacon pulses steadily. Someone will find you. Eventually.
+
+In the silence of the pod, you wonder about the others. About the entity's message. About the Nexus of Worlds and the star charts you'll never see again.
+
+You survived. But survival, you're beginning to understand, isn't always the same as winning.
+
+The stars wheel overhead, indifferent and eternal.`,
+		choices: []
+	},
+
+	search_survivors: {
+		id: 'search_survivors',
+		text: `You turn from the escape pod and run deeper into the ship.
+
+The cryo-bay is chaos-pods scattered, their occupants long gone. But in the corner, beneath a collapsed beam, you find them: a woman clutching two children, all awake, all terrified.
+
+"We heard the alarms," she whispers. "We didn't know what to do."
+
+Together, you make it back to the escape bay. The entity's tendrils have pierced the hull now, spreading across the walls in intricate patterns. But they part as you approach, creating a path to the pod.
+
+*Protect them,* the presence whispers in your mind. *Guide them to the light.*
+
+The pod is designed for one. It fits four, if barely. As you launch into the void, you see the Wanderer begin its transformation, and you understand-the entity was never the threat.
+
+It was the test.
+
+And you passed.`,
 		choices: []
 	}
 };
