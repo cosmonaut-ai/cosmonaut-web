@@ -57,24 +57,20 @@
 	}
 </script>
 
-<section class="relative bg-background py-24">
-	<!-- Subtle top fade for smoother transition from hero -->
-	<div
-		class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-transparent to-background"
-	></div>
-
-	<!-- Bottom gradient to fade back to transparent starfield -->
-	<div
-		class="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-transparent to-background"
-	></div>
-
-	<div class="relative mx-auto max-w-4xl px-6">
-		<!-- Section header -->
-		<div class="mb-12 text-center">
-			<p class="mb-3 text-sm font-medium tracking-widest text-primary uppercase">Try it yourself</p>
-			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">Step Into a Story</h2>
-			<p class="mx-auto max-w-xl text-muted-foreground">
-				A branching sci-fi scene for readers of any age. Make a choice and see how the path changes.
+<section class="story-lab relative overflow-hidden py-24 text-[#f7f1e3] sm:py-28">
+	<div class="relative mx-auto max-w-6xl px-6">
+		<div class="mb-12 grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-end">
+			<div>
+				<p class="mb-4 text-sm font-semibold tracking-[0.18em] text-[#f3d98b] uppercase">
+					Try it for yourself
+				</p>
+				<h2 class="max-w-xl text-4xl leading-tight font-semibold text-[#fff8e8] sm:text-5xl">
+					A story should feel read, not generated.
+				</h2>
+			</div>
+			<p class="max-w-2xl text-lg leading-8 text-[#b6c4cd] md:justify-self-end">
+				A branching sci-fi scene with enough atmosphere for grown readers, clear stakes for kids,
+				and choices that feel like interactive fiction instead of a chat transcript.
 			</p>
 		</div>
 
@@ -83,15 +79,15 @@
 			{#each visitedPath as nodeId, i (nodeId + i)}
 				<span
 					class="rounded-full px-3 py-1 transition-colors duration-300 {i === visitedPath.length - 1
-						? 'bg-primary text-primary-foreground'
-						: 'bg-muted text-muted-foreground'}"
+						? 'bg-[#f3d98b] text-[#172230]'
+						: 'bg-[#20303f] text-[#b6c4cd]'}"
 				>
 					{i === 0 ? 'Start' : `Choice ${i}`}
 				</span>
 				{#if i < visitedPath.length - 1}
 					<div class="demo-connector mx-0.5 flex items-center">
-						<div class="h-px w-4 bg-primary/30"></div>
-						<ChevronRight class="h-3 w-3 text-primary/40" />
+						<div class="h-px w-4 bg-[#42576a]"></div>
+						<ChevronRight class="h-3 w-3 text-[#6f8191]" />
 					</div>
 				{/if}
 			{/each}
@@ -105,11 +101,11 @@
 					out:fade={{ duration: prefersReducedMotion ? 0 : 150 }}
 					class={isTransitioning ? 'opacity-50' : ''}
 				>
-					<Card class="demo-card rounded-none bg-card py-0 sm:rounded-lg">
-						<CardContent class="p-3 sm:p-6 lg:p-8">
+					<Card class="demo-card rounded-none py-0 sm:rounded-lg">
+						<CardContent class="p-5 sm:p-8 lg:p-10">
 							<!-- Story text -->
 							<div
-								class="prose prose-base max-w-none leading-relaxed text-card-foreground prose-invert sm:prose-lg"
+								class="prose prose-base max-w-none leading-relaxed text-[#e8eef2] prose-invert sm:prose-lg"
 								aria-live="polite"
 							>
 								{#each (currentNode?.text || '').split('\n\n') as paragraph, i (i)}
@@ -123,29 +119,27 @@
 							<!-- Choices -->
 							{#if currentNode?.choices && currentNode.choices.length > 0}
 								<div
-									class="mt-8 space-y-3 border-t border-border pt-8"
+									class="mt-8 space-y-4 border-t border-[#314354] pt-8"
 									in:fade={{ duration: fadeDuration, delay: choiceFadeDelay }}
 								>
-									<p
-										class="mb-4 text-sm font-medium tracking-wider text-muted-foreground uppercase"
-									>
+									<p class="mb-4 text-sm font-semibold tracking-[0.16em] text-[#9caab6] uppercase">
 										What do you do?
 									</p>
 									{#each currentNode.choices as choice, i (choice.targetId)}
 										<button
 											onclick={() => selectChoice(choice.targetId)}
 											disabled={isTransitioning}
-											class="demo-choice group flex w-full items-center gap-4 rounded-lg border border-border bg-background p-4 text-left disabled:opacity-50"
+											class="demo-choice group flex w-full items-center gap-4 rounded-lg border border-[#314354] bg-[#101923] p-4 text-left disabled:opacity-50"
 											style="--choice-delay: {i * 70}ms"
 										>
 											<span
-												class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 text-sm font-medium text-primary transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground"
+												class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#5b6f81] text-sm font-semibold text-[#f3d98b] transition-colors group-hover:border-[#f3d98b] group-hover:bg-[#f3d98b] group-hover:text-[#172230]"
 											>
 												{i + 1}
 											</span>
-											<span class="text-foreground">{choice.label}</span>
+											<span class="text-[#f7f1e3]">{choice.label}</span>
 											<ChevronRight
-												class="ml-auto h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary"
+												class="ml-auto h-5 w-5 text-[#8fa0ad] transition-transform group-hover:translate-x-1 group-hover:text-[#f3d98b]"
 											/>
 										</button>
 									{/each}
@@ -155,10 +149,10 @@
 							<!-- Ending state -->
 							{#if isEnding}
 								<div
-									class="mt-8 border-t border-border pt-8 text-center"
+									class="mt-8 border-t border-[#314354] pt-8 text-center"
 									in:fade={{ duration: fadeDuration, delay: choiceFadeDelay }}
 								>
-									<p class="demo-ending mb-6 text-muted-foreground">
+									<p class="demo-ending mb-6 text-[#b6c4cd]">
 										<span class="demo-star demo-star-1">✦</span>
 										This path has reached its destination
 										<span class="demo-star demo-star-2">✦</span>
@@ -178,7 +172,7 @@
 		<!-- Restart button -->
 		{#if visitedPath.length > 1 && !isEnding}
 			<div class="mt-6 text-center">
-				<Button variant="ghost" size="sm" onclick={restart} class="gap-2 text-muted-foreground">
+				<Button variant="ghost" size="sm" onclick={restart} class="gap-2 text-[#b6c4cd]">
 					<RotateCcw class="h-4 w-4" />
 					Start Over
 				</Button>
@@ -188,13 +182,17 @@
 </section>
 
 <style>
+	.story-lab {
+		background: linear-gradient(180deg, #101923 0%, #142130 50%, #101923 100%), #101923;
+	}
+
 	/* ── Card background ── */
 	:global(.demo-card) {
-		background: linear-gradient(
-			135deg,
-			var(--card) 0%,
-			oklch(from var(--primary) l c h / 0.02) 100%
-		);
+		border: 1px solid #314354;
+		background: linear-gradient(180deg, rgba(32, 48, 63, 0.92), rgba(23, 37, 52, 0.98)), #172534;
+		box-shadow:
+			0 28px 70px rgba(0, 0, 0, 0.28),
+			0 1px 0 rgba(255, 255, 255, 0.04) inset;
 	}
 
 	/* ── Choice button stagger ── */
@@ -209,9 +207,9 @@
 	}
 
 	.demo-choice:hover {
-		border-color: oklch(from var(--primary) l c h / 0.5);
-		background-color: oklch(from var(--primary) l c h / 0.05);
-		box-shadow: 0 2px 12px oklch(from var(--primary) l c h / 0.08);
+		border-color: #f3d98b;
+		background-color: #142130;
+		box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 		transform: translateX(2px);
 	}
 
@@ -245,7 +243,7 @@
 	/* ── Ending star flourish ── */
 	.demo-star {
 		display: inline-block;
-		color: var(--primary);
+		color: #7d642b;
 		animation: star-twinkle 2s ease-in-out infinite;
 	}
 	.demo-star-1 {
