@@ -102,10 +102,15 @@
 	<div class="relative mx-auto max-w-4xl px-6">
 		<!-- Section header -->
 		<div class="mb-12 text-center">
-			<p class="mb-3 text-sm font-medium tracking-widest text-primary uppercase">Try it yourself</p>
-			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">Step Into a Story</h2>
+			<p class="mb-3 text-sm font-medium tracking-widest text-primary uppercase">
+				A tiny bedtime test flight
+			</p>
+			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
+				The Moon Has Misplaced Its Name
+			</h2>
 			<p class="mx-auto max-w-xl text-muted-foreground">
-				This is what it feels like. Make a choice. See what happens.
+				A strange little branch from an ordinary evening: toothbrushes, rain on the skylight, and
+				two kids trying to help the moon remember what it is called.
 			</p>
 		</div>
 

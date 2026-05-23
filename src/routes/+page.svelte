@@ -98,11 +98,11 @@
 	>
 		<div class="mx-auto max-w-4xl px-6 text-center">
 			<h2 class="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
-				What story are you building?
+				Start with the odd detail they will remember tomorrow.
 			</h2>
 			<p class="mx-auto mb-8 max-w-2xl text-muted-foreground">
-				One prompt is all it takes. Describe your story, step inside, and see where your choices
-				take you.
+				A missing moon name, a dragon who needs to apologize, a garden on Mars. Give Cosmonaut one
+				small spark and turn it into a story you can read together.
 			</p>
 			<Button size="lg" class="gap-2 px-8" onclick={() => handleGetStarted('bottom_cta')}>
 				<Rocket class="h-5 w-5" />
