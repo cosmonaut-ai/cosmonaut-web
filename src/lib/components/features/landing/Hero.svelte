@@ -41,11 +41,11 @@
 <svelte:window onmousemove={handleMouseMove} />
 
 <section
-	class="pt:0 relative flex min-h-screen flex-col items-end justify-center overflow-hidden px-6 pb-12 md:pt-40 md:pb-32"
+	class="pt:0 relative flex min-h-[calc(100dvh-3.75rem)] flex-col items-end justify-center overflow-hidden px-6 pb-12 md:pt-40 md:pb-32"
 >
-	<!-- Gradient overlay for depth -->
+	<!-- Gradient overlay - fades to the section background color at the bottom for seamless transition -->
 	<div
-		class="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent via-background/50 to-background"
+		class="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent via-transparent to-[#101923]"
 	></div>
 
 	<!-- Clouds (top-right, mirrored, decorative) -->
@@ -174,7 +174,7 @@
 
 	<!-- Scroll indicator -->
 	<div
-		class="hero-enter hero-enter-5 absolute bottom-8 left-1/2 hidden -translate-x-1/2 text-center motion-safe:animate-bounce md:block"
+		class="hero-enter hero-enter-5 absolute bottom-16 left-1/2 hidden -translate-x-1/2 text-center motion-safe:animate-bounce md:block"
 	>
 		<div class="mx-auto h-14 w-8 rounded-full border-2 border-muted-foreground/30 p-1">
 			<div class="mx-auto h-3 w-1.5 rounded-full bg-primary/60"></div>

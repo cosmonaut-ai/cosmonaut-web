@@ -5,15 +5,11 @@
 	import DemoStory from '$lib/components/features/landing/DemoStory.svelte';
 	import Features from '$lib/components/features/landing/Features.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Rocket } from '@lucide/svelte';
-	import { intersectionReveal } from '$lib/utils/intersectionReveal';
+	import { Rocket, Smartphone } from '@lucide/svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
 	const auth = useAuth();
-
-	/** Scroll-triggered visibility for the final CTA section */
-	let ctaVisible = $state(false);
 
 	function handleGetStarted(location: string = 'hero') {
 		trackEvent('cta_clicked', { location });
@@ -91,55 +87,69 @@
 	<!-- Features section -->
 	<Features />
 
-	<!-- Final CTA section -->
-	<section
-		class="cta-section relative bg-[#101923] py-24 text-[#f7f1e3] {ctaVisible
-			? 'cta-visible'
-			: 'cta-hidden'}"
-		use:intersectionReveal={{ onReveal: () => (ctaVisible = true), threshold: 0.2 }}
-	>
-		<div class="mx-auto max-w-4xl px-6">
+	<!-- Android app section -->
+	<section class="relative bg-[#101923] pt-16 pb-20 text-[#f7f1e3] sm:pt-20 sm:pb-24">
+		<div class="mx-auto max-w-5xl px-6">
 			<div
-				class="rounded-lg border border-[#314354] bg-[#172534] px-6 py-12 text-center shadow-[0_28px_70px_rgba(0,0,0,0.24)] sm:px-10"
+				class="grid items-center gap-10 rounded-lg border border-[#314354] bg-[#172534] p-8 shadow-[0_24px_70px_rgba(0,0,0,0.24)] sm:p-10 lg:grid-cols-[1fr_auto] lg:gap-16"
 			>
-				<h2 class="mb-4 text-3xl font-semibold text-[#fff8e8] sm:text-4xl">
-					Start with the odd detail they will remember tomorrow.
-				</h2>
-				<p class="mx-auto mb-8 max-w-2xl text-[#b6c4cd]">
-					A missing moon name, a dragon who needs to apologize, a garden on Mars. Give Cosmonaut one
-					small spark and turn it into a story you can read together.
-				</p>
-				<Button size="lg" class="gap-2 px-8" onclick={() => handleGetStarted('bottom_cta')}>
-					<Rocket class="h-5 w-5" />
-					Create Your Story
-				</Button>
+				<div>
+					<p class="mb-3 text-sm font-semibold tracking-[0.18em] text-[#f3d98b] uppercase">
+						Take it with you
+					</p>
+					<h2 class="mb-4 text-3xl leading-tight font-semibold text-[#fff8e8] sm:text-4xl">
+						We're on Android!
+					</h2>
+					<p class="max-w-xl text-lg leading-relaxed text-[#b6c4cd]">
+						The same branching stories, audio narration, and story map — in your pocket. Read on the
+						couch, in the car, or wherever bedtime happens to be tonight.
+					</p>
+					<a
+						href="https://play.google.com/store/apps/details?id=com.cosmonaut.app"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="mt-6 inline-flex items-center gap-2 rounded-lg border border-[#314354] bg-[#101923] px-5 py-3 text-sm font-semibold text-[#f7f1e3] transition-colors hover:border-[#f3d98b] hover:bg-[#142130]"
+					>
+						<Smartphone class="h-5 w-5 text-[#f3d98b]" />
+						Get it on Google Play
+					</a>
+				</div>
+				<div class="hidden lg:block">
+					<div
+						class="flex h-36 w-36 items-center justify-center rounded-2xl border border-[#314354] bg-[#101923]"
+					>
+						<img src="/logo.png" alt="Cosmonaut app icon" class="h-16 w-16" />
+					</div>
+				</div>
 			</div>
 		</div>
 	</section>
+
+	<!-- Final CTA section -->
+	<section class="relative pt-24 pb-28 text-[#f7f1e3] sm:pt-32 sm:pb-36">
+		<!-- Gradient from section background to transparent -->
+		<div
+			class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-[#101923] to-transparent"
+		></div>
+		<div class="mx-auto max-w-3xl px-6 text-center">
+			<p class="mb-5 text-sm font-semibold tracking-[0.18em] text-[#f3d98b] uppercase">Your turn</p>
+			<h2
+				class="mb-6 font-orbitron text-3xl leading-tight font-bold tracking-wide text-[#fff8e8] sm:text-4xl lg:text-5xl"
+			>
+				One odd detail. One whole story.
+			</h2>
+			<p class="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-[#b6c4cd]">
+				A missing moon name. A dragon who needs to apologize. A garden on Mars. Give Cosmonaut a
+				spark and read what grows from it.
+			</p>
+			<Button
+				size="lg"
+				class="gap-2 px-10 py-6 text-base"
+				onclick={() => handleGetStarted('bottom_cta')}
+			>
+				<Rocket class="h-5 w-5" />
+				Create Your Story
+			</Button>
+		</div>
+	</section>
 </main>
-
-<style>
-	.cta-section {
-		transition:
-			opacity 0.7s ease-out,
-			transform 0.7s ease-out;
-	}
-	.cta-hidden {
-		opacity: 0;
-		transform: translateY(24px);
-	}
-	.cta-visible {
-		opacity: 1;
-		transform: translateY(0);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.cta-section {
-			transition: none;
-		}
-		.cta-hidden {
-			opacity: 1;
-			transform: none;
-		}
-	}
-</style>

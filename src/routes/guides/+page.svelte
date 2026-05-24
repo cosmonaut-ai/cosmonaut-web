@@ -80,7 +80,7 @@
 				<li>
 					<a
 						href={guide.href}
-						class="group flex flex-col gap-3 py-8 transition-colors hover:bg-muted/30 sm:flex-row sm:items-baseline sm:justify-between sm:gap-12"
+						class="group -mx-4 flex flex-col gap-3 rounded-lg px-4 py-8 transition-colors hover:bg-muted/30 sm:-mx-6 sm:flex-row sm:items-baseline sm:justify-between sm:gap-12 sm:px-6"
 					>
 						<div class="flex-1">
 							<p class="mb-2 text-[10px] font-medium tracking-[0.2em] text-primary/80 uppercase">

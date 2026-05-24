@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { BookOpen, GitBranch, Map, Moon, PencilLine, Users } from '@lucide/svelte';
-	import { intersectionReveal } from '$lib/utils/intersectionReveal';
+	import { BookOpen, GitBranch, Map } from '@lucide/svelte';
 
 	const promptScraps = [
 		{
@@ -40,36 +39,13 @@
 				'The story map keeps paths legible, so one strange decision can become a favorite route later.'
 		}
 	];
-
-	const houseRules = [
-		{
-			icon: Moon,
-			title: 'Bedtime pace',
-			description: 'Short enough to stop cleanly, rich enough to feel like a chapter.'
-		},
-		{
-			icon: Users,
-			title: 'Shared reading',
-			description: 'Choices are made together, not autoplayed into another scroll.'
-		},
-		{
-			icon: PencilLine,
-			title: 'Room for odd ideas',
-			description: 'A four-word prompt can be more useful than a polished brief.'
-		}
-	];
-
-	let visible = $state([false, false, false]);
 </script>
 
-<section class="landing-editorial relative overflow-hidden py-24 text-[#f7f1e3] sm:py-32">
+<section
+	class="landing-editorial relative overflow-hidden pt-24 pb-16 text-[#f7f1e3] sm:pt-32 sm:pb-20"
+>
 	<div class="mx-auto max-w-6xl px-6">
-		<div
-			class="feature-card grid gap-10 border-b border-[#314354] pb-16 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16 {visible[0]
-				? 'feature-visible'
-				: 'feature-hidden'}"
-			use:intersectionReveal={{ onReveal: () => (visible[0] = true), threshold: 0.2 }}
-		>
+		<div class="grid gap-10 pb-16 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
 			<div>
 				<p class="mb-4 text-sm font-semibold tracking-[0.18em] text-[#f3d98b] uppercase">
 					Not another prompt machine
@@ -86,12 +62,7 @@
 		</div>
 
 		<div class="grid gap-8 py-16 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
-			<div
-				class="feature-card editorial-panel p-6 sm:p-8 {visible[1]
-					? 'feature-visible'
-					: 'feature-hidden'}"
-				use:intersectionReveal={{ onReveal: () => (visible[1] = true), threshold: 0.2 }}
-			>
+			<div class="editorial-panel p-6 sm:p-8">
 				<p class="mb-4 text-sm font-semibold tracking-[0.18em] text-[#f3d98b] uppercase">
 					From the table
 				</p>
@@ -109,13 +80,9 @@
 			</div>
 
 			<div class="grid content-start gap-5">
-				{#each storyPrinciples as principle, i (principle.title)}
+				{#each storyPrinciples as principle (principle.title)}
 					{@const Icon = principle.icon}
-					<article
-						class="feature-card principle-row {visible[1] ? 'feature-visible' : 'feature-hidden'}"
-						style="--delay: {i * 80}ms"
-						use:intersectionReveal={{ onReveal: () => (visible[1] = true), threshold: 0.15 }}
-					>
+					<article class="principle-row">
 						<div
 							class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[#4b6072] bg-[#20303f]"
 						>
@@ -129,39 +96,12 @@
 				{/each}
 			</div>
 		</div>
-
-		<div
-			class="feature-card house-panel grid gap-8 p-6 sm:p-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-center {visible[2]
-				? 'feature-visible'
-				: 'feature-hidden'}"
-			use:intersectionReveal={{ onReveal: () => (visible[2] = true), threshold: 0.2 }}
-		>
-			<div>
-				<p class="mb-4 text-sm font-semibold tracking-[0.18em] text-[#f3d98b] uppercase">
-					House rules
-				</p>
-				<h2 class="text-3xl leading-tight font-semibold text-[#fff8e8] sm:text-4xl">
-					Quiet by design. Weird when it counts.
-				</h2>
-			</div>
-
-			<div class="grid gap-4 sm:grid-cols-3">
-				{#each houseRules as rule (rule.title)}
-					{@const Icon = rule.icon}
-					<div class="rule-cell">
-						<Icon class="mb-4 h-5 w-5 text-[#f3d98b]" />
-						<p class="font-semibold text-[#fff8e8]">{rule.title}</p>
-						<p class="mt-2 text-sm leading-6 text-[#b6c4cd]">{rule.description}</p>
-					</div>
-				{/each}
-			</div>
-		</div>
 	</div>
 </section>
 
 <style>
 	.landing-editorial {
-		background: linear-gradient(180deg, #101923 0%, #142130 58%, #0f1822 100%), #101923;
+		background: #101923;
 	}
 
 	.editorial-panel {
@@ -189,35 +129,6 @@
 		border-radius: 0.5rem;
 		background: #172534;
 		padding: 1.5rem;
-		transition-delay: var(--delay);
-	}
-
-	.house-panel {
-		border: 1px solid #314354;
-		border-radius: 0.5rem;
-		background: linear-gradient(90deg, rgba(243, 217, 139, 0.08), transparent 48%), #172534;
-	}
-
-	.rule-cell {
-		min-height: 100%;
-		border-left: 1px solid #314354;
-		padding-left: 1rem;
-	}
-
-	.feature-card {
-		transition:
-			opacity 0.6s ease-out,
-			transform 0.6s ease-out;
-	}
-
-	.feature-hidden {
-		opacity: 0;
-		transform: translateY(24px);
-	}
-
-	.feature-visible {
-		opacity: 1;
-		transform: translateY(0);
 	}
 
 	@media (max-width: 640px) {
@@ -227,17 +138,6 @@
 
 		.principle-row {
 			grid-template-columns: 1fr;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.feature-card {
-			transition: none;
-		}
-
-		.feature-hidden {
-			opacity: 1;
-			transform: none;
 		}
 	}
 </style>
