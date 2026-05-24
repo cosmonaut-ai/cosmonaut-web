@@ -69,8 +69,8 @@
 				</h2>
 			</div>
 			<p class="max-w-2xl text-lg leading-8 text-[#b6c4cd] md:justify-self-end">
-				A branching sci-fi scene with enough atmosphere for grown readers, clear stakes for kids,
-				and choices that feel like interactive fiction instead of a chat transcript.
+				This is a real Cosmonaut story. Make a few choices and see how it feels to read something
+				branching, not generated paragraph-by-paragraph.
 			</p>
 		</div>
 
@@ -183,7 +183,7 @@
 
 <style>
 	.story-lab {
-		background: linear-gradient(180deg, #101923 0%, #142130 50%, #101923 100%), #101923;
+		background: #101923;
 	}
 
 	/* ── Card background ── */
