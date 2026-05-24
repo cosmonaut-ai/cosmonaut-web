@@ -183,7 +183,7 @@
 
 <style>
 	.story-lab {
-		background: #101923;
+		background: var(--background);
 	}
 
 	/* ── Card background ── */
