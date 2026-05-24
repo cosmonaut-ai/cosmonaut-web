@@ -81,17 +81,22 @@
 	<!-- Hero section -->
 	<Hero onGetStarted={() => handleGetStarted('hero')} onSignIn={handleSignIn} isLoading={false} />
 
-	<!-- Demo story section -->
+	<!-- Demo story section ("Try it for yourself") -->
 	<DemoStory />
 
-	<!-- Features section -->
-	<Features />
-
-	<!-- Android app section -->
-	<section class="relative bg-[#101923] pt-16 pb-20 text-[#f7f1e3] sm:pt-20 sm:pb-24">
-		<div class="mx-auto max-w-5xl px-6">
+	<!-- Android app section (transparent, between opaque sections) -->
+	<section class="relative py-20 text-[#f7f1e3] sm:py-28">
+		<!-- Gradient from DemoStory background to transparent -->
+		<div
+			class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-background to-transparent"
+		></div>
+		<!-- Gradient from transparent to Features background -->
+		<div
+			class="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-background to-transparent"
+		></div>
+		<div class="relative mx-auto max-w-5xl px-6">
 			<div
-				class="grid items-center gap-10 rounded-lg border border-[#314354] bg-[#172534] p-8 shadow-[0_24px_70px_rgba(0,0,0,0.24)] sm:p-10 lg:grid-cols-[1fr_auto] lg:gap-16"
+				class="grid items-center gap-10 rounded-lg border border-[#314354] bg-[#172534]/90 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.24)] backdrop-blur-sm sm:p-10 lg:grid-cols-[1fr_auto] lg:gap-16"
 			>
 				<div>
 					<p class="mb-3 text-sm font-semibold tracking-[0.18em] text-[#f3d98b] uppercase">
@@ -108,7 +113,7 @@
 						href="https://play.google.com/store/apps/details?id=com.cosmonaut.app"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="mt-6 inline-flex items-center gap-2 rounded-lg border border-[#314354] bg-[#101923] px-5 py-3 text-sm font-semibold text-[#f7f1e3] transition-colors hover:border-[#f3d98b] hover:bg-[#142130]"
+						class="mt-6 inline-flex items-center gap-2 rounded-lg border border-[#314354] bg-background px-5 py-3 text-sm font-semibold text-[#f7f1e3] transition-colors hover:border-[#f3d98b] hover:bg-[#142130]"
 					>
 						<Smartphone class="h-5 w-5 text-[#f3d98b]" />
 						Get it on Google Play
@@ -116,7 +121,7 @@
 				</div>
 				<div class="hidden lg:block">
 					<div
-						class="flex h-36 w-36 items-center justify-center rounded-2xl border border-[#314354] bg-[#101923]"
+						class="flex h-36 w-36 items-center justify-center rounded-2xl border border-[#314354] bg-background"
 					>
 						<img src="/logo.png" alt="Cosmonaut app icon" class="h-16 w-16" />
 					</div>
@@ -125,11 +130,14 @@
 		</div>
 	</section>
 
+	<!-- Features section ("Not another prompt machine") -->
+	<Features />
+
 	<!-- Final CTA section -->
 	<section class="relative pt-24 pb-28 text-[#f7f1e3] sm:pt-32 sm:pb-36">
-		<!-- Gradient from section background to transparent -->
+		<!-- Gradient from Features background to transparent -->
 		<div
-			class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-[#101923] to-transparent"
+			class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-background to-transparent"
 		></div>
 		<div class="mx-auto max-w-3xl px-6 text-center">
 			<p class="mb-5 text-sm font-semibold tracking-[0.18em] text-[#f3d98b] uppercase">Your turn</p>

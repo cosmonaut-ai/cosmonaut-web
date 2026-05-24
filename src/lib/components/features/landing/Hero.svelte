@@ -45,7 +45,7 @@
 >
 	<!-- Gradient overlay - fades to the section background color at the bottom for seamless transition -->
 	<div
-		class="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent via-transparent to-[#101923]"
+		class="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background"
 	></div>
 
 	<!-- Clouds (top-right, mirrored, decorative) -->

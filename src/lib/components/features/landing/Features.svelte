@@ -101,7 +101,7 @@
 
 <style>
 	.landing-editorial {
-		background: #101923;
+		background: var(--background);
 	}
 
 	.editorial-panel {
