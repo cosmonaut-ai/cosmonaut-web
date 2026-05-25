@@ -50,7 +50,7 @@ jobs:
             echo "PUBLIC_ENV=dev" >> $GITHUB_ENV
           fi
           echo "PUBLIC_SENTRY_RELEASE=${{ github.sha }}" >> $GITHUB_ENV
-          echo "PUBLIC_POSTHOG_HOST=REDACTED_PUBLIC_POSTHOG_HOST" >> $GITHUB_ENV
+          echo "PUBLIC_POSTHOG_HOST=${{ vars.PUBLIC_POSTHOG_HOST }}" >> $GITHUB_ENV
           echo "PUBLIC_POSTHOG_PROJECT_TOKEN=${{ vars.PUBLIC_POSTHOG_PROJECT_TOKEN }}" >> $GITHUB_ENV
 
       - name: Build
