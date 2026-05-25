@@ -2,7 +2,7 @@
 
 ## Brand Overview
 
-**Cosmonaut** is a choose-your-own-adventure platform where users create and explore unique story worlds. The name evokes space exploration-navigating the infinite possibilities of narrative universes.
+**Cosmonaut** is a choose-your-own-adventure platform where users create and explore unique story worlds. The name evokes space exploration and navigating the infinite possibilities of narrative universes.
 
 ### Core Concept
 

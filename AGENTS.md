@@ -85,6 +85,6 @@ Authentication is **automatically mocked** when no Cognito env vars are set (the
 
 The frontend expects a backend at `http://localhost:8000` (configurable via `PUBLIC_API_BASE_URL`). The backend is in a **separate repository** and is not required for frontend-only development. API calls will fail with "Failed to fetch" when the backend is absent - this is expected.
 
-### Pre-existing lint issues
+### Verification notes
 
-There is one pre-existing ESLint error in `src/routes/login/ForgotPasswordForm.svelte` (unused variable `passwordsMatch`). This is not caused by your changes.
+For documentation-only changes, run formatting or link checks when available and use `git diff --check`. For UI changes, run the frontend verification workflow and inspect the changed screens in a browser.

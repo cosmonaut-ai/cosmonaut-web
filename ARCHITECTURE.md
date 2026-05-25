@@ -47,7 +47,7 @@ src/
 │   │   ├── api.ts                    # API domain types (World, StoryNode, Choice, etc.)
 │   │   └── subscription.ts           # Subscription types (UsageInfo, tiers)
 │   └── utils/                        # Pure utility functions
-│       ├── analytics.ts              # Google Analytics (gtag) wrappers
+│       ├── analytics.ts              # PostHog analytics helpers
 │       ├── date.ts                   # Date formatting
 │       ├── logger.ts                 # Structured logging
 │       ├── nodeTransform.ts          # StoryNode → SvelteFlow graph layout

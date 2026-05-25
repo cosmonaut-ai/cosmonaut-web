@@ -71,5 +71,5 @@ showSuccess('Action completed', 'Optional description');
 - Don't use `$navigating` store-it's deprecated in Svelte 5
 - Don't block entire pages with full-screen spinners
 - Don't use different spinner styles-use `Spinner` consistently
-- Don't call API client directly-use query hooks
+- Don't call API client directly; use query hooks
 - Don't manually track loading state when using TanStack Query

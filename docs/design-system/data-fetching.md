@@ -12,7 +12,7 @@ Component → Query Hook → API Client → Server
 
 - **Components** use query hooks for data
 - **Query hooks** (`$lib/queries/`) wrap API calls with caching and mutations
-- **API client** (`$lib/api/client.ts`) makes raw fetch calls
+- **API clients** (`$lib/api/`) make raw fetch calls through shared helpers in `$lib/api/core.ts`
 
 ## Query Hooks
 
@@ -145,15 +145,15 @@ For data that updates server-side (like world generation status):
 
 ## Query Keys
 
-Query keys are used for cache invalidation. They're exported from the query modules:
+Query keys are used for cache invalidation. They're exported from the unified query key factory:
 
 ```typescript
-import { worldKeys, nodeKeys } from '$lib/queries';
+import { queryKeys } from '$lib/queries';
 
-// worldKeys.all → ['worlds']
-// worldKeys.detail(id) → ['worlds', id]
-// nodeKeys.all(worldId) → ['worlds', worldId, 'nodes']
-// nodeKeys.detail(worldId, nodeId) → ['worlds', worldId, 'nodes', nodeId]
+// queryKeys.worlds.all -> ['worlds']
+// queryKeys.worlds.detail(id) -> ['worlds', id]
+// queryKeys.nodes.all(worldId) -> ['worlds', worldId, 'nodes']
+// queryKeys.nodes.detail(worldId, nodeId) -> ['worlds', worldId, 'nodes', nodeId]
 ```
 
 ---
@@ -164,7 +164,7 @@ TanStack Query doesn't handle Server-Sent Events (SSE). For streaming content, u
 
 ```svelte
 <script lang="ts">
-	import { generateNodeText } from '$lib/api/client';
+	import { generateNodeText } from '$lib/api/nodes';
 
 	let streamingText = $state('');
 
