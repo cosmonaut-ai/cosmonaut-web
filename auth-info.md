@@ -1,148 +1,64 @@
-Here is a comprehensive implementation guide for your client-side authentication. This guide uses **AWS Amplify** (the library) which is the most reliable way to handle the Cognito OAuth2 "Code Grant" flow in a web app.
+# Authentication Notes
 
----
+Cosmonaut Web uses AWS Amplify Auth with Cognito in deployed environments and a local mock user in development when Cognito environment variables are absent.
 
-# Client-Side Authentication Guide: Cosmonaut AI
+## Source of Truth
 
-This document outlines how to implement Google Sign-In and secure API communication using the infrastructure provisioned in this repository.
+- Runtime auth store: `src/lib/auth/auth.svelte.ts`
+- Login flow state: `src/lib/auth/useLoginFlow.svelte.ts`
+- Environment parsing: `src/lib/config/index.ts`
+- Example configuration: `.env.example`
 
-## 1. Prerequisites
+## Local Development
 
-You will need the following values from your Terraform outputs:
-
-- `cognito_user_pool_id`
-- `cognito_user_pool_client_id`
-- `cognito_domain` (e.g., `cosmonaut-dev`)
-- `aws_region` (e.g., `us-east-2`)
-- `api_endpoint` (Your API Gateway URL)
-
-## 2. Installation
-
-Install the Amplify Auth library in your frontend project:
+The default local workflow does not require Cognito:
 
 ```bash
-npm install aws-amplify
+npm ci
+cp .env.example .env
+npm run dev
 ```
 
-## 3. Initialization
+If Cognito variables are left blank, the app uses a `LOCAL_DEV_USER` identity. You can sign in with any email and password in the login UI.
 
-Configure Amplify at the entry point of your application (e.g., `src/routes/+layout.svelte` for SvelteKit or `App.js` for React).
+To connect to a local API, set:
 
-```javascript
-import { Amplify } from 'aws-amplify';
-
-Amplify.configure({
-	Auth: {
-		Cognito: {
-			userPoolId: 'YOUR_USER_POOL_ID',
-			userPoolClientId: 'YOUR_CLIENT_ID',
-			loginWith: {
-				oauth: {
-					domain: 'cosmonaut-dev.auth.us-east-2.amazoncognito.com',
-					scopes: ['email', 'openid', 'profile'],
-					redirectSignIn: ['https://dev.cosmonaut-ai.com/callback'],
-					redirectSignOut: ['https://dev.cosmonaut-ai.com'],
-					responseType: 'code'
-				}
-			}
-		}
-	}
-});
+```bash
+PUBLIC_API_BASE_URL=http://localhost:8000
+PUBLIC_STREAMING_BASE_URL=http://localhost:8000
 ```
 
-## 4. Implementing Login
+## Deployed Authentication
 
-Create a login button that triggers the Google OAuth flow.
+Deployed environments use Cognito Hosted UI and Amplify Auth. The relevant public configuration values are:
 
-```javascript
-import { signInWithRedirect } from 'aws-amplify/auth';
-
-const login = async () => {
-	try {
-		await signInWithRedirect({ provider: 'Google' });
-	} catch (error) {
-		console.error('Login failed:', error);
-	}
-};
+```bash
+PUBLIC_COGNITO_USER_POOL_ID=
+PUBLIC_COGNITO_CLIENT_ID=
+PUBLIC_COGNITO_DOMAIN=
+PUBLIC_COGNITO_REDIRECT_URI=
+PUBLIC_AWS_REGION=us-east-2
 ```
 
-## 5. Handling the Callback
+These values are public client configuration. They identify the Cognito app client and hosted UI domain, but they are not sufficient to access private backend data without a valid user session.
 
-On your `/callback` page, Amplify will automatically detect the `?code=` in the URL and exchange it for tokens. You just need to ensure the user is redirected back to the main app once the session is established.
+## API Authorization
 
-```javascript
-// src/routes/callback/+page.svelte
-import { onMount } from 'svelte';
-import { getCurrentUser } from 'aws-amplify/auth';
-import { goto } from '$app/navigation';
+Authenticated API calls include an ID token:
 
-onMount(async () => {
-	try {
-		await getCurrentUser();
-		goto('/dashboard'); // Login successful
-	} catch (e) {
-		console.error('Session not established yet', e);
-	}
-});
+```http
+Authorization: Bearer <id_token>
 ```
 
-## 6. Calling the Secured API
+The API client helpers in `src/lib/api/core.ts` attach auth headers and normalize error handling. Feature code should call the typed API functions instead of duplicating token fetch logic.
 
-To hit your API Gateway, you must include the `idToken` in the `Authorization` header.
+## Streaming Session
 
-```javascript
-import { fetchAuthSession } from 'aws-amplify/auth';
+The API and streaming domains are separate in deployed environments. Before using streaming routes, the app establishes a session with the API so the browser receives the cookies required for the streaming domain. If a streaming request returns `401` or `403`, retry by refreshing the auth/session handshake before surfacing an error.
 
-async function callApi(path) {
-	const session = await fetchAuthSession();
-	const token = session.tokens?.idToken?.toString();
+## Security Checklist
 
-	const response = await fetch(`https://api.dev.cosmonaut-ai.com${path}`, {
-		headers: {
-			Authorization: `Bearer ${token}`
-		}
-	});
-	return response.json();
-}
-```
-
-## 7. Authenticating for Streaming (CloudFront)
-
-Since your streaming endpoint (`streaming.dev.cosmonaut-ai.com`) uses **Signed Cookies**, you need a "handshake" to get the cookies before you can access the streams.
-
-1.  **Request Cookies**: Create a protected endpoint in your API (e.g., `GET /auth/cookies`).
-2.  **The Flow**:
-
-    ```javascript
-    // 1. Call API Gateway with JWT to get signed cookies
-    const response = await fetch('https://api.dev.cosmonaut-ai.com/auth/cookies', {
-    	headers: { Authorization: `Bearer ${token}` }
-    });
-
-    // 2. The API should return 'Set-Cookie' headers for:
-    //    CloudFront-Policy, CloudFront-Signature, CloudFront-Key-Pair-Id
-
-    // 3. Now you can use the streaming URL in a video player or EventSource
-    const streamUrl = 'https://streaming.dev.cosmonaut-ai.com/worlds/123/stream';
-    ```
-
-## 8. User Info
-
-Because we mapped extra attributes in the infrastructure (`given_name`, `picture`), you can retrieve them from the session:
-
-```javascript
-const session = await fetchAuthSession();
-const claims = session.tokens.idToken.payload;
-
-console.log('User Name:', claims.given_name);
-console.log('Profile Picture:', claims.picture);
-console.log('Google Sub ID:', claims.sub);
-```
-
----
-
-### Security Checklist
-
-- [ ] **Domain Alignment**: Ensure your `redirectSignIn` exactly matches what is in `envs/dev/main.tf`.
-- [ ] **HTTPS**: Cognito OAuth requires `https` for all redirect URIs except for `localhost`.
-- [ ] **Token Expiry**: Amplify `fetchAuthSession()` automatically handles token refreshing; always use it instead of storing the token in `localStorage` yourself.
+- Do not store tokens manually in `localStorage`.
+- Do not put server-side secrets in `PUBLIC_` variables.
+- Keep redirect URIs aligned with the Cognito app client configuration.
+- Treat screenshots, console logs, and traces as sensitive when they include user identifiers or generated private story content.
