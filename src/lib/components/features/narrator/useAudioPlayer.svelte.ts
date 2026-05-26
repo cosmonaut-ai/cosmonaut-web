@@ -89,7 +89,10 @@ export function useAudioPlayer() {
 	function handleSeek(e: Event) {
 		if (!audioElement) return;
 		const target = e.target as HTMLInputElement;
-		audioElement.currentTime = (parseFloat(target.value) / 100) * duration;
+		const nextTime = (parseFloat(target.value) / 100) * duration;
+		audioElement.currentTime = nextTime;
+		currentTime = nextTime;
+		ended = false;
 	}
 
 	async function waitAndPlay() {

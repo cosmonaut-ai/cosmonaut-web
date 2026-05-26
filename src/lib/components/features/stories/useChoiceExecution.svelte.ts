@@ -26,6 +26,7 @@ interface UseChoiceExecutionOptions {
 		showQuotaPrompt: boolean;
 	};
 	nodeQueryRefetch: () => void;
+	routeForNode?: (nodeId: string) => string;
 }
 
 export function useChoiceExecution(options: UseChoiceExecutionOptions) {
@@ -86,10 +87,13 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 			if (controller.signal.aborted) return;
 
 			options.setCurrentNodeOverride(newNode);
-			goto(`/worlds/${options.worldId()}/nodes/${newNode.id}`, {
-				replaceState: false,
-				noScroll: true
-			});
+			goto(
+				options.routeForNode?.(newNode.id) ?? `/worlds/${options.worldId()}/nodes/${newNode.id}`,
+				{
+					replaceState: false,
+					noScroll: true
+				}
+			);
 
 			if (newNode.generation_status === 'initialized') {
 				options.stream.setGeneratingNodeId(newNode.id);
@@ -102,7 +106,7 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 			if (err instanceof ApiError && err.isQuotaExceeded) {
 				options.stream.showQuotaPrompt = true;
 				queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
-				goto(`/worlds/${options.worldId()}/nodes/${node.id}`, {
+				goto(options.routeForNode?.(node.id) ?? `/worlds/${options.worldId()}/nodes/${node.id}`, {
 					replaceState: true,
 					noScroll: true
 				});

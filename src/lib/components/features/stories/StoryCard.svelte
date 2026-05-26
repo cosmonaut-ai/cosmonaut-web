@@ -183,14 +183,16 @@
 		</div>
 
 		{#if !isTyping && choices.length > 0}
-			<ChoiceList
-				{choices}
-				{isLoading}
-				{isAtQuotaLimit}
-				{showCustomChoice}
-				{onChoiceSelect}
-				{onCustomChoice}
-			/>
+			<div class="mt-8 border-t border-border pt-8">
+				<ChoiceList
+					{choices}
+					{isLoading}
+					{isAtQuotaLimit}
+					{showCustomChoice}
+					{onChoiceSelect}
+					{onCustomChoice}
+				/>
+			</div>
 		{/if}
 
 		<!-- Ending state -->

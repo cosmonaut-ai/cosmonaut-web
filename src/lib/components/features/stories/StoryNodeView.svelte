@@ -1,12 +1,14 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { page } from '$app/state';
 	import { useNode, useUser } from '$lib/queries';
 	import { getWorldContext } from '$lib/contexts/world';
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
 	import SlideTransition from './SlideTransition.svelte';
 	import AudioNarration from '$lib/components/features/narrator/AudioNarration.svelte';
+	import ImmersiveStoryView from '$lib/components/features/narrator/ImmersiveStoryView.svelte';
 	import ShareModal from '$lib/components/features/worlds/ShareModal.svelte';
 	import UpgradePrompt from '$lib/components/features/subscription/UpgradePrompt.svelte';
 	import { useStreamingNode } from './useStreamingNode.svelte';
@@ -28,9 +30,62 @@
 
 	let currentNodeOverride = $state.raw<StoryNode | null>(null);
 	let loading = $state(false);
+	const IMMERSIVE_QUERY_PARAM = 'immersive';
+
+	function immersiveParamEnabled(value: string | null): boolean {
+		return value === '1' || value === 'true';
+	}
 
 	// Navigation direction for slide animation
 	let slideDirection = $state<'forward' | 'back'>('forward');
+
+	// ── Audio Narration ──
+	let audioPlayerVisible = $state(false);
+	let immersiveActive = $state(
+		immersiveParamEnabled(page.url.searchParams.get(IMMERSIVE_QUERY_PARAM))
+	);
+	let narrationStatus = $state({
+		currentTime: 0,
+		duration: 0,
+		paused: true,
+		ended: false,
+		isGenerating: false,
+		audioUrl: null as string | null,
+		timestampsUrl: null as string | null,
+		hasAudio: false,
+		voiceId: null as string | null,
+		captionsUnavailable: false
+	});
+	let seekNarration = $state<((time: number) => void) | null>(null);
+
+	function routeForNode(targetNodeId: string): string {
+		const searchParams = new URLSearchParams(browser ? window.location.search : page.url.search);
+		if (immersiveActive) {
+			searchParams.set(IMMERSIVE_QUERY_PARAM, '1');
+		} else {
+			searchParams.delete(IMMERSIVE_QUERY_PARAM);
+		}
+
+		const query = searchParams.toString();
+		return `/worlds/${worldId}/nodes/${targetNodeId}${query ? `?${query}` : ''}`;
+	}
+
+	$effect(() => {
+		if (!browser) return;
+
+		const url = new URL(window.location.href);
+		if (immersiveActive) {
+			url.searchParams.set(IMMERSIVE_QUERY_PARAM, '1');
+		} else {
+			url.searchParams.delete(IMMERSIVE_QUERY_PARAM);
+		}
+
+		const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+		const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+		if (currentUrl !== nextUrl) {
+			replaceState(nextUrl, page.state);
+		}
+	});
 
 	// Use TanStack Query for node data (pass getters to ensure reactivity)
 	// Enable polling when node is in 'generating' status
@@ -61,7 +116,7 @@
 		nodeQuery,
 		onStreamingComplete: (node) => {
 			if (node.id) {
-				goto(`/worlds/${worldId}/nodes/${node.id}`, {
+				goto(routeForNode(node.id), {
 					replaceState: true,
 					noScroll: true
 				});
@@ -93,7 +148,8 @@
 			slideDirection = dir;
 		},
 		stream,
-		nodeQueryRefetch: () => nodeQuery.refetch()
+		nodeQueryRefetch: () => nodeQuery.refetch(),
+		routeForNode
 	});
 
 	// Proactive quota check
@@ -130,7 +186,7 @@
 		slideDirection = 'back';
 		currentNodeOverride = null;
 		loading = false;
-		goto(`/worlds/${worldId}/nodes/${parentId}`, {
+		goto(routeForNode(parentId), {
 			replaceState: false,
 			noScroll: true
 		});
@@ -144,7 +200,7 @@
 		slideDirection = 'back';
 		currentNodeOverride = null;
 		loading = false;
-		goto(`/worlds/${worldId}/nodes/${rootNodeId}`, {
+		goto(routeForNode(rootNodeId), {
 			replaceState: false,
 			noScroll: true
 		});
@@ -169,8 +225,11 @@
 		}
 	});
 
-	// ── Audio Narration ──
-	let audioPlayerVisible = $state(false);
+	$effect(() => {
+		if (isNodeFailed || nodeQuery.isError) {
+			immersiveActive = false;
+		}
+	});
 
 	// ── World data for ShareModal ──
 	const worldQuery = getWorldContext();
@@ -179,7 +238,7 @@
 	const auth = useAuth();
 </script>
 
-<main class="mx-auto max-w-4xl px-6 py-8 {audioPlayerVisible ? 'pb-24' : ''}">
+<main class="mx-auto max-w-4xl px-6 py-8 {audioPlayerVisible || immersiveActive ? 'pb-24' : ''}">
 	<!-- Toolbar -->
 	<div class="mb-6 flex items-center justify-between">
 		<div class="flex items-center gap-1">
@@ -206,6 +265,9 @@
 				isNodeCompleted={currentNode?.generation_status === 'completed'}
 				onQuotaExceeded={() => (stream.showAudioQuotaPrompt = true)}
 				bind:playerVisible={audioPlayerVisible}
+				bind:immersiveActive
+				bind:narrationStatus
+				bind:seekNarration
 				nodeTextLength={currentNode?.text?.length ?? 0}
 			/>
 			<Button
@@ -373,6 +435,32 @@
 				</div>
 			</CardContent>
 		</Card>
+	{/if}
+
+	{#if immersiveActive && (stream.isStreaming || isNodeGenerating || currentNode)}
+		<ImmersiveStoryView
+			nodeId={currentNode?.id ?? nodeId}
+			text={stream.isStreaming ? stream.streamingText.trim() : (currentNode?.text?.trim() ?? '')}
+			choices={stream.isStreaming || isNodeGenerating ? [] : (currentNode?.choices ?? [])}
+			currentTime={narrationStatus.currentTime}
+			duration={narrationStatus.duration}
+			ended={narrationStatus.ended}
+			timestampsUrl={stream.isStreaming || isNodeGenerating ? null : narrationStatus.timestampsUrl}
+			isNarrationGenerating={narrationStatus.isGenerating}
+			isStoryGenerating={stream.isStreaming || isNodeGenerating}
+			worldImageUrl={world?.world_image_url}
+			worldImageAlt={world?.world_image_alt_text}
+			title={currentNode?.title}
+			{isEnding}
+			{isLoading}
+			isAtQuotaLimit={isAtNodeLimit}
+			showCustomChoice={!isEnding}
+			onChoiceSelect={choices.handleChoiceSelect}
+			onCustomChoice={choices.handleCustomChoice}
+			onRestart={handleRestart}
+			onWordSeek={(time) => seekNarration?.(time)}
+			onExit={() => (immersiveActive = false)}
+		/>
 	{/if}
 
 	<UpgradePrompt

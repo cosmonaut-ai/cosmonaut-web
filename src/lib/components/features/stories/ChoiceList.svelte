@@ -44,7 +44,7 @@
 	}
 </script>
 
-<div class="mt-8 space-y-3 border-t border-border pt-8" in:fade={{ duration: 300, delay: 100 }}>
+<div class="space-y-3" in:fade={{ duration: 300, delay: 100 }}>
 	{#if isAtQuotaLimit}
 		<div
 			class="mb-4 flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3"

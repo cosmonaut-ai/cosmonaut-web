@@ -4,7 +4,7 @@
 	import { showError, showWarning } from '$lib/utils/toast';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { Volume2 } from '@lucide/svelte';
+	import { Maximize2, Volume2 } from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import type { Component } from 'svelte';
 	import { useAudioPlayer } from './useAudioPlayer.svelte';
@@ -27,7 +27,23 @@
 		isNodeCompleted: boolean;
 		onQuotaExceeded: () => void;
 		playerVisible?: boolean;
+		immersiveActive?: boolean;
+		narrationStatus?: NarrationPlaybackStatus;
+		seekNarration?: ((time: number) => void) | null;
 		nodeTextLength?: number;
+	}
+
+	interface NarrationPlaybackStatus {
+		currentTime: number;
+		duration: number;
+		paused: boolean;
+		ended: boolean;
+		isGenerating: boolean;
+		audioUrl: string | null;
+		timestampsUrl: string | null;
+		hasAudio: boolean;
+		voiceId: string | null;
+		captionsUnavailable: boolean;
 	}
 
 	let {
@@ -37,6 +53,20 @@
 		isNodeCompleted,
 		onQuotaExceeded,
 		playerVisible = $bindable(false),
+		immersiveActive = $bindable(false),
+		narrationStatus = $bindable<NarrationPlaybackStatus>({
+			currentTime: 0,
+			duration: 0,
+			paused: true,
+			ended: false,
+			isGenerating: false,
+			audioUrl: null,
+			timestampsUrl: null,
+			hasAudio: false,
+			voiceId: null,
+			captionsUnavailable: false
+		}),
+		seekNarration = $bindable<((time: number) => void) | null>(null),
 		nodeTextLength = 0
 	}: Props = $props();
 
@@ -57,6 +87,8 @@
 	// ── Disabled-state tooltip (hover + click, auto-dismiss) ──
 	let tooltipOpen = $state(false);
 	let isHovering = $state(false);
+	let immersiveTooltipOpen = $state(false);
+	let isHoveringImmersive = $state(false);
 
 	// When opened via tap/click (isHovering=false), auto-dismiss after 2s.
 	// Effect cleanup cancels the timer when hover or open state changes.
@@ -64,6 +96,15 @@
 		if (tooltipOpen && !isHovering) {
 			const timer = setTimeout(() => {
 				tooltipOpen = false;
+			}, 2000);
+			return () => clearTimeout(timer);
+		}
+	});
+
+	$effect(() => {
+		if (immersiveTooltipOpen && !isHoveringImmersive) {
+			const timer = setTimeout(() => {
+				immersiveTooltipOpen = false;
 			}, 2000);
 			return () => clearTimeout(timer);
 		}
@@ -78,14 +119,42 @@
 	// Local cache for the brief gap between generation success and TanStack cache propagation
 	let localAudio = $state<Record<string, AudioEntry>>({});
 	const mergedAudio = $derived({ ...audio, ...localAudio });
-	const effectiveAudioUrl = $derived(
-		effectiveVoiceId ? (mergedAudio[effectiveVoiceId]?.audio_url ?? null) : null
+	const activeAudioEntry = $derived(
+		effectiveVoiceId ? (mergedAudio[effectiveVoiceId] ?? null) : null
+	);
+	const effectiveAudioUrl = $derived(activeAudioEntry?.audio_url ?? null);
+	const effectiveTimestampsUrl = $derived(activeAudioEntry?.timestamps_url ?? null);
+	const captionsUnavailable = $derived(
+		!!activeAudioEntry?.audio_url && !activeAudioEntry.timestamps_url
 	);
 
 	// Generation mutation
 	const audioMutation = useGenerateAudio(() => worldId);
 	const isGenerating = $derived(audioMutation.isPending);
 	const hasAudio = $derived(!!effectiveAudioUrl);
+	const immersiveDisabledMessage = $derived<string | null>(
+		narrationDisabledMessage ??
+			(!effectiveVoiceId
+				? 'Narration voices are still loading'
+				: captionsUnavailable
+					? 'Captions are unavailable for this narration'
+					: null)
+	);
+
+	$effect(() => {
+		narrationStatus = {
+			currentTime: player.currentTime,
+			duration: player.duration,
+			paused: player.paused,
+			ended: player.ended,
+			isGenerating,
+			audioUrl: effectiveAudioUrl,
+			timestampsUrl: effectiveTimestampsUrl,
+			hasAudio,
+			voiceId: effectiveVoiceId,
+			captionsUnavailable
+		};
+	});
 
 	function handleToggle() {
 		if (playerVisible) {
@@ -95,8 +164,27 @@
 		handleActivate();
 	}
 
-	async function handleActivate() {
-		if (isGenerating || playerVisible) return;
+	async function handleActivate(options: { requireTimestamps?: boolean } = {}) {
+		if (isGenerating) return;
+
+		if (options.requireTimestamps && captionsUnavailable) {
+			immersiveActive = false;
+			showWarning('Captions unavailable', 'This narration does not include caption timestamps.');
+			return;
+		}
+
+		if (playerVisible) {
+			if (options.requireTimestamps && !effectiveTimestampsUrl && hasAudio) {
+				immersiveActive = false;
+				showWarning('Captions unavailable', 'This narration does not include caption timestamps.');
+				return;
+			}
+			if (player.paused) {
+				await player.waitAndPlay();
+			}
+			return;
+		}
+
 		await loadPlayerBar();
 
 		const voiceId = effectiveVoiceId;
@@ -110,12 +198,12 @@
 			await player.waitAndPlay();
 		} else if (isNodeCompleted) {
 			// Generate audio first, then auto-play
-			await generateForVoice(voiceId);
+			await generateForVoice(voiceId, options);
 		}
 	}
 
 	/** Generate audio for a specific voice, update local cache, and auto-play */
-	async function generateForVoice(voiceId: string) {
+	async function generateForVoice(voiceId: string, options: { requireTimestamps?: boolean } = {}) {
 		try {
 			const result = await audioMutation.mutateAsync({ nodeId, voiceId });
 			const entry: AudioEntry = {
@@ -123,19 +211,30 @@
 				timestamps_url: (result as Record<string, unknown>).timestamps_url as string | undefined
 			};
 			localAudio = { ...localAudio, [voiceId]: entry };
+
+			if (options.requireTimestamps && !entry.timestamps_url) {
+				playerVisible = false;
+				immersiveActive = false;
+				showWarning('Captions unavailable', 'This narration does not include caption timestamps.');
+				return;
+			}
+
 			await player.waitAndPlay();
 		} catch (err) {
 			if (err instanceof ApiError && err.isRateLimited) {
 				playerVisible = false;
+				if (options.requireTimestamps) immersiveActive = false;
 				showWarning(
 					'Slow down',
 					"You're generating audio too quickly. Please wait a moment and try again."
 				);
 			} else if (err instanceof ApiError && err.isQuotaExceeded) {
 				playerVisible = false;
+				if (options.requireTimestamps) immersiveActive = false;
 				onQuotaExceeded();
 			} else {
 				playerVisible = false;
+				if (options.requireTimestamps) immersiveActive = false;
 				showError(
 					'Audio generation failed',
 					err instanceof Error ? err.message : 'Please try again later.'
@@ -147,6 +246,42 @@
 	function handleClose() {
 		player.pause();
 		playerVisible = false;
+		immersiveActive = false;
+	}
+
+	function seekToTime(time: number) {
+		if (!Number.isFinite(time)) return;
+
+		const duration =
+			Number.isFinite(player.duration) && player.duration > 0 ? player.duration : time;
+		const nextTime = Math.min(Math.max(time, 0), duration);
+
+		if (player.audioElement) {
+			player.audioElement.currentTime = nextTime;
+		}
+		player.currentTime = nextTime;
+		player.ended = false;
+
+		if (immersiveActive && player.paused) {
+			void player.waitAndPlay();
+		}
+	}
+
+	$effect(() => {
+		seekNarration = seekToTime;
+		return () => {
+			seekNarration = null;
+		};
+	});
+
+	function handleImmersiveToggle() {
+		if (immersiveActive) {
+			immersiveActive = false;
+			return;
+		}
+
+		immersiveActive = true;
+		handleActivate({ requireTimestamps: true });
 	}
 
 	// ── Voice picker integration ──
@@ -177,6 +312,10 @@
 		// Check if audio already exists for the new voice
 		const url = mergedAudio[voiceId];
 		if (url) {
+			if (immersiveActive && !url.timestamps_url) {
+				immersiveActive = false;
+				showWarning('Captions unavailable', 'This narration does not include caption timestamps.');
+			}
 			// Audio exists - reset playback position (src changes reactively)
 			player.currentTime = 0;
 			player.ended = false;
@@ -187,7 +326,7 @@
 		} else if (isNodeCompleted) {
 			// No audio for this voice yet - generate it
 			wasPlayingBeforePickerOpen = false;
-			generateForVoice(voiceId);
+			generateForVoice(voiceId, { requireTimestamps: immersiveActive });
 		}
 	}
 
@@ -213,9 +352,33 @@
 		});
 	});
 
+	let lastImmersiveAutoStartKey = $state<string | null>(null);
+
+	$effect(() => {
+		const voiceId = effectiveVoiceId;
+		const key = `${nodeId}:${voiceId ?? 'voice-loading'}:${effectiveAudioUrl ?? 'pending'}`;
+
+		if (
+			!immersiveActive ||
+			!isNodeCompleted ||
+			narrationDisabledMessage ||
+			!voiceId ||
+			isGenerating
+		) {
+			return;
+		}
+		if (lastImmersiveAutoStartKey === key) return;
+
+		untrack(() => {
+			lastImmersiveAutoStartKey = key;
+			handleActivate({ requireTimestamps: true });
+		});
+	});
+
 	function handleAudioError() {
 		player.pause();
 		playerVisible = false;
+		immersiveActive = false;
 		if (effectiveVoiceId && localAudio[effectiveVoiceId]) {
 			const { [effectiveVoiceId]: _, ...rest } = localAudio;
 			localAudio = rest;
@@ -248,56 +411,109 @@
 	></audio>
 {/if}
 
-<!-- Speaker icon toggle (always visible, disabled until node text is ready) -->
-{#if narrationDisabledMessage}
-	<Tooltip.Provider>
-		<Tooltip.Root bind:open={tooltipOpen} delayDuration={0}>
-			<Tooltip.Trigger>
-				{#snippet child({ props })}
-					<span
-						{...props}
-						aria-label="Narration unavailable"
-						class="inline-flex shrink-0 cursor-not-allowed"
-						onmouseenter={() => {
-							isHovering = true;
-							tooltipOpen = true;
-						}}
-						onmouseleave={() => {
-							isHovering = false;
-						}}
-						onclick={() => {
-							tooltipOpen = !tooltipOpen;
-						}}
-					>
-						<Button
-							variant="ghost"
-							size="icon-sm"
-							disabled
-							aria-hidden="true"
-							class="pointer-events-none"
+<div class="flex shrink-0 items-center gap-1">
+	<!-- Speaker icon toggle (always visible, disabled until node text is ready) -->
+	{#if narrationDisabledMessage}
+		<Tooltip.Provider>
+			<Tooltip.Root bind:open={tooltipOpen} delayDuration={0}>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<span
+							{...props}
+							aria-label="Narration unavailable"
+							class="inline-flex shrink-0 cursor-not-allowed"
+							onmouseenter={() => {
+								isHovering = true;
+								tooltipOpen = true;
+							}}
+							onmouseleave={() => {
+								isHovering = false;
+							}}
+							onclick={() => {
+								tooltipOpen = !tooltipOpen;
+							}}
 						>
-							<Volume2 class="h-4 w-4" />
-						</Button>
-					</span>
-				{/snippet}
-			</Tooltip.Trigger>
-			<Tooltip.Content>
-				<p>{narrationDisabledMessage}</p>
-			</Tooltip.Content>
-		</Tooltip.Root>
-	</Tooltip.Provider>
-{:else}
-	<Button
-		variant="ghost"
-		size="icon-sm"
-		onclick={handleToggle}
-		disabled={!effectiveVoiceId}
-		aria-label={playerVisible ? 'Close narration' : 'Play narration'}
-		class="shrink-0"
-	>
-		<Volume2 class="h-4 w-4" />
-	</Button>
-{/if}
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								disabled
+								aria-hidden="true"
+								class="pointer-events-none"
+							>
+								<Volume2 class="h-4 w-4" />
+							</Button>
+						</span>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					<p>{narrationDisabledMessage}</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
+		</Tooltip.Provider>
+	{:else}
+		<Button
+			variant="ghost"
+			size="icon-sm"
+			onclick={handleToggle}
+			disabled={!effectiveVoiceId}
+			aria-label={playerVisible ? 'Close narration' : 'Play narration'}
+			class="shrink-0"
+		>
+			<Volume2 class="h-4 w-4" />
+		</Button>
+	{/if}
+
+	{#if immersiveDisabledMessage}
+		<Tooltip.Provider>
+			<Tooltip.Root bind:open={immersiveTooltipOpen} delayDuration={0}>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<span
+							{...props}
+							aria-label="Immersive captions unavailable"
+							class="inline-flex shrink-0 cursor-not-allowed"
+							onmouseenter={() => {
+								isHoveringImmersive = true;
+								immersiveTooltipOpen = true;
+							}}
+							onmouseleave={() => {
+								isHoveringImmersive = false;
+							}}
+							onclick={() => {
+								immersiveTooltipOpen = !immersiveTooltipOpen;
+							}}
+						>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								disabled
+								aria-hidden="true"
+								class="pointer-events-none"
+							>
+								<Maximize2 class="h-4 w-4" />
+							</Button>
+						</span>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					<p>{immersiveDisabledMessage}</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
+		</Tooltip.Provider>
+	{:else}
+		<Button
+			variant={immersiveActive ? 'secondary' : 'ghost'}
+			size="icon-sm"
+			onclick={handleImmersiveToggle}
+			disabled={!effectiveVoiceId}
+			aria-pressed={immersiveActive}
+			aria-label={immersiveActive ? 'Exit immersive view' : 'Enter immersive view'}
+			class="shrink-0"
+		>
+			<Maximize2 class="h-4 w-4" />
+		</Button>
+	{/if}
+</div>
 
 {#if playerVisible && AudioPlayerBar}
 	<AudioPlayerBar
@@ -307,6 +523,7 @@
 		volume={player.volume}
 		volumeProgress={player.volumeProgress}
 		playbackRate={player.playbackRate}
+		immersive={immersiveActive}
 		{isGenerating}
 		{voices}
 		{effectiveVoiceId}
