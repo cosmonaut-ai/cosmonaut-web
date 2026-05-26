@@ -34,6 +34,7 @@
 		isLoading?: boolean;
 		isAtQuotaLimit?: boolean;
 		showCustomChoice?: boolean;
+		wordSeekEnabled?: boolean;
 		onChoiceSelect?: (targetId: string) => void;
 		onCustomChoice?: (text: string) => void;
 		onRestart?: () => void;
@@ -58,6 +59,7 @@
 		isLoading = false,
 		isAtQuotaLimit = false,
 		showCustomChoice = true,
+		wordSeekEnabled = false,
 		onChoiceSelect,
 		onCustomChoice,
 		onRestart,
@@ -90,6 +92,7 @@
 	const statusText = $derived(
 		isStoryGenerating ? 'Generating story...' : 'Generating narration...'
 	);
+	const canSeekWords = $derived(wordSeekEnabled && !!onWordSeek);
 
 	function cancelCaptionScrollAnimation() {
 		if (scrollAnimationFrame === null) return;
@@ -323,8 +326,12 @@
 											tabindex="-1"
 											data-caption-word-index={token.wordIndex}
 											aria-current={token.wordIndex === activeWordIndex ? 'true' : undefined}
-											onclick={() => onWordSeek?.(Math.max(0, token.start - 0.03))}
+											disabled={!canSeekWords}
+											onclick={() => {
+												if (canSeekWords) onWordSeek?.(Math.max(0, token.start - 0.03));
+											}}
 											class="caption-word {token.emphasized ? 'caption-word-emphasized' : ''}
+												{canSeekWords ? 'caption-word-seekable' : ''}
 												{token.wordIndex === activeWordIndex
 												? 'caption-word-active'
 												: token.wordIndex < activeWordIndex
@@ -498,6 +505,15 @@
 			color 0.18s ease,
 			opacity 0.18s ease,
 			text-shadow 0.18s ease;
+	}
+
+	.caption-word:disabled {
+		pointer-events: none;
+		cursor: default;
+	}
+
+	.caption-word-seekable {
+		cursor: pointer;
 	}
 
 	.caption-word-emphasized {

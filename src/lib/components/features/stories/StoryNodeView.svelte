@@ -45,6 +45,7 @@
 		immersiveParamEnabled(page.url.searchParams.get(IMMERSIVE_QUERY_PARAM))
 	);
 	let narrationStatus = $state({
+		nodeId: null as string | null,
 		currentTime: 0,
 		duration: 0,
 		paused: true,
@@ -54,7 +55,8 @@
 		timestampsUrl: null as string | null,
 		hasAudio: false,
 		voiceId: null as string | null,
-		captionsUnavailable: false
+		captionsUnavailable: false,
+		hasStartedPlayback: false
 	});
 	let seekNarration = $state<((time: number) => void) | null>(null);
 
@@ -132,6 +134,31 @@
 
 	// The current node is either the override (during streaming/navigation) or from the query
 	const currentNode = $derived(currentNodeOverride ?? nodeQuery.data ?? null);
+
+	const activeNarrationNodeId = $derived(currentNode?.id ?? nodeId);
+	const narrationMatchesCurrentNode = $derived(narrationStatus.nodeId === activeNarrationNodeId);
+	const currentNarrationTime = $derived(
+		narrationMatchesCurrentNode ? narrationStatus.currentTime : 0
+	);
+	const currentNarrationDuration = $derived(
+		narrationMatchesCurrentNode ? narrationStatus.duration : 0
+	);
+	const currentNarrationEnded = $derived(
+		narrationMatchesCurrentNode ? narrationStatus.ended : false
+	);
+	const currentNarrationTimestampsUrl = $derived(
+		narrationMatchesCurrentNode ? narrationStatus.timestampsUrl : null
+	);
+	const currentNarrationGenerating = $derived(
+		narrationMatchesCurrentNode ? narrationStatus.isGenerating : false
+	);
+	const wordSeekEnabled = $derived(
+		narrationMatchesCurrentNode &&
+			narrationStatus.hasAudio &&
+			narrationStatus.hasStartedPlayback &&
+			!narrationStatus.isGenerating &&
+			!!seekNarration
+	);
 
 	const choices = useChoiceExecution({
 		worldId: () => worldId,
@@ -442,11 +469,11 @@
 			nodeId={currentNode?.id ?? nodeId}
 			text={stream.isStreaming ? stream.streamingText.trim() : (currentNode?.text?.trim() ?? '')}
 			choices={stream.isStreaming || isNodeGenerating ? [] : (currentNode?.choices ?? [])}
-			currentTime={narrationStatus.currentTime}
-			duration={narrationStatus.duration}
-			ended={narrationStatus.ended}
-			timestampsUrl={stream.isStreaming || isNodeGenerating ? null : narrationStatus.timestampsUrl}
-			isNarrationGenerating={narrationStatus.isGenerating}
+			currentTime={currentNarrationTime}
+			duration={currentNarrationDuration}
+			ended={currentNarrationEnded}
+			timestampsUrl={stream.isStreaming || isNodeGenerating ? null : currentNarrationTimestampsUrl}
+			isNarrationGenerating={currentNarrationGenerating}
 			isStoryGenerating={stream.isStreaming || isNodeGenerating}
 			worldImageUrl={world?.world_image_url}
 			worldImageAlt={world?.world_image_alt_text}
@@ -458,7 +485,10 @@
 			onChoiceSelect={choices.handleChoiceSelect}
 			onCustomChoice={choices.handleCustomChoice}
 			onRestart={handleRestart}
-			onWordSeek={(time) => seekNarration?.(time)}
+			{wordSeekEnabled}
+			onWordSeek={(time) => {
+				if (wordSeekEnabled) seekNarration?.(time);
+			}}
 			onExit={() => (immersiveActive = false)}
 		/>
 	{/if}

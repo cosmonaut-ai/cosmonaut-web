@@ -34,6 +34,7 @@
 	}
 
 	interface NarrationPlaybackStatus {
+		nodeId: string | null;
 		currentTime: number;
 		duration: number;
 		paused: boolean;
@@ -44,6 +45,7 @@
 		hasAudio: boolean;
 		voiceId: string | null;
 		captionsUnavailable: boolean;
+		hasStartedPlayback: boolean;
 	}
 
 	let {
@@ -55,6 +57,7 @@
 		playerVisible = $bindable(false),
 		immersiveActive = $bindable(false),
 		narrationStatus = $bindable<NarrationPlaybackStatus>({
+			nodeId: null,
 			currentTime: 0,
 			duration: 0,
 			paused: true,
@@ -64,7 +67,8 @@
 			timestampsUrl: null,
 			hasAudio: false,
 			voiceId: null,
-			captionsUnavailable: false
+			captionsUnavailable: false,
+			hasStartedPlayback: false
 		}),
 		seekNarration = $bindable<((time: number) => void) | null>(null),
 		nodeTextLength = 0
@@ -132,6 +136,32 @@
 	const audioMutation = useGenerateAudio(() => worldId);
 	const isGenerating = $derived(audioMutation.isPending);
 	const hasAudio = $derived(!!effectiveAudioUrl);
+	let hasStartedPlayback = $state(false);
+	// Reset state when user navigates to a *different* node (actual value change).
+	// Using explicit string comparison avoids spurious cleanup from reactive
+	// re-evaluation when the cache is patched (same nodeId, new object ref).
+	let lastNodeId = $state<string | undefined>(undefined);
+	let lastImmersiveAutoStartKey = $state<string | null>(null);
+
+	$effect(() => {
+		const currentId = nodeId;
+		untrack(() => {
+			if (lastNodeId === undefined) {
+				lastNodeId = currentId;
+				return;
+			}
+			if (currentId !== lastNodeId) {
+				player.pause();
+				playerVisible = false;
+				localAudio = {};
+				hasStartedPlayback = false;
+				player.resetPlayback();
+				lastImmersiveAutoStartKey = null;
+				lastNodeId = currentId;
+			}
+		});
+	});
+
 	const immersiveDisabledMessage = $derived<string | null>(
 		narrationDisabledMessage ??
 			(!effectiveVoiceId
@@ -143,6 +173,7 @@
 
 	$effect(() => {
 		narrationStatus = {
+			nodeId,
 			currentTime: player.currentTime,
 			duration: player.duration,
 			paused: player.paused,
@@ -152,7 +183,8 @@
 			timestampsUrl: effectiveTimestampsUrl,
 			hasAudio,
 			voiceId: effectiveVoiceId,
-			captionsUnavailable
+			captionsUnavailable,
+			hasStartedPlayback
 		};
 	});
 
@@ -166,6 +198,7 @@
 
 	async function handleActivate(options: { requireTimestamps?: boolean } = {}) {
 		if (isGenerating) return;
+		const activationNodeId = nodeId;
 
 		if (options.requireTimestamps && captionsUnavailable) {
 			immersiveActive = false;
@@ -186,6 +219,7 @@
 		}
 
 		await loadPlayerBar();
+		if (activationNodeId !== nodeId) return;
 
 		const voiceId = effectiveVoiceId;
 		if (!voiceId) return; // Voices haven't loaded yet
@@ -204,8 +238,11 @@
 
 	/** Generate audio for a specific voice, update local cache, and auto-play */
 	async function generateForVoice(voiceId: string, options: { requireTimestamps?: boolean } = {}) {
+		const requestedNodeId = nodeId;
 		try {
-			const result = await audioMutation.mutateAsync({ nodeId, voiceId });
+			const result = await audioMutation.mutateAsync({ nodeId: requestedNodeId, voiceId });
+			if (requestedNodeId !== nodeId) return;
+
 			const entry: AudioEntry = {
 				audio_url: result.audio_url,
 				timestamps_url: (result as Record<string, unknown>).timestamps_url as string | undefined
@@ -247,24 +284,36 @@
 		player.pause();
 		playerVisible = false;
 		immersiveActive = false;
+		hasStartedPlayback = false;
 	}
 
 	function seekToTime(time: number) {
 		if (!Number.isFinite(time)) return;
+		if (!effectiveAudioUrl || isGenerating) return;
+
+		const audioElement = player.audioElement;
+		if (!audioElement) return;
+
+		const haveMetadata =
+			typeof HTMLMediaElement === 'undefined' ? 1 : HTMLMediaElement.HAVE_METADATA;
+		if (audioElement.readyState < haveMetadata) return;
 
 		const duration =
-			Number.isFinite(player.duration) && player.duration > 0 ? player.duration : time;
+			Number.isFinite(player.duration) && player.duration > 0
+				? player.duration
+				: Number.isFinite(audioElement.duration) && audioElement.duration > 0
+					? audioElement.duration
+					: time;
 		const nextTime = Math.min(Math.max(time, 0), duration);
 
-		if (player.audioElement) {
-			player.audioElement.currentTime = nextTime;
+		try {
+			audioElement.currentTime = nextTime;
+		} catch {
+			return;
 		}
+
 		player.currentTime = nextTime;
 		player.ended = false;
-
-		if (immersiveActive && player.paused) {
-			void player.waitAndPlay();
-		}
 	}
 
 	$effect(() => {
@@ -308,6 +357,7 @@
 
 	function handleVoiceSelect(voiceId: string) {
 		player.selectVoice(voiceId);
+		hasStartedPlayback = false;
 
 		// Check if audio already exists for the new voice
 		const url = mergedAudio[voiceId];
@@ -329,30 +379,6 @@
 			generateForVoice(voiceId, { requireTimestamps: immersiveActive });
 		}
 	}
-
-	// Reset state when user navigates to a *different* node (actual value change).
-	// Using explicit string comparison avoids spurious cleanup from reactive
-	// re-evaluation when the cache is patched (same nodeId, new object ref).
-	let lastNodeId = $state<string | undefined>(undefined);
-
-	$effect(() => {
-		const currentId = nodeId;
-		untrack(() => {
-			if (lastNodeId === undefined) {
-				lastNodeId = currentId;
-				return;
-			}
-			if (currentId !== lastNodeId) {
-				player.pause();
-				playerVisible = false;
-				localAudio = {};
-				player.resetPlayback();
-				lastNodeId = currentId;
-			}
-		});
-	});
-
-	let lastImmersiveAutoStartKey = $state<string | null>(null);
 
 	$effect(() => {
 		const voiceId = effectiveVoiceId;
@@ -379,6 +405,7 @@
 		player.pause();
 		playerVisible = false;
 		immersiveActive = false;
+		hasStartedPlayback = false;
 		if (effectiveVoiceId && localAudio[effectiveVoiceId]) {
 			const { [effectiveVoiceId]: _, ...rest } = localAudio;
 			localAudio = rest;
@@ -393,8 +420,13 @@
 			player.pause();
 			playerVisible = false;
 			localAudio = {};
+			hasStartedPlayback = false;
 		};
 	});
+
+	function handleAudioPlay() {
+		hasStartedPlayback = true;
+	}
 </script>
 
 <!-- Hidden audio element -->
@@ -407,6 +439,7 @@
 		bind:ended={player.ended}
 		src={effectiveAudioUrl}
 		preload="auto"
+		onplay={handleAudioPlay}
 		onerror={handleAudioError}
 	></audio>
 {/if}

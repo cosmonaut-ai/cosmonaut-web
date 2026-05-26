@@ -36,6 +36,7 @@ export function useAudioPlayer() {
 	let duration = $state(0);
 	let paused = $state(true);
 	let ended = $state(false);
+	let playRequestId = 0;
 
 	$effect(() => {
 		if (audioElement) audioElement.playbackRate = playbackRate;
@@ -95,24 +96,60 @@ export function useAudioPlayer() {
 		ended = false;
 	}
 
-	async function waitAndPlay() {
+	function waitForPlayable(element: HTMLAudioElement, requestId: number): Promise<boolean> {
+		const haveCurrentData =
+			typeof HTMLMediaElement === 'undefined' ? 2 : HTMLMediaElement.HAVE_CURRENT_DATA;
+
+		if (element.readyState >= haveCurrentData) return Promise.resolve(true);
+
+		return new Promise((resolve) => {
+			let settled = false;
+			let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+			const cleanup = () => {
+				element.removeEventListener('canplay', handleReady);
+				element.removeEventListener('loadeddata', handleReady);
+				element.removeEventListener('error', handleError);
+				if (timeoutId) clearTimeout(timeoutId);
+			};
+
+			const settle = (ready: boolean) => {
+				if (settled) return;
+				settled = true;
+				cleanup();
+				resolve(requestId === playRequestId && element === audioElement && ready);
+			};
+
+			const handleReady = () => settle(true);
+			const handleError = () => settle(false);
+
+			element.addEventListener('canplay', handleReady, { once: true });
+			element.addEventListener('loadeddata', handleReady, { once: true });
+			element.addEventListener('error', handleError, { once: true });
+
+			timeoutId = setTimeout(() => {
+				settle(true);
+			}, 2500);
+		});
+	}
+
+	async function waitAndPlay(): Promise<boolean> {
+		const requestId = ++playRequestId;
 		await new Promise((r) => requestAnimationFrame(r));
 		await new Promise((r) => requestAnimationFrame(r));
 
-		if (!audioElement) return;
+		const element = audioElement;
+		if (!element) return false;
 
-		if (audioElement.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
-			const ready = await new Promise<boolean>((resolve) => {
-				audioElement!.addEventListener('canplaythrough', () => resolve(true), { once: true });
-				audioElement!.addEventListener('error', () => resolve(false), { once: true });
-			});
-			if (!ready) return;
-		}
+		const ready = await waitForPlayable(element, requestId);
+		if (!ready || requestId !== playRequestId || element !== audioElement) return false;
 
 		try {
-			await audioElement.play();
+			await element.play();
+			return true;
 		} catch {
 			// Autoplay blocked
+			return false;
 		}
 	}
 
@@ -123,6 +160,7 @@ export function useAudioPlayer() {
 	}
 
 	function pause() {
+		playRequestId += 1;
 		audioElement?.pause();
 	}
 
