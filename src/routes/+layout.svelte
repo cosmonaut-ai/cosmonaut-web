@@ -90,6 +90,7 @@
 		!page.url.pathname.startsWith('/login') &&
 			!page.url.pathname.startsWith('/callback') &&
 			!page.url.pathname.startsWith('/onboarding') &&
+			!page.url.pathname.startsWith('/admin') &&
 			!page.url.pathname.includes('/graph') &&
 			!page.url.pathname.includes('/map')
 	);
