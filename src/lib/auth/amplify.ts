@@ -73,11 +73,15 @@ export function extractUserFromClaims(
 	claims: Record<string, unknown>,
 	fallbackSub?: string
 ): UserInfo {
+	const rawGroups = claims['cognito:groups'];
+	const groups = Array.isArray(rawGroups) ? rawGroups.map(String) : [];
+
 	return {
 		sub: (claims.sub as string) ?? fallbackSub ?? '',
 		email: claims.email as string | undefined,
 		name: claims.given_name as string | undefined,
 		picture: claims.picture as string | undefined,
-		username: claims['custom:username'] as string | undefined
+		username: claims['custom:username'] as string | undefined,
+		groups
 	};
 }

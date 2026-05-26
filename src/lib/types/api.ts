@@ -115,6 +115,7 @@ export interface World {
 	world_image_height: string | null;
 	world_image_size: string | null;
 	image_generation_status: ImageGenerationStatus | null;
+	featured_order: number | null;
 	invite_token?: InviteToken | null;
 	created_at: string;
 	updated_at: string;

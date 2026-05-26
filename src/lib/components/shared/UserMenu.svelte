@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useAuth } from '$lib/auth/auth.svelte';
+	import { isAdminUser, useAuth } from '$lib/auth/auth.svelte';
 	import { logger } from '$lib/utils/logger';
 	import { useUser } from '$lib/queries';
 	import { getTierConfig } from '$lib/config/tiers';
@@ -13,7 +13,8 @@
 		CreditCard,
 		MessageSquare,
 		LogOut,
-		ChevronDown
+		ChevronDown,
+		ShieldCheck
 	} from '@lucide/svelte';
 
 	const auth = useAuth();
@@ -21,6 +22,7 @@
 
 	const displayName = $derived(getDisplayName(auth.user, usageQuery.data?.display_name));
 	const tierConfig = $derived(usageQuery.data ? getTierConfig(usageQuery.data.tier) : null);
+	const showAdminLink = $derived(isAdminUser(auth.user));
 
 	const tierBadgeClass: Record<string, string> = {
 		FREE: 'bg-muted text-muted-foreground border-border',
@@ -73,6 +75,13 @@
 			<LayoutDashboard class="h-4 w-4" />
 			Dashboard
 		</DropdownMenu.Item>
+
+		{#if showAdminLink}
+			<DropdownMenu.Item onclick={() => goto('/admin/dashboard')} class="cursor-pointer">
+				<ShieldCheck class="h-4 w-4" />
+				Admin
+			</DropdownMenu.Item>
+		{/if}
 
 		<DropdownMenu.Item onclick={() => goto('/pricing')} class="cursor-pointer">
 			<CreditCard class="h-4 w-4" />

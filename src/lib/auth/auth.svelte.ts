@@ -38,8 +38,15 @@ const LOCAL_DEV_USER: UserInfo = {
 	sub: 'local-dev-user-123',
 	email: 'developer@localhost',
 	name: 'Local Developer',
-	picture: undefined
+	picture: undefined,
+	groups: ['Owner']
 };
+
+const ADMIN_GROUPS = new Set(['Owner', 'Admin']);
+
+export function isAdminUser(candidate: UserInfo | null | undefined): boolean {
+	return candidate?.groups?.some((group) => ADMIN_GROUPS.has(group)) ?? false;
+}
 
 /**
  * Initialize Amplify Auth - call this once in the root layout

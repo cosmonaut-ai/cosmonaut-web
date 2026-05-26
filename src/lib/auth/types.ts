@@ -4,4 +4,5 @@ export interface UserInfo {
 	name?: string;
 	picture?: string;
 	username?: string;
+	groups?: string[];
 }
