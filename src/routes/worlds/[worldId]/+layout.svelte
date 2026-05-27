@@ -1,10 +1,16 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { useWorld } from '$lib/queries';
 	import { setWorldContext } from '$lib/contexts/world';
+	import {
+		setImmersiveStoryContext,
+		type ImmersiveStoryModel
+	} from '$lib/contexts/immersiveStory.svelte';
 	import { ApiError } from '$lib/types/api';
+	import ImmersiveStoryView from '$lib/components/features/narrator/ImmersiveStoryView.svelte';
 	import WorldHeader from '$lib/components/features/worlds/WorldHeader.svelte';
 	import WorldGenerationProgress from '$lib/components/features/worlds/WorldGenerationProgress.svelte';
 	import WorldGenerationFailed from '$lib/components/features/worlds/WorldGenerationFailed.svelte';
@@ -21,13 +27,22 @@
 
 	let { children }: Props = $props();
 
+	const IMMERSIVE_QUERY_PARAM = 'immersive';
+	const immersiveStory = setImmersiveStoryContext();
+
+	function immersiveParamEnabled(value: string | null): boolean {
+		return value === '1' || value === 'true';
+	}
+
 	// Get worldId from params (guaranteed to exist in this route)
 	const worldId = $derived(page.params.worldId!);
+	const nodeId = $derived(page.params.nodeId);
 	const inviteToken = $derived(page.url.searchParams.get('invite'));
 
 	// Determine if we're on the graph page (which has its own full-screen layout)
 	const isGraphPage = $derived(page.url.pathname.includes('/graph'));
 	const isMapPage = $derived(page.url.pathname.includes('/map'));
+	const isNodePage = $derived(page.url.pathname.includes('/nodes/'));
 	const isMainWorldPage = $derived(
 		page.url.pathname === `/worlds/${worldId}` || page.url.pathname === `/worlds/${worldId}/`
 	);
@@ -50,6 +65,86 @@
 	);
 	const isNotFound = $derived(worldQuery.error instanceof ApiError && worldQuery.error.isNotFound);
 	const isNetworkOrServerError = $derived(!!worldQuery.error && !isAccessDenied && !isNotFound);
+
+	$effect(() => {
+		if (immersiveParamEnabled(page.url.searchParams.get(IMMERSIVE_QUERY_PARAM))) {
+			immersiveStory.active = true;
+		}
+	});
+
+	$effect(() => {
+		if (!browser || !(isNodePage || isGraphPage || isMapPage)) return;
+
+		const url = new URL(window.location.href);
+		if (immersiveStory.active) {
+			url.searchParams.set(IMMERSIVE_QUERY_PARAM, '1');
+		} else {
+			url.searchParams.delete(IMMERSIVE_QUERY_PARAM);
+		}
+
+		const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+		const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+		if (currentUrl !== nextUrl) {
+			replaceState(nextUrl, page.state);
+		}
+	});
+
+	const immersiveRenderModel = $derived.by<ImmersiveStoryModel | null>(() => {
+		if (!immersiveStory.active || !isNodePage) return null;
+
+		const model = immersiveStory.model;
+		if (!model) {
+			return {
+				nodeId: nodeId ?? '',
+				text: '',
+				choices: [],
+				currentTime: 0,
+				duration: 0,
+				ended: false,
+				timestampsUrl: null,
+				isNarrationGenerating: false,
+				isStoryGenerating: false,
+				worldImageUrl: world?.world_image_url,
+				worldImageAlt: world?.world_image_alt_text,
+				title: null,
+				loadingProgress: 0,
+				isEnding: false,
+				isLoading: true,
+				isAtQuotaLimit: false,
+				showCustomChoice: false,
+				wordSeekEnabled: false,
+				canGoBack: false
+			};
+		}
+
+		if (nodeId && model.nodeId !== nodeId) {
+			return {
+				...model,
+				nodeId,
+				text: '',
+				choices: [],
+				currentTime: 0,
+				duration: 0,
+				ended: false,
+				timestampsUrl: null,
+				isNarrationGenerating: false,
+				isStoryGenerating: false,
+				title: null,
+				loadingProgress: 0,
+				isLoading: true,
+				showCustomChoice: false,
+				wordSeekEnabled: false,
+				canGoBack: false,
+				onBack: undefined,
+				onChoiceSelect: undefined,
+				onCustomChoice: undefined,
+				onRestart: undefined,
+				onWordSeek: undefined
+			};
+		}
+
+		return model;
+	});
 </script>
 
 <SEO
@@ -172,4 +267,35 @@
 		<WorldHeader {world} />
 		{@render children()}
 	</div>
+{/if}
+
+{#if immersiveRenderModel}
+	<ImmersiveStoryView
+		nodeId={immersiveRenderModel.nodeId}
+		text={immersiveRenderModel.text}
+		choices={immersiveRenderModel.choices}
+		currentTime={immersiveRenderModel.currentTime}
+		duration={immersiveRenderModel.duration}
+		ended={immersiveRenderModel.ended}
+		timestampsUrl={immersiveRenderModel.timestampsUrl}
+		isNarrationGenerating={immersiveRenderModel.isNarrationGenerating}
+		isStoryGenerating={immersiveRenderModel.isStoryGenerating}
+		worldImageUrl={immersiveRenderModel.worldImageUrl}
+		worldImageAlt={immersiveRenderModel.worldImageAlt}
+		title={immersiveRenderModel.title}
+		loadingProgress={immersiveRenderModel.loadingProgress}
+		isEnding={immersiveRenderModel.isEnding}
+		isLoading={immersiveRenderModel.isLoading}
+		isAtQuotaLimit={immersiveRenderModel.isAtQuotaLimit}
+		showCustomChoice={immersiveRenderModel.showCustomChoice}
+		wordSeekEnabled={immersiveRenderModel.wordSeekEnabled}
+		canGoBack={immersiveRenderModel.canGoBack}
+		onBack={immersiveRenderModel.onBack}
+		onOpenMap={immersiveRenderModel.onOpenMap}
+		onChoiceSelect={immersiveRenderModel.onChoiceSelect}
+		onCustomChoice={immersiveRenderModel.onCustomChoice}
+		onRestart={immersiveRenderModel.onRestart}
+		onWordSeek={immersiveRenderModel.onWordSeek}
+		onExit={() => immersiveStory.setActive(false)}
+	/>
 {/if}

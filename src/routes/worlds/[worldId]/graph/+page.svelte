@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { NodeTypes } from '@xyflow/svelte';
 	import { useWorld, useWorldNodes } from '$lib/queries';
 	import { transformNodesToFlow } from '$lib/utils/nodeTransform';
@@ -23,8 +24,16 @@
 	const isLoading = $derived(nodesQuery.isLoading);
 	const currentNodeId = $derived(page.url.searchParams.get('node'));
 
+	function routeForNode(nodeId: string): string {
+		const searchParams = new SvelteURLSearchParams(page.url.searchParams);
+		searchParams.delete('node');
+
+		const query = searchParams.toString();
+		return `/worlds/${worldId}/nodes/${nodeId}${query ? `?${query}` : ''}`;
+	}
+
 	function handleNodeClick(nodeId: string) {
-		goto(`/worlds/${worldId}/nodes/${nodeId}`);
+		goto(routeForNode(nodeId));
 	}
 
 	const graphColors = {
@@ -52,7 +61,7 @@
 	} as NodeTypes;
 
 	function handleBackToStory() {
-		const url = currentNodeId ? `/worlds/${worldId}/nodes/${currentNodeId}` : `/worlds/${worldId}`;
+		const url = currentNodeId ? routeForNode(currentNodeId) : `/worlds/${worldId}`;
 		goto(url);
 	}
 </script>
@@ -102,7 +111,7 @@
 					</p>
 				</div>
 				{#if rootNodeId}
-					<Button onclick={() => goto(`/worlds/${worldId}/nodes/${rootNodeId}`)} class="gap-2">
+					<Button onclick={() => goto(routeForNode(rootNodeId))} class="gap-2">
 						<BookOpen class="h-4 w-4" />
 						Enter the Story
 					</Button>
