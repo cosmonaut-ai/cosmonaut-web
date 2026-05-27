@@ -147,6 +147,9 @@
 										>
 											{user.email || 'No email'}
 										</a>
+										{#if user.username}
+											<div class="mt-1 text-xs text-muted-foreground">@{user.username}</div>
+										{/if}
 										<div
 											class="mt-1 flex items-center gap-1 font-mono text-xs text-muted-foreground"
 										>

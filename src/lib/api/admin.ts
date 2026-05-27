@@ -9,12 +9,13 @@ export interface PaginatedAdminResponse<T> {
 }
 
 export interface AdminCognitoUser {
-	username: string;
+	username: string | null;
+	cognito_username: string | null;
 	sub: string;
 	email: string;
 	tier: string;
 	stripe_customer_id: string | null;
-	email_verified: boolean;
+	email_verified: boolean | null;
 	created_at: string | null;
 	status: string | null;
 	enabled: boolean | null;

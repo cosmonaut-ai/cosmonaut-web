@@ -282,11 +282,23 @@
 								<p class="mt-1 font-medium text-foreground">{formatBoolean(user.email_verified)}</p>
 							</div>
 							<div class="rounded-md border border-border p-3">
-								<p class="text-xs text-muted-foreground">Cognito Username</p>
+								<p class="text-xs text-muted-foreground">App Username</p>
 								<p class="mt-1 flex items-center gap-1 font-mono text-xs break-all text-foreground">
 									{user.username || 'N/A'}
 									<CopyButton
 										value={user.username}
+										label="Copy app username"
+										successLabel="App username copied"
+										class="h-6 w-6 text-muted-foreground"
+									/>
+								</p>
+							</div>
+							<div class="rounded-md border border-border p-3">
+								<p class="text-xs text-muted-foreground">Cognito Username</p>
+								<p class="mt-1 flex items-center gap-1 font-mono text-xs break-all text-foreground">
+									{user.cognito_username || 'N/A'}
+									<CopyButton
+										value={user.cognito_username}
 										label="Copy Cognito username"
 										successLabel="Cognito username copied"
 										class="h-6 w-6 text-muted-foreground"

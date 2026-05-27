@@ -124,6 +124,9 @@
 										<p class="truncate text-sm font-medium text-foreground">
 											{user.email || 'No email'}
 										</p>
+										{#if user.username}
+											<p class="mt-1 truncate text-xs text-muted-foreground">@{user.username}</p>
+										{/if}
 										<p class="mt-1 font-mono text-xs text-muted-foreground">{shortId(user.sub)}</p>
 									</div>
 									<Badge class={tierClass(user.tier)}>{user.tier}</Badge>
