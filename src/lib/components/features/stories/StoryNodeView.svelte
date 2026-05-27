@@ -1,24 +1,32 @@
 <script lang="ts">
-	import { goto, replaceState } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { useNode, useUser } from '$lib/queries';
 	import { getWorldContext } from '$lib/contexts/world';
+	import { getImmersiveStoryContext } from '$lib/contexts/immersiveStory.svelte';
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
 	import SlideTransition from './SlideTransition.svelte';
 	import AudioNarration from '$lib/components/features/narrator/AudioNarration.svelte';
-	import ImmersiveStoryView from '$lib/components/features/narrator/ImmersiveStoryView.svelte';
 	import ShareModal from '$lib/components/features/worlds/ShareModal.svelte';
 	import UpgradePrompt from '$lib/components/features/subscription/UpgradePrompt.svelte';
 	import { useStreamingNode } from './useStreamingNode.svelte';
 	import { useChoiceExecution } from './useChoiceExecution.svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
+	import {
+		DEFAULT_BRANCH_STORY_WORDS,
+		DEFAULT_ROOT_STORY_WORDS,
+		estimateInteractiveStoryLoadingProgress,
+		estimateNarrationGenerationProgress,
+		estimateStoryGenerationProgress
+	} from '$lib/utils/generationProgress';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { ChevronLeft, RotateCcw, TriangleAlert, Map, Rocket, Share2 } from '@lucide/svelte';
+	import { ChevronLeft, Undo, RotateCcw, TriangleAlert, Map, Rocket, Share2 } from '@lucide/svelte';
 
 	interface Props {
 		worldId: string;
@@ -30,20 +38,14 @@
 
 	let currentNodeOverride = $state.raw<StoryNode | null>(null);
 	let loading = $state(false);
+	const immersiveStory = getImmersiveStoryContext();
 	const IMMERSIVE_QUERY_PARAM = 'immersive';
-
-	function immersiveParamEnabled(value: string | null): boolean {
-		return value === '1' || value === 'true';
-	}
 
 	// Navigation direction for slide animation
 	let slideDirection = $state<'forward' | 'back'>('forward');
 
 	// ── Audio Narration ──
 	let audioPlayerVisible = $state(false);
-	let immersiveActive = $state(
-		immersiveParamEnabled(page.url.searchParams.get(IMMERSIVE_QUERY_PARAM))
-	);
 	let narrationStatus = $state({
 		nodeId: null as string | null,
 		currentTime: 0,
@@ -56,13 +58,16 @@
 		hasAudio: false,
 		voiceId: null as string | null,
 		captionsUnavailable: false,
-		hasStartedPlayback: false
+		hasStartedPlayback: false,
+		generationStartedAt: null as number | null
 	});
 	let seekNarration = $state<((time: number) => void) | null>(null);
 
 	function routeForNode(targetNodeId: string): string {
-		const searchParams = new URLSearchParams(browser ? window.location.search : page.url.search);
-		if (immersiveActive) {
+		const searchParams = new SvelteURLSearchParams(
+			browser ? window.location.search : page.url.search
+		);
+		if (immersiveStory.active) {
 			searchParams.set(IMMERSIVE_QUERY_PARAM, '1');
 		} else {
 			searchParams.delete(IMMERSIVE_QUERY_PARAM);
@@ -72,22 +77,21 @@
 		return `/worlds/${worldId}/nodes/${targetNodeId}${query ? `?${query}` : ''}`;
 	}
 
-	$effect(() => {
-		if (!browser) return;
+	function routeForMap(): string {
+		const searchParams = new SvelteURLSearchParams(
+			browser ? window.location.search : page.url.search
+		);
+		searchParams.set('node', currentNode?.id ?? nodeId);
 
-		const url = new URL(window.location.href);
-		if (immersiveActive) {
-			url.searchParams.set(IMMERSIVE_QUERY_PARAM, '1');
+		if (immersiveStory.active) {
+			searchParams.set(IMMERSIVE_QUERY_PARAM, '1');
 		} else {
-			url.searchParams.delete(IMMERSIVE_QUERY_PARAM);
+			searchParams.delete(IMMERSIVE_QUERY_PARAM);
 		}
 
-		const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-		const nextUrl = `${url.pathname}${url.search}${url.hash}`;
-		if (currentUrl !== nextUrl) {
-			replaceState(nextUrl, page.state);
-		}
-	});
+		const query = searchParams.toString();
+		return `/worlds/${worldId}/graph${query ? `?${query}` : ''}`;
+	}
 
 	// Use TanStack Query for node data (pass getters to ensure reactivity)
 	// Enable polling when node is in 'generating' status
@@ -96,6 +100,10 @@
 		() => nodeId,
 		{ enablePolling: true }
 	);
+
+	// ── World data for progress estimates and ShareModal ──
+	const worldQuery = getWorldContext();
+	const world = $derived(worldQuery.data);
 
 	// Get stable values - prefer override (most recent) over query data
 	const effectiveNodeId = $derived(currentNodeOverride?.id ?? nodeQuery.data?.id);
@@ -159,6 +167,55 @@
 			!narrationStatus.isGenerating &&
 			!!seekNarration
 	);
+	let progressClock = $state(Date.now());
+	const storyGenerationActive = $derived(stream.isStreaming || isNodeGenerating);
+	const storyGenerationComplete = $derived(
+		stream.streamingDone || currentNode?.generation_status === 'completed'
+	);
+	const storyTargetWords = $derived(
+		world?.node_text_length ??
+			(currentNode?.parent_id ? DEFAULT_BRANCH_STORY_WORDS : DEFAULT_ROOT_STORY_WORDS)
+	);
+	const storyGenerationProgress = $derived(
+		estimateStoryGenerationProgress({
+			text: stream.streamingText,
+			isGenerating: storyGenerationActive,
+			isComplete: storyGenerationComplete,
+			targetWords: storyTargetWords
+		})
+	);
+	const narrationGenerationProgress = $derived(
+		estimateNarrationGenerationProgress({
+			isGenerating: currentNarrationGenerating,
+			generationStartedAt: narrationMatchesCurrentNode ? narrationStatus.generationStartedAt : null,
+			now: progressClock
+		})
+	);
+	const immersiveLoadingProgress = $derived(
+		estimateInteractiveStoryLoadingProgress({
+			storyProgress: storyGenerationProgress,
+			isStoryGenerating: storyGenerationActive,
+			isStoryComplete: storyGenerationComplete,
+			narrationProgress: narrationGenerationProgress,
+			isNarrationGenerating: currentNarrationGenerating,
+			hasNarration: !!currentNarrationTimestampsUrl
+		})
+	);
+	const immersiveLoaderVisible = $derived(
+		immersiveStory.active &&
+			(storyGenerationActive || currentNarrationGenerating || !currentNarrationTimestampsUrl)
+	);
+
+	$effect(() => {
+		if (!browser || !immersiveLoaderVisible) return;
+
+		progressClock = Date.now();
+		const interval = setInterval(() => {
+			progressClock = Date.now();
+		}, 250);
+
+		return () => clearInterval(interval);
+	});
 
 	const choices = useChoiceExecution({
 		worldId: () => worldId,
@@ -233,6 +290,10 @@
 		});
 	}
 
+	function handleOpenMap() {
+		goto(routeForMap(), { noScroll: true });
+	}
+
 	async function handleRetryGeneration() {
 		if (!currentNode || stream.isStreaming) return;
 		stream.setGeneratingNodeId(currentNode.id);
@@ -254,34 +315,66 @@
 
 	$effect(() => {
 		if (isNodeFailed || nodeQuery.isError) {
-			immersiveActive = false;
+			immersiveStory.active = false;
 		}
 	});
 
-	// ── World data for ShareModal ──
-	const worldQuery = getWorldContext();
-	const world = $derived(worldQuery.data);
+	$effect(() => {
+		const routeLoading = !currentNode && isLoading;
+		const storyGenerating = stream.isStreaming || isNodeGenerating;
+		const interactionDisabled = storyGenerating || routeLoading;
+
+		immersiveStory.publish({
+			nodeId: currentNode?.id ?? nodeId,
+			text: stream.isStreaming ? stream.streamingText.trim() : (currentNode?.text?.trim() ?? ''),
+			choices: interactionDisabled ? [] : (currentNode?.choices ?? []),
+			currentTime: routeLoading ? 0 : currentNarrationTime,
+			duration: routeLoading ? 0 : currentNarrationDuration,
+			ended: routeLoading ? false : currentNarrationEnded,
+			timestampsUrl: interactionDisabled ? null : currentNarrationTimestampsUrl,
+			isNarrationGenerating: routeLoading ? false : currentNarrationGenerating,
+			isStoryGenerating: storyGenerating,
+			worldImageUrl: world?.world_image_url,
+			worldImageAlt: world?.world_image_alt_text,
+			title: routeLoading ? null : currentNode?.title,
+			loadingProgress: routeLoading ? 0 : immersiveLoadingProgress,
+			isEnding: routeLoading ? false : isEnding,
+			isLoading,
+			isAtQuotaLimit: isAtNodeLimit,
+			showCustomChoice: !routeLoading && !isEnding,
+			wordSeekEnabled: routeLoading ? false : wordSeekEnabled,
+			canGoBack: routeLoading ? false : canGoBack,
+			onBack: routeLoading ? undefined : handleBack,
+			onOpenMap: handleOpenMap,
+			onChoiceSelect: routeLoading ? undefined : choices.handleChoiceSelect,
+			onCustomChoice: routeLoading ? undefined : choices.handleCustomChoice,
+			onRestart: routeLoading ? undefined : handleRestart,
+			onWordSeek: routeLoading
+				? undefined
+				: (time) => {
+						if (wordSeekEnabled) seekNarration?.(time);
+					}
+		});
+	});
+
 	let shareModalOpen = $state(false);
 	const auth = useAuth();
 </script>
 
-<main class="mx-auto max-w-4xl px-6 py-8 {audioPlayerVisible || immersiveActive ? 'pb-24' : ''}">
+<main
+	class="mx-auto max-w-4xl px-6 py-8 {audioPlayerVisible || immersiveStory.active ? 'pb-24' : ''}"
+>
 	<!-- Toolbar -->
 	<div class="mb-6 flex items-center justify-between">
 		<div class="flex items-center gap-1">
 			<Button variant="ghost" size="sm" onclick={handleBack} disabled={!canGoBack} class="gap-1">
-				<ChevronLeft class="h-4 w-4" />
+				<Undo class="h-4 w-4" />
 				Undo
 			</Button>
 		</div>
 
 		<div class="flex items-center gap-1">
-			<Button
-				variant="ghost"
-				size="sm"
-				onclick={() => goto(`/worlds/${worldId}/graph?node=${nodeId}`)}
-				class="gap-1"
-			>
+			<Button variant="ghost" size="sm" onclick={handleOpenMap} class="gap-1">
 				<Map class="h-4 w-4" />
 				Map
 			</Button>
@@ -292,7 +385,7 @@
 				isNodeCompleted={currentNode?.generation_status === 'completed'}
 				onQuotaExceeded={() => (stream.showAudioQuotaPrompt = true)}
 				bind:playerVisible={audioPlayerVisible}
-				bind:immersiveActive
+				bind:immersiveActive={immersiveStory.active}
 				bind:narrationStatus
 				bind:seekNarration
 				nodeTextLength={currentNode?.text?.length ?? 0}
@@ -462,35 +555,6 @@
 				</div>
 			</CardContent>
 		</Card>
-	{/if}
-
-	{#if immersiveActive && (stream.isStreaming || isNodeGenerating || currentNode)}
-		<ImmersiveStoryView
-			nodeId={currentNode?.id ?? nodeId}
-			text={stream.isStreaming ? stream.streamingText.trim() : (currentNode?.text?.trim() ?? '')}
-			choices={stream.isStreaming || isNodeGenerating ? [] : (currentNode?.choices ?? [])}
-			currentTime={currentNarrationTime}
-			duration={currentNarrationDuration}
-			ended={currentNarrationEnded}
-			timestampsUrl={stream.isStreaming || isNodeGenerating ? null : currentNarrationTimestampsUrl}
-			isNarrationGenerating={currentNarrationGenerating}
-			isStoryGenerating={stream.isStreaming || isNodeGenerating}
-			worldImageUrl={world?.world_image_url}
-			worldImageAlt={world?.world_image_alt_text}
-			title={currentNode?.title}
-			{isEnding}
-			{isLoading}
-			isAtQuotaLimit={isAtNodeLimit}
-			showCustomChoice={!isEnding}
-			onChoiceSelect={choices.handleChoiceSelect}
-			onCustomChoice={choices.handleCustomChoice}
-			onRestart={handleRestart}
-			{wordSeekEnabled}
-			onWordSeek={(time) => {
-				if (wordSeekEnabled) seekNarration?.(time);
-			}}
-			onExit={() => (immersiveActive = false)}
-		/>
 	{/if}
 
 	<UpgradePrompt

@@ -223,23 +223,6 @@
 </div>
 
 <style>
-	.login-glow {
-		position: absolute;
-		top: 40%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 500px;
-		height: 500px;
-		border-radius: 50%;
-		background: radial-gradient(
-			circle,
-			oklch(from var(--primary) l c h / 0.08) 0%,
-			transparent 70%
-		);
-		filter: blur(60px);
-		pointer-events: none;
-	}
-
 	.login-doorway {
 		filter: drop-shadow(0 0 40px oklch(from var(--primary) l c h / 0.15));
 	}

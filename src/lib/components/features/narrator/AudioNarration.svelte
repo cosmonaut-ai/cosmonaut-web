@@ -46,6 +46,7 @@
 		voiceId: string | null;
 		captionsUnavailable: boolean;
 		hasStartedPlayback: boolean;
+		generationStartedAt: number | null;
 	}
 
 	let {
@@ -68,7 +69,8 @@
 			hasAudio: false,
 			voiceId: null,
 			captionsUnavailable: false,
-			hasStartedPlayback: false
+			hasStartedPlayback: false,
+			generationStartedAt: null
 		}),
 		seekNarration = $bindable<((time: number) => void) | null>(null),
 		nodeTextLength = 0
@@ -137,6 +139,7 @@
 	const isGenerating = $derived(audioMutation.isPending);
 	const hasAudio = $derived(!!effectiveAudioUrl);
 	let hasStartedPlayback = $state(false);
+	let generationStartedAt = $state<number | null>(null);
 	// Reset state when user navigates to a *different* node (actual value change).
 	// Using explicit string comparison avoids spurious cleanup from reactive
 	// re-evaluation when the cache is patched (same nodeId, new object ref).
@@ -155,6 +158,7 @@
 				playerVisible = false;
 				localAudio = {};
 				hasStartedPlayback = false;
+				generationStartedAt = null;
 				player.resetPlayback();
 				lastImmersiveAutoStartKey = null;
 				lastNodeId = currentId;
@@ -172,6 +176,14 @@
 	);
 
 	$effect(() => {
+		if (isGenerating && generationStartedAt === null) {
+			generationStartedAt = Date.now();
+		} else if (!isGenerating && generationStartedAt !== null) {
+			generationStartedAt = null;
+		}
+	});
+
+	$effect(() => {
 		narrationStatus = {
 			nodeId,
 			currentTime: player.currentTime,
@@ -184,7 +196,8 @@
 			hasAudio,
 			voiceId: effectiveVoiceId,
 			captionsUnavailable,
-			hasStartedPlayback
+			hasStartedPlayback,
+			generationStartedAt
 		};
 	});
 

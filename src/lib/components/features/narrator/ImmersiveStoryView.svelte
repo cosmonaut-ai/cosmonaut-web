@@ -3,6 +3,7 @@
 	import type { Choice } from '$lib/types/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import OrbitProgressLoader from '$lib/components/shared/OrbitProgressLoader.svelte';
 	import {
 		buildCaptionParagraphs,
 		findActiveCaptionWordIndex,
@@ -10,7 +11,7 @@
 		type CaptionParagraph
 	} from '$lib/utils/audioCaptions';
 	import { prefersReducedMotion } from '$lib/utils/media';
-	import { Minimize2, RotateCcw } from '@lucide/svelte';
+	import { Undo, Map, Minimize2, RotateCcw } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 	import ChoiceList from '../stories/ChoiceList.svelte';
 
@@ -30,11 +31,15 @@
 		worldImageUrl?: string | null;
 		worldImageAlt?: string | null;
 		title?: string | null;
+		loadingProgress?: number;
 		isEnding?: boolean;
 		isLoading?: boolean;
 		isAtQuotaLimit?: boolean;
 		showCustomChoice?: boolean;
 		wordSeekEnabled?: boolean;
+		canGoBack?: boolean;
+		onBack?: () => void;
+		onOpenMap?: () => void;
 		onChoiceSelect?: (targetId: string) => void;
 		onCustomChoice?: (text: string) => void;
 		onRestart?: () => void;
@@ -55,11 +60,15 @@
 		worldImageUrl = null,
 		worldImageAlt = null,
 		title = null,
+		loadingProgress = 0,
 		isEnding = false,
 		isLoading = false,
 		isAtQuotaLimit = false,
 		showCustomChoice = true,
 		wordSeekEnabled = false,
+		canGoBack = false,
+		onBack,
+		onOpenMap,
 		onChoiceSelect,
 		onCustomChoice,
 		onRestart,
@@ -74,7 +83,9 @@
 	let choicesRevealed = $state(false);
 	let lastNodeId = $state<string | null>(null);
 	let lastScrolledLineTop = $state<number | null>(null);
+	let captionSourceKey: string | null = null;
 	let captionRequestId = 0;
+	let captionAbortController: AbortController | null = null;
 	let scrollAnimationFrame: number | null = null;
 
 	const captionWords = $derived(getCaptionWords(captionParagraphs));
@@ -89,8 +100,17 @@
 		ended || (audioEndTime > 0 && currentTime >= audioEndTime - 0.2)
 	);
 	const showChoices = $derived(choicesRevealed && !isStoryGenerating && !isNarrationGenerating);
+	const showCaptionLoading = $derived(isLoadingCaptions && captionParagraphs.length === 0);
 	const statusText = $derived(
-		isStoryGenerating ? 'Generating story...' : 'Generating narration...'
+		isStoryGenerating
+			? 'Generating story...'
+			: isNarrationGenerating
+				? 'Generating narration...'
+				: isLoading
+					? 'Loading story...'
+					: !timestampsUrl
+						? 'Preparing narration...'
+						: 'Loading story...'
 	);
 	const canSeekWords = $derived(wordSeekEnabled && !!onWordSeek);
 
@@ -135,6 +155,7 @@
 
 	$effect(() => {
 		return () => {
+			captionAbortController?.abort();
 			cancelCaptionScrollAnimation();
 		};
 	});
@@ -155,8 +176,12 @@
 		if (nodeId !== lastNodeId) {
 			lastNodeId = nodeId;
 			choicesRevealed = false;
+			captionSourceKey = null;
+			captionAbortController?.abort();
+			captionAbortController = null;
 			captionParagraphs = [];
 			captionError = null;
+			isLoadingCaptions = false;
 			lastScrolledLineTop = null;
 			cancelCaptionScrollAnimation();
 		}
@@ -192,9 +217,14 @@
 
 	$effect(() => {
 		const url = timestampsUrl;
-		const storyText = text;
+		const storyText = text.trim();
+		const sourceKey = url && storyText ? `${nodeId}\u0000${url}\u0000${storyText}` : null;
 
-		if (!url || !storyText.trim()) {
+		if (!sourceKey || !url) {
+			captionSourceKey = null;
+			captionRequestId += 1;
+			captionAbortController?.abort();
+			captionAbortController = null;
 			isLoadingCaptions = false;
 			captionError = null;
 			captionParagraphs = [];
@@ -203,8 +233,13 @@
 			return;
 		}
 
+		if (sourceKey === captionSourceKey) return;
+
+		captionSourceKey = sourceKey;
 		const requestId = ++captionRequestId;
+		captionAbortController?.abort();
 		const controller = new AbortController();
+		captionAbortController = controller;
 
 		isLoadingCaptions = true;
 		captionError = null;
@@ -238,10 +273,11 @@
 			.finally(() => {
 				if (requestId === captionRequestId) {
 					isLoadingCaptions = false;
+					if (captionAbortController === controller) {
+						captionAbortController = null;
+					}
 				}
 			});
-
-		return () => controller.abort();
 	});
 </script>
 
@@ -264,22 +300,48 @@
 	></div>
 
 	<header
-		class="pointer-events-none absolute inset-x-0 top-0 z-30 flex h-14 items-center justify-between gap-3 px-4 sm:px-6"
+		class="pointer-events-none absolute inset-x-0 top-0 z-30 grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 sm:px-6"
 	>
-		<div class="min-w-0">
+		<div class="pointer-events-auto flex items-center gap-1">
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				onclick={() => onBack?.()}
+				disabled={!canGoBack || !onBack}
+				aria-label="Undo choice"
+				title="Undo"
+				class="border border-white/10 bg-white/5 text-white hover:bg-white/15 hover:text-white disabled:opacity-35"
+			>
+				<Undo class="h-4 w-4" />
+			</Button>
+		</div>
+		<div class="min-w-0 px-1 text-center">
 			{#if title}
 				<p class="truncate text-sm font-medium text-white/65">{title}</p>
 			{/if}
 		</div>
-		<Button
-			variant="ghost"
-			size="icon-sm"
-			onclick={onExit}
-			aria-label="Exit immersive view"
-			class="pointer-events-auto border border-white/10 bg-white/5 text-white hover:bg-white/15 hover:text-white"
-		>
-			<Minimize2 class="h-4 w-4" />
-		</Button>
+		<div class="pointer-events-auto flex items-center gap-1">
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				onclick={() => onOpenMap?.()}
+				disabled={!onOpenMap}
+				aria-label="Open story map"
+				title="Map"
+				class="border border-white/10 bg-white/5 text-white hover:bg-white/15 hover:text-white disabled:opacity-35"
+			>
+				<Map class="h-4 w-4" />
+			</Button>
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				onclick={onExit}
+				aria-label="Exit immersive view"
+				class="border border-white/10 bg-white/5 text-white hover:bg-white/15 hover:text-white"
+			>
+				<Minimize2 class="h-4 w-4" />
+			</Button>
+		</div>
 	</header>
 
 	<div class="relative z-10 h-dvh">
@@ -287,11 +349,16 @@
 			{#if isStoryGenerating || isNarrationGenerating || !timestampsUrl}
 				<div class="flex h-full items-center justify-center px-6 pb-24">
 					<div class="flex flex-col items-center gap-5 text-center text-white/80">
-						<Spinner class="h-14 w-14 text-primary drop-shadow-[0_0_22px_rgba(255,255,255,0.24)]" />
+						<OrbitProgressLoader
+							percentage={loadingProgress}
+							label={statusText}
+							size={190}
+							class="text-white"
+						/>
 						<p class="text-sm font-medium tracking-wide text-white/70">{statusText}</p>
 					</div>
 				</div>
-			{:else if isLoadingCaptions}
+			{:else if showCaptionLoading}
 				<div class="flex h-full items-center justify-center px-6 pb-24">
 					<Spinner class="h-6 w-6 text-primary" />
 				</div>

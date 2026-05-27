@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 
 	// Redirect to new graph route
 	const worldId = $derived(page.params.worldId);
-	const nodeParam = $derived(page.url.searchParams.get('node'));
+	const graphQuery = $derived.by(() => {
+		const searchParams = new SvelteURLSearchParams(page.url.searchParams);
+		return searchParams.toString();
+	});
 
 	$effect(() => {
-		const url = nodeParam
-			? `/worlds/${worldId}/graph?node=${nodeParam}`
-			: `/worlds/${worldId}/graph`;
+		const url = `/worlds/${worldId}/graph${graphQuery ? `?${graphQuery}` : ''}`;
 		goto(url, { replaceState: true });
 	});
 </script>
