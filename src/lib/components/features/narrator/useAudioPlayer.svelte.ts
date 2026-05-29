@@ -39,14 +39,22 @@ export function useAudioPlayer() {
 	let playRequestId = 0;
 
 	$effect(() => {
-		if (audioElement) audioElement.playbackRate = playbackRate;
 		setItem(SPEED_KEY, String(playbackRate));
 	});
 
 	$effect(() => {
-		if (audioElement) audioElement.volume = volume;
 		setItem(VOLUME_KEY, String(volume));
 	});
+
+	function setVolume(nextVolume: number) {
+		if (!Number.isFinite(nextVolume)) return;
+
+		const clampedVolume = Math.min(1, Math.max(0, nextVolume));
+		if (clampedVolume > 0) {
+			previousVolume = clampedVolume;
+		}
+		volume = clampedVolume;
+	}
 
 	function resolveVoiceId(voices: Voice[]): string | null {
 		if (selectedVoiceId && voices.some((v) => v.id === selectedVoiceId)) {
@@ -68,13 +76,12 @@ export function useAudioPlayer() {
 			previousVolume = volume;
 			volume = 0;
 		} else {
-			volume = previousVolume > 0 ? previousVolume : 1;
+			setVolume(previousVolume > 0 ? previousVolume : 1);
 		}
 	}
 
-	function handleVolumeChange(e: Event) {
-		const target = e.target as HTMLInputElement;
-		volume = parseFloat(target.value) / 100;
+	function setVolumeProgress(progress: number) {
+		setVolume(progress / 100);
 	}
 
 	function togglePlayPause() {
@@ -205,7 +212,7 @@ export function useAudioPlayer() {
 			return volume;
 		},
 		set volume(v: number) {
-			volume = v;
+			setVolume(v);
 		},
 		get volumeProgress() {
 			return volume * 100;
@@ -213,7 +220,7 @@ export function useAudioPlayer() {
 		resolveVoiceId,
 		selectVoice,
 		toggleMute,
-		handleVolumeChange,
+		setVolumeProgress,
 		togglePlayPause,
 		handleSeek,
 		waitAndPlay,

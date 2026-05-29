@@ -2,15 +2,19 @@
 	import { onMount } from 'svelte';
 	import {
 		listAdminFeaturedWorlds,
+		listAdminSoundtracks,
 		listAdminUsers,
 		listAdminWorlds,
-		type AdminCognitoUser
+		type AdminCognitoUser,
+		type Soundtrack
 	} from '$lib/api/admin';
 	import type { World } from '$lib/types/api';
 	import {
 		formatDate,
 		formatDateTime,
+		formatDuration,
 		shortId,
+		soundtrackStatusClass,
 		tierClass,
 		visibilityClass
 	} from '$lib/admin/format';
@@ -18,11 +22,12 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { Crown, Globe2, RefreshCw, Users } from '@lucide/svelte';
+	import { Crown, Globe2, Music2, RefreshCw, Users } from '@lucide/svelte';
 
 	let users = $state<AdminCognitoUser[]>([]);
 	let worlds = $state<World[]>([]);
 	let featuredWorlds = $state<World[]>([]);
+	let draftSoundtracks = $state<Soundtrack[]>([]);
 	let loading = $state(false);
 	let error = $state('');
 
@@ -35,14 +40,18 @@
 		loading = true;
 		error = '';
 		try {
-			const [userResponse, worldResponse, featuredResponse] = await Promise.all([
-				listAdminUsers({ limit: 10 }),
-				listAdminWorlds(),
-				listAdminFeaturedWorlds()
-			]);
+			const [userResponse, worldResponse, featuredResponse, soundtrackResponse] = await Promise.all(
+				[
+					listAdminUsers({ limit: 10 }),
+					listAdminWorlds(),
+					listAdminFeaturedWorlds(),
+					listAdminSoundtracks({ status: 'draft', limit: 10 })
+				]
+			);
 			users = userResponse.items;
 			worlds = worldResponse.items;
 			featuredWorlds = featuredResponse.items;
+			draftSoundtracks = soundtrackResponse.items;
 		} catch (caught) {
 			error = caught instanceof Error ? caught.message : 'Failed to load admin dashboard';
 		} finally {
@@ -71,7 +80,7 @@
 		</div>
 	{/if}
 
-	<div class="grid gap-3 sm:grid-cols-3">
+	<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 		<Card class="min-w-0">
 			<CardContent class="flex items-center justify-between p-4">
 				<div>
@@ -99,14 +108,23 @@
 				<Crown class="h-5 w-5 text-amber-300" />
 			</CardContent>
 		</Card>
+		<Card class="min-w-0">
+			<CardContent class="flex items-center justify-between p-4">
+				<div>
+					<p class="text-xs font-medium text-muted-foreground uppercase">Draft tracks</p>
+					<p class="mt-1 text-2xl font-semibold text-foreground">{draftSoundtracks.length}</p>
+				</div>
+				<Music2 class="h-5 w-5 text-emerald-300" />
+			</CardContent>
+		</Card>
 	</div>
 
-	{#if loading && users.length === 0 && worlds.length === 0 && featuredWorlds.length === 0}
+	{#if loading && users.length === 0 && worlds.length === 0 && featuredWorlds.length === 0 && draftSoundtracks.length === 0}
 		<div class="flex h-52 items-center justify-center">
 			<Spinner class="h-6 w-6" />
 		</div>
 	{:else}
-		<div class="grid min-w-0 gap-6 xl:grid-cols-2">
+		<div class="grid min-w-0 gap-6 xl:grid-cols-3">
 			<Card class="min-w-0">
 				<CardHeader class="flex-row items-center justify-between">
 					<CardTitle>Recent Users</CardTitle>
@@ -164,6 +182,44 @@
 								<p class="mt-2 text-xs text-muted-foreground">{formatDateTime(world.updated_at)}</p>
 							</a>
 						{/each}
+					</div>
+				</CardContent>
+			</Card>
+
+			<Card class="min-w-0">
+				<CardHeader class="flex-row items-center justify-between">
+					<CardTitle>Draft Soundtracks</CardTitle>
+					<Button href="/admin/soundtracks" variant="outline" size="sm">View All</Button>
+				</CardHeader>
+				<CardContent>
+					<div class="space-y-3">
+						{#each draftSoundtracks.slice(0, 5) as soundtrack (soundtrack.id)}
+							<a
+								href={`/admin/soundtracks/${soundtrack.id}`}
+								class="block rounded-md border border-border p-3 hover:bg-muted/40"
+							>
+								<div class="flex items-start justify-between gap-3">
+									<div class="min-w-0">
+										<p class="truncate text-sm font-medium text-foreground">
+											{soundtrack.title || 'Untitled soundtrack'}
+										</p>
+										<p class="mt-1 font-mono text-xs text-muted-foreground">
+											{shortId(soundtrack.id)}
+										</p>
+									</div>
+									<Badge class={soundtrackStatusClass(soundtrack.status)}>{soundtrack.status}</Badge
+									>
+								</div>
+								<p class="mt-2 text-xs text-muted-foreground">
+									{formatDuration(soundtrack.duration_seconds)} / {formatDateTime(
+										soundtrack.created_at
+									)}
+								</p>
+							</a>
+						{/each}
+						{#if draftSoundtracks.length === 0}
+							<p class="text-sm text-muted-foreground">No draft soundtracks loaded.</p>
+						{/if}
 					</div>
 				</CardContent>
 			</Card>

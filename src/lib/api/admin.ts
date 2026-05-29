@@ -66,6 +66,55 @@ export interface AdminFeaturedOrderItem {
 	featured_order: number;
 }
 
+export type SoundtrackStatus = 'draft' | 'active' | 'disabled' | 'rejected';
+export type SoundtrackContentRating = 'child' | 'teen' | 'adult';
+export type SoundtrackLoopStrategy = 'crossfade' | 'fade_restart' | 'none';
+export type SoundtrackProvider = 'suno';
+
+export interface Soundtrack {
+	id: string | null;
+	status: SoundtrackStatus;
+	title: string | null;
+	description: string | null;
+	prompt: string | null;
+	audio_url: string | null;
+	s3_key: string | null;
+	file_size_bytes: number | null;
+	duration_seconds: number | null;
+	content_type: string | null;
+	content_rating: SoundtrackContentRating;
+	loop_strategy: SoundtrackLoopStrategy;
+	provider: SoundtrackProvider;
+	provider_track_id: string | null;
+	generated_at: string | null;
+	pinecone_record_id: string | null;
+	pinecone_upserted_at: string | null;
+	quality_score: number | null;
+	curation_notes: string | null;
+	created_by: string | null;
+	reviewed_by: string | null;
+	reviewed_at: string | null;
+	created_at: string | null;
+	updated_at: string | null;
+}
+
+export interface SoundtrackUpdatePayload {
+	status?: SoundtrackStatus;
+	title?: string | null;
+	description?: string | null;
+	prompt?: string | null;
+	file_size_bytes?: number | null;
+	duration_seconds?: number | null;
+	content_type?: string | null;
+	content_rating?: SoundtrackContentRating;
+	loop_strategy?: SoundtrackLoopStrategy;
+	provider?: SoundtrackProvider;
+	provider_track_id?: string | null;
+	generated_at?: string | null;
+	quality_score?: number | null;
+	curation_notes?: string | null;
+}
+
 interface ListAdminUsersOptions {
 	emailPrefix?: string;
 	cursor?: string | null;
@@ -81,6 +130,10 @@ interface ListAdminWorldsOptions {
 interface CursorOptions {
 	cursor?: string | null;
 	limit?: number;
+}
+
+interface ListAdminSoundtracksOptions extends CursorOptions {
+	status?: SoundtrackStatus | null;
 }
 
 export async function listAdminUsers({
@@ -204,5 +257,37 @@ export async function updateAdminFeaturedOrder(items: AdminFeaturedOrderItem[]):
 	return apiRequest<World[]>(`${API_BASE_URL}/admin/featured/order`, {
 		method: 'PATCH',
 		body: JSON.stringify({ items })
+	});
+}
+
+export async function listAdminSoundtracks({
+	status,
+	cursor,
+	limit = 50
+}: ListAdminSoundtracksOptions = {}): Promise<PaginatedAdminResponse<Soundtrack>> {
+	const url = new URL(`${API_BASE_URL}/admin/audio/soundtracks`);
+	url.searchParams.set('limit', String(limit));
+	if (status) url.searchParams.set('status', status);
+	if (cursor) url.searchParams.set('cursor', cursor);
+	return apiRequest<PaginatedAdminResponse<Soundtrack>>(url.toString());
+}
+
+export async function getAdminSoundtrack(soundtrackId: string): Promise<Soundtrack> {
+	return apiRequest<Soundtrack>(`${API_BASE_URL}/admin/audio/soundtracks/${soundtrackId}`);
+}
+
+export async function updateAdminSoundtrack(
+	soundtrackId: string,
+	payload: SoundtrackUpdatePayload
+): Promise<Soundtrack> {
+	return apiRequest<Soundtrack>(`${API_BASE_URL}/admin/audio/soundtracks/${soundtrackId}`, {
+		method: 'PATCH',
+		body: JSON.stringify(payload)
+	});
+}
+
+export async function deleteAdminSoundtrack(soundtrackId: string): Promise<void> {
+	await apiRequest<void>(`${API_BASE_URL}/admin/audio/soundtracks/${soundtrackId}`, {
+		method: 'DELETE'
 	});
 }

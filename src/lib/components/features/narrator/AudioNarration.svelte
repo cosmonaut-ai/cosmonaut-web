@@ -6,12 +6,11 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Maximize2, Volume2 } from '@lucide/svelte';
 	import { untrack } from 'svelte';
-	import type { Component } from 'svelte';
 	import { useAudioPlayer } from './useAudioPlayer.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let AudioPlayerBar = $state<Component<any> | null>(null);
+	type AudioPlayerBarComponent = typeof import('./AudioPlayerBar.svelte').default;
+	let AudioPlayerBar = $state<AudioPlayerBarComponent | null>(null);
 
 	async function loadPlayerBar() {
 		if (AudioPlayerBar) return;
@@ -450,6 +449,8 @@
 		bind:duration={player.duration}
 		bind:paused={player.paused}
 		bind:ended={player.ended}
+		bind:playbackRate={player.playbackRate}
+		bind:volume={player.volume}
 		src={effectiveAudioUrl}
 		preload="auto"
 		onplay={handleAudioPlay}
@@ -575,7 +576,7 @@
 		{effectiveVoiceId}
 		onTogglePlayPause={player.togglePlayPause}
 		onSeek={player.handleSeek}
-		onVolumeChange={player.handleVolumeChange}
+		onVolumeChange={player.setVolumeProgress}
 		onToggleMute={player.toggleMute}
 		onPlaybackRateChange={(rate: number) => (player.playbackRate = rate)}
 		onVoiceSelect={handleVoiceSelect}

@@ -55,6 +55,15 @@
 		onGoogleSignIn,
 		onSwitchToSignIn
 	}: Props = $props();
+
+	const passwordRequirementClass = (met: boolean) =>
+		`rounded px-1.5 py-0.5 transition-colors ${
+			met
+				? 'text-green-500'
+				: 'bg-destructive/10 font-semibold text-destructive ring-1 ring-destructive/20'
+		}`;
+
+	const passwordRequirementMarker = (met: boolean) => (met ? '\u2713' : '\u2715');
 </script>
 
 <div class="space-y-4">
@@ -81,6 +90,8 @@
 				oninput={(e) => onPasswordChange((e.target as HTMLInputElement).value)}
 				disabled={isSubmitting}
 				autocomplete="new-password"
+				aria-invalid={password.length > 0 && !passwordValid ? 'true' : undefined}
+				aria-describedby={password.length > 0 ? 'signup-password-requirements' : undefined}
 			/>
 			<button
 				type="button"
@@ -95,21 +106,25 @@
 			</button>
 		</div>
 		{#if password.length > 0}
-			<div class="grid grid-cols-2 gap-1 text-xs">
-				<span class={passwordChecks.length ? 'text-green-500' : 'text-muted-foreground'}>
-					{passwordChecks.length ? '\u2713' : '\u2022'} 8+ characters
+			<div
+				id="signup-password-requirements"
+				class="grid grid-cols-2 gap-1 text-xs"
+				aria-live="polite"
+			>
+				<span class={passwordRequirementClass(passwordChecks.length)}>
+					{passwordRequirementMarker(passwordChecks.length)} 8+ characters
 				</span>
-				<span class={passwordChecks.uppercase ? 'text-green-500' : 'text-muted-foreground'}>
-					{passwordChecks.uppercase ? '\u2713' : '\u2022'} Uppercase
+				<span class={passwordRequirementClass(passwordChecks.uppercase)}>
+					{passwordRequirementMarker(passwordChecks.uppercase)} Uppercase
 				</span>
-				<span class={passwordChecks.lowercase ? 'text-green-500' : 'text-muted-foreground'}>
-					{passwordChecks.lowercase ? '\u2713' : '\u2022'} Lowercase
+				<span class={passwordRequirementClass(passwordChecks.lowercase)}>
+					{passwordRequirementMarker(passwordChecks.lowercase)} Lowercase
 				</span>
-				<span class={passwordChecks.number ? 'text-green-500' : 'text-muted-foreground'}>
-					{passwordChecks.number ? '\u2713' : '\u2022'} Number
+				<span class={passwordRequirementClass(passwordChecks.number)}>
+					{passwordRequirementMarker(passwordChecks.number)} Number
 				</span>
-				<span class={passwordChecks.symbol ? 'text-green-500' : 'text-muted-foreground'}>
-					{passwordChecks.symbol ? '\u2713' : '\u2022'} Symbol
+				<span class={passwordRequirementClass(passwordChecks.symbol)}>
+					{passwordRequirementMarker(passwordChecks.symbol)} Symbol
 				</span>
 			</div>
 		{/if}

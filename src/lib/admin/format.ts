@@ -44,6 +44,23 @@ export function formatFileSize(value: string | number | null | undefined): strin
 	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+export function formatDuration(value: string | number | null | undefined): string {
+	if (value == null || value === '') return 'N/A';
+	const seconds = typeof value === 'number' ? value : Number(value);
+	if (!Number.isFinite(seconds)) return String(value);
+	const rounded = Math.round(seconds);
+	const minutes = Math.floor(rounded / 60);
+	const remainder = rounded % 60;
+	return `${minutes}:${String(remainder).padStart(2, '0')}`;
+}
+
+export function formatScore(value: string | number | null | undefined): string {
+	if (value == null || value === '') return 'N/A';
+	const score = typeof value === 'number' ? value : Number(value);
+	if (!Number.isFinite(score)) return String(value);
+	return score.toFixed(1);
+}
+
 export function shortId(value: string | null | undefined): string {
 	if (!value) return 'N/A';
 	return value.length > 12 ? `${value.slice(0, 8)}...${value.slice(-4)}` : value;
@@ -67,5 +84,20 @@ export function statusClass(enabled: boolean | null | undefined): string {
 export function visibilityClass(visibility: string | null | undefined): string {
 	if (visibility === 'public') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
 	if (visibility === 'unlisted') return 'border-sky-500/30 bg-sky-500/10 text-sky-300';
+	return 'border-border bg-muted text-muted-foreground';
+}
+
+export function soundtrackStatusClass(status: string | null | undefined): string {
+	if (status === 'active') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
+	if (status === 'draft') return 'border-sky-500/30 bg-sky-500/10 text-sky-300';
+	if (status === 'rejected') return 'border-destructive/30 bg-destructive/10 text-destructive';
+	if (status === 'disabled') return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
+	return 'border-border bg-muted text-muted-foreground';
+}
+
+export function contentRatingClass(rating: string | null | undefined): string {
+	if (rating === 'child') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
+	if (rating === 'teen') return 'border-sky-500/30 bg-sky-500/10 text-sky-300';
+	if (rating === 'adult') return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
 	return 'border-border bg-muted text-muted-foreground';
 }

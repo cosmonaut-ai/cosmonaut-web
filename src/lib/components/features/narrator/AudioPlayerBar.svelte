@@ -32,7 +32,7 @@
 		effectiveVoiceId: string | null;
 		onTogglePlayPause: () => void;
 		onSeek: (e: Event) => void;
-		onVolumeChange: (e: Event) => void;
+		onVolumeChange: (progress: number) => void;
 		onToggleMute: () => void;
 		onPlaybackRateChange: (rate: number) => void;
 		onVoiceSelect: (voiceId: string) => void;
@@ -159,9 +159,7 @@
 					min="0"
 					max="100"
 					step="1"
-					value={volumeProgress}
-					oninput={onVolumeChange}
-					onchange={onVolumeChange}
+					bind:value={() => volumeProgress, onVolumeChange}
 					aria-label="Volume"
 					class="volume-range h-5 w-16 cursor-pointer appearance-none rounded-full bg-transparent"
 					style="--vol-progress: {volumeProgress}%"
@@ -253,9 +251,7 @@
 								min="0"
 								max="100"
 								step="1"
-								value={volumeProgress}
-								oninput={onVolumeChange}
-								onchange={onVolumeChange}
+								bind:value={() => volumeProgress, onVolumeChange}
 								aria-label="Volume"
 								class="volume-range h-5 flex-1 cursor-pointer appearance-none rounded-full bg-transparent"
 								style="--vol-progress: {volumeProgress}%"
