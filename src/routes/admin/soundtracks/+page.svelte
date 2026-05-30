@@ -23,15 +23,18 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Input } from '$lib/components/ui/input';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import {
 		CheckCircle2,
+		ChevronDown,
 		CircleOff,
 		ExternalLink,
 		MoreHorizontal,
 		RefreshCw,
+		RotateCcw,
 		Search,
 		Trash2,
 		XCircle
@@ -55,9 +58,31 @@
 	let actionPending = $state('');
 	let lookupId = $state('');
 	let soundtrackPendingDelete = $state<Soundtrack | null>(null);
+	let selectedSoundtrackIds = $state<string[]>([]);
+	let batchDeleteDialogOpen = $state(false);
 	let requestId = 0;
 
 	const isMutating = $derived(actionPending !== '');
+	const visibleSelectableIds = $derived(
+		soundtracks.flatMap((soundtrack) => (soundtrack.id ? [soundtrack.id] : []))
+	);
+	const selectedSoundtracks = $derived(
+		soundtracks.filter(
+			(soundtrack) => soundtrack.id && selectedSoundtrackIds.includes(soundtrack.id)
+		)
+	);
+	const selectedCount = $derived(selectedSoundtracks.length);
+	const allVisibleSelected = $derived(
+		visibleSelectableIds.length > 0 &&
+			visibleSelectableIds.every((id) => selectedSoundtrackIds.includes(id))
+	);
+	const someVisibleSelected = $derived(
+		visibleSelectableIds.some((id) => selectedSoundtrackIds.includes(id)) && !allVisibleSelected
+	);
+	const canActivateSelection = $derived(
+		selectedSoundtracks.length > 0 &&
+			selectedSoundtracks.every((soundtrack) => canActivate(soundtrack))
+	);
 
 	$effect(() => {
 		const currentRequest = ++requestId;
@@ -93,6 +118,7 @@
 			if (currentRequest !== requestId) return;
 			soundtracks = response.items;
 			nextCursor = response.next_cursor;
+			selectedSoundtrackIds = [];
 		} catch (caught) {
 			if (currentRequest !== requestId) return;
 			error = caught instanceof Error ? caught.message : 'Failed to load soundtracks';
@@ -133,6 +159,32 @@
 		return Boolean(soundtrack.id && soundtrack.audio_url && soundtrack.description?.trim());
 	}
 
+	function statusActionLabel(status: SoundtrackStatus): string {
+		if (status === 'active') return 'Activate';
+		if (status === 'disabled') return 'Disable';
+		if (status === 'rejected') return 'Reject';
+		return 'Back to draft';
+	}
+
+	function toggleSoundtrackSelection(soundtrackId: string | null, checked: boolean) {
+		if (!soundtrackId) return;
+		if (checked) {
+			if (!selectedSoundtrackIds.includes(soundtrackId)) {
+				selectedSoundtrackIds = [...selectedSoundtrackIds, soundtrackId];
+			}
+			return;
+		}
+		selectedSoundtrackIds = selectedSoundtrackIds.filter((id) => id !== soundtrackId);
+	}
+
+	function selectAllVisible() {
+		selectedSoundtrackIds = visibleSelectableIds;
+	}
+
+	function clearSelection() {
+		selectedSoundtrackIds = [];
+	}
+
 	function openAudio(soundtrack: Soundtrack) {
 		if (!soundtrack.audio_url) return;
 		window.open(soundtrack.audio_url, '_blank', 'noopener,noreferrer');
@@ -144,11 +196,58 @@
 		try {
 			const updated = await updateAdminSoundtrack(soundtrack.id, { status });
 			replaceOrRemove(updated);
+			if (updated.id) {
+				selectedSoundtrackIds = selectedSoundtrackIds.filter((id) => id !== updated.id);
+			}
 			showSuccess(status === 'active' ? 'Soundtrack activated' : 'Soundtrack updated');
 		} catch (caught) {
 			showError(
 				'Failed to update soundtrack',
 				caught instanceof Error ? caught.message : undefined
+			);
+		} finally {
+			actionPending = '';
+		}
+	}
+
+	async function setSelectedSoundtrackStatus(status: SoundtrackStatus) {
+		if (selectedCount === 0 || isMutating) return;
+		if (status === 'active' && !canActivateSelection) {
+			showError(
+				'Some selected tracks cannot be activated',
+				'Active soundtracks need audio and a description.'
+			);
+			return;
+		}
+
+		const ids = [...selectedSoundtrackIds];
+		actionPending = `batch:${status}`;
+		try {
+			const results = await Promise.allSettled(
+				ids.map((id) => updateAdminSoundtrack(id, { status }))
+			);
+			const updates = results
+				.filter(
+					(result): result is PromiseFulfilledResult<Soundtrack> => result.status === 'fulfilled'
+				)
+				.map((result) => result.value);
+			const successfulIds = updates.flatMap((updated) => (updated.id ? [updated.id] : []));
+
+			for (const updated of updates) {
+				replaceOrRemove(updated);
+			}
+			selectedSoundtrackIds = selectedSoundtrackIds.filter((id) => !successfulIds.includes(id));
+
+			const failedCount = results.length - updates.length;
+			if (failedCount > 0) {
+				showError(
+					'Some soundtrack updates failed',
+					`${updates.length} updated, ${failedCount} failed.`
+				);
+				return;
+			}
+			showSuccess(
+				`${updates.length} soundtrack${updates.length === 1 ? '' : 's'} ${status === 'active' ? 'activated' : 'updated'}`
 			);
 		} finally {
 			actionPending = '';
@@ -166,12 +265,42 @@
 		try {
 			await deleteAdminSoundtrack(soundtrack.id);
 			soundtracks = soundtracks.filter((item) => item.id !== soundtrack.id);
+			selectedSoundtrackIds = selectedSoundtrackIds.filter((id) => id !== soundtrack.id);
 			soundtrackPendingDelete = null;
 			showSuccess('Soundtrack deleted');
 		} catch (caught) {
 			showError(
 				'Failed to delete soundtrack',
 				caught instanceof Error ? caught.message : undefined
+			);
+		} finally {
+			actionPending = '';
+		}
+	}
+
+	async function deleteSelectedSoundtracks() {
+		if (selectedCount === 0 || isMutating) return;
+		const ids = [...selectedSoundtrackIds];
+		actionPending = 'batch:delete';
+		try {
+			const results = await Promise.allSettled(ids.map((id) => deleteAdminSoundtrack(id)));
+			const successfulIds = ids.filter((_, index) => results[index]?.status === 'fulfilled');
+			soundtracks = soundtracks.filter(
+				(soundtrack) => !soundtrack.id || !successfulIds.includes(soundtrack.id)
+			);
+			selectedSoundtrackIds = selectedSoundtrackIds.filter((id) => !successfulIds.includes(id));
+
+			const failedCount = results.length - successfulIds.length;
+			if (failedCount > 0) {
+				showError(
+					'Some soundtrack deletes failed',
+					`${successfulIds.length} deleted, ${failedCount} failed.`
+				);
+				return;
+			}
+			batchDeleteDialogOpen = false;
+			showSuccess(
+				`${successfulIds.length} soundtrack${successfulIds.length === 1 ? '' : 's'} deleted`
 			);
 		} finally {
 			actionPending = '';
@@ -238,6 +367,107 @@
 			</div>
 		</CardHeader>
 		<CardContent>
+			<div
+				class="mb-4 flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between"
+			>
+				<div class="flex min-w-0 items-center gap-3">
+					<Checkbox
+						checked={allVisibleSelected}
+						indeterminate={someVisibleSelected}
+						disabled={visibleSelectableIds.length === 0 || isMutating}
+						aria-label={allVisibleSelected ? 'Unselect all soundtracks' : 'Select all soundtracks'}
+						onCheckedChange={(checked) => {
+							if (checked) {
+								selectAllVisible();
+							} else {
+								clearSelection();
+							}
+						}}
+					/>
+					<div class="min-w-0">
+						<p class="text-sm font-medium text-foreground">
+							{selectedCount > 0
+								? `${selectedCount} selected`
+								: `${soundtracks.length} on this page`}
+						</p>
+						<p class="text-xs text-muted-foreground">Batch actions apply to selected tracks.</p>
+					</div>
+				</div>
+				<div class="flex flex-wrap gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={visibleSelectableIds.length === 0 || allVisibleSelected || isMutating}
+						onclick={selectAllVisible}
+					>
+						Select All
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={selectedCount === 0 || isMutating}
+						onclick={clearSelection}
+					>
+						Unselect
+					</Button>
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger
+							class="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-input bg-background px-3 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+							disabled={selectedCount === 0 || isMutating}
+						>
+							Batch Actions
+							<ChevronDown class="h-4 w-4" />
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content align="end" class="w-52">
+							<DropdownMenu.Label>{selectedCount} selected</DropdownMenu.Label>
+							<DropdownMenu.Separator />
+							<DropdownMenu.Item
+								class="cursor-pointer"
+								disabled={!canActivateSelection || isMutating}
+								onclick={() => setSelectedSoundtrackStatus('active')}
+							>
+								<CheckCircle2 class="h-4 w-4" />
+								{statusActionLabel('active')}
+							</DropdownMenu.Item>
+							<DropdownMenu.Item
+								class="cursor-pointer"
+								disabled={isMutating}
+								onclick={() => setSelectedSoundtrackStatus('draft')}
+							>
+								<RotateCcw class="h-4 w-4" />
+								{statusActionLabel('draft')}
+							</DropdownMenu.Item>
+							<DropdownMenu.Item
+								class="cursor-pointer"
+								disabled={isMutating}
+								onclick={() => setSelectedSoundtrackStatus('disabled')}
+							>
+								<CircleOff class="h-4 w-4" />
+								{statusActionLabel('disabled')}
+							</DropdownMenu.Item>
+							<DropdownMenu.Item
+								class="cursor-pointer"
+								disabled={isMutating}
+								onclick={() => setSelectedSoundtrackStatus('rejected')}
+							>
+								<XCircle class="h-4 w-4" />
+								{statusActionLabel('rejected')}
+							</DropdownMenu.Item>
+							<DropdownMenu.Separator />
+							<DropdownMenu.Item
+								class="cursor-pointer"
+								variant="destructive"
+								disabled={isMutating}
+								onclick={() => (batchDeleteDialogOpen = true)}
+							>
+								<Trash2 class="h-4 w-4" />
+								Delete selected
+							</DropdownMenu.Item>
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+				</div>
+			</div>
+
 			{#if error}
 				<div
 					class="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
@@ -251,9 +481,22 @@
 			{:else}
 				<div class="divide-y divide-border">
 					{#each soundtracks as soundtrack (soundtrack.id)}
+						{@const isSelected = Boolean(
+							soundtrack.id && selectedSoundtrackIds.includes(soundtrack.id)
+						)}
 						<article
-							class="grid min-w-0 gap-4 py-5 first:pt-0 last:pb-0 xl:grid-cols-[minmax(0,1.35fr)_minmax(15rem,0.85fr)_minmax(12rem,0.55fr)_9rem] xl:items-center"
+							class="grid min-w-0 gap-4 rounded-lg px-3 py-5 transition-colors first:pt-0 last:pb-0 {isSelected
+								? 'bg-primary/5'
+								: ''} xl:grid-cols-[2rem_minmax(0,1.35fr)_minmax(15rem,0.85fr)_minmax(12rem,0.55fr)_9rem] xl:items-center"
 						>
+							<div class="flex items-start xl:pt-1">
+								<Checkbox
+									checked={isSelected}
+									disabled={!soundtrack.id || isMutating}
+									aria-label={`Select ${soundtrack.title || soundtrack.id || 'soundtrack'}`}
+									onCheckedChange={(checked) => toggleSoundtrackSelection(soundtrack.id, checked)}
+								/>
+							</div>
 							<div class="min-w-0 space-y-2">
 								<a
 									href={`/admin/soundtracks/${soundtrack.id}`}
@@ -491,6 +734,41 @@
 					<Trash2 class="h-4 w-4" />
 				{/if}
 				Delete
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
+
+<AlertDialog.Root
+	open={batchDeleteDialogOpen}
+	onOpenChange={(open) => {
+		if (!isMutating) batchDeleteDialogOpen = open;
+	}}
+>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Delete selected soundtracks?</AlertDialog.Title>
+			<AlertDialog.Description>
+				This permanently deletes {selectedCount} selected soundtrack{selectedCount === 1 ? '' : 's'} from
+				the library. This action cannot be undone.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel disabled={isMutating}>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Action
+				variant="destructive"
+				disabled={isMutating || selectedCount === 0}
+				onclick={(event) => {
+					event.preventDefault();
+					void deleteSelectedSoundtracks();
+				}}
+			>
+				{#if actionPending === 'batch:delete'}
+					<Spinner class="h-4 w-4" />
+				{:else}
+					<Trash2 class="h-4 w-4" />
+				{/if}
+				Delete selected
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
