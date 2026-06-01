@@ -24,6 +24,9 @@ export const queryKeys = {
 		all: (sessionId: string) => ['sessions', sessionId, 'nodes'] as const,
 		detail: (sessionId: string, nodeId: string) => ['sessions', sessionId, 'nodes', nodeId] as const
 	},
+	playlists: {
+		detail: (id: string) => ['playlists', id] as const
+	},
 	voices: {
 		all: ['voices'] as const
 	},

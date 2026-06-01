@@ -9,8 +9,10 @@
 		setImmersiveStoryContext,
 		type ImmersiveStoryModel
 	} from '$lib/contexts/immersiveStory.svelte';
+	import { setSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
 	import { ApiError } from '$lib/types/api';
 	import ImmersiveStoryView from '$lib/components/features/narrator/ImmersiveStoryView.svelte';
+	import SessionMediaPlayer from '$lib/components/features/media/SessionMediaPlayer.svelte';
 	import WorldHeader from '$lib/components/features/worlds/WorldHeader.svelte';
 	import WorldGenerationProgress from '$lib/components/features/worlds/WorldGenerationProgress.svelte';
 	import WorldGenerationFailed from '$lib/components/features/worlds/WorldGenerationFailed.svelte';
@@ -30,6 +32,7 @@
 
 	const IMMERSIVE_QUERY_PARAM = 'immersive';
 	const immersiveStory = setImmersiveStoryContext();
+	setSessionMediaContext();
 
 	function immersiveParamEnabled(value: string | null): boolean {
 		return value === '1' || value === 'true';
@@ -252,4 +255,8 @@
 		onWordSeek={immersiveRenderModel.onWordSeek}
 		onExit={() => immersiveStory.setActive(false)}
 	/>
+{/if}
+
+{#if isWorldComplete && session}
+	<SessionMediaPlayer />
 {/if}

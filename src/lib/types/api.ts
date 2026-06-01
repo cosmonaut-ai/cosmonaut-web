@@ -114,8 +114,27 @@ export interface World {
 	image_generation_status: ImageGenerationStatus | null;
 	featured_order: number | null;
 	invite_token?: InviteToken | null;
+	default_playlist_id?: string | null;
 	created_at: string;
 	updated_at: string;
+}
+
+export interface PlaylistTrack {
+	soundtrack_id: string;
+	title: string | null;
+	description: string | null;
+	audio_url: string | null;
+	duration_seconds: number | null;
+	content_rating: string | null;
+	loop_strategy: string | null;
+}
+
+export interface Playlist {
+	id: string;
+	description: string | null;
+	tracks: PlaylistTrack[];
+	generated_at: string | null;
+	created_at: string | null;
 }
 
 export interface WorldSessionSummary {
@@ -137,6 +156,7 @@ export interface WorldSession {
 	role: 'owner' | 'member' | string;
 	last_visited_node_id: string | null;
 	visited_node_count: number;
+	soundtrack_playlist_id?: string | null;
 	created_at: string | null;
 	updated_at: string | null;
 	world: World;

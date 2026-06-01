@@ -6,47 +6,19 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Maximize2, Volume2 } from '@lucide/svelte';
 	import { untrack } from 'svelte';
-	import { useAudioPlayer } from './useAudioPlayer.svelte';
 	import { trackEvent } from '$lib/utils/analytics';
-
-	type AudioPlayerBarComponent = typeof import('./AudioPlayerBar.svelte').default;
-	let AudioPlayerBar = $state<AudioPlayerBarComponent | null>(null);
-
-	async function loadPlayerBar() {
-		if (AudioPlayerBar) return;
-		const mod = await import('./AudioPlayerBar.svelte');
-		AudioPlayerBar = mod.default;
-	}
+	import { getSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
+	import { getImmersiveStoryContext } from '$lib/contexts/immersiveStory.svelte';
 
 	interface Props {
 		sessionId: string;
 		rootWorldId: string;
 		nodeId: string;
-		/** Map of voice_id → audio entry for already-generated narrations on this node */
 		audio: Record<string, AudioEntry>;
 		isNodeCompleted: boolean;
 		onQuotaExceeded: () => void;
-		playerVisible?: boolean;
-		immersiveActive?: boolean;
-		narrationStatus?: NarrationPlaybackStatus;
-		seekNarration?: ((time: number) => void) | null;
+		soundtrackPlaylistId?: string | null;
 		nodeTextLength?: number;
-	}
-
-	interface NarrationPlaybackStatus {
-		nodeId: string | null;
-		currentTime: number;
-		duration: number;
-		paused: boolean;
-		ended: boolean;
-		isGenerating: boolean;
-		audioUrl: string | null;
-		timestampsUrl: string | null;
-		hasAudio: boolean;
-		voiceId: string | null;
-		captionsUnavailable: boolean;
-		hasStartedPlayback: boolean;
-		generationStartedAt: number | null;
 	}
 
 	let {
@@ -56,33 +28,16 @@
 		audio,
 		isNodeCompleted,
 		onQuotaExceeded,
-		playerVisible = $bindable(false),
-		immersiveActive = $bindable(false),
-		narrationStatus = $bindable<NarrationPlaybackStatus>({
-			nodeId: null,
-			currentTime: 0,
-			duration: 0,
-			paused: true,
-			ended: false,
-			isGenerating: false,
-			audioUrl: null,
-			timestampsUrl: null,
-			hasAudio: false,
-			voiceId: null,
-			captionsUnavailable: false,
-			hasStartedPlayback: false,
-			generationStartedAt: null
-		}),
-		seekNarration = $bindable<((time: number) => void) | null>(null),
+		soundtrackPlaylistId = null,
 		nodeTextLength = 0
 	}: Props = $props();
 
-	const player = useAudioPlayer();
+	const media = getSessionMediaContext();
+	const immersiveStory = getImmersiveStoryContext();
 
 	const MAX_NARRATION_CHARS = 3000;
 	const isTooLong = $derived(nodeTextLength > MAX_NARRATION_CHARS);
 
-	// Returns a human-readable reason why narration is disabled, or null if enabled.
 	const narrationDisabledMessage = $derived<string | null>(
 		isTooLong
 			? `Too long for audio narration (${nodeTextLength.toLocaleString()} / ${MAX_NARRATION_CHARS.toLocaleString()} chars)`
@@ -91,14 +46,12 @@
 				: null
 	);
 
-	// ── Disabled-state tooltip (hover + click, auto-dismiss) ──
+	// Disabled-state tooltip (hover + click, auto-dismiss)
 	let tooltipOpen = $state(false);
 	let isHovering = $state(false);
 	let immersiveTooltipOpen = $state(false);
 	let isHoveringImmersive = $state(false);
 
-	// When opened via tap/click (isHovering=false), auto-dismiss after 2s.
-	// Effect cleanup cancels the timer when hover or open state changes.
 	$effect(() => {
 		if (tooltipOpen && !isHovering) {
 			const timer = setTimeout(() => {
@@ -120,10 +73,9 @@
 	const voicesQuery = useVoices();
 	const voices = $derived(voicesQuery.data ?? []);
 
-	const effectiveVoiceId = $derived(player.resolveVoiceId(voices));
+	const effectiveVoiceId = $derived(media.resolveVoiceId(voices));
 
-	// ── Audio URL resolution ──
-	// Local cache for the brief gap between generation success and TanStack cache propagation
+	// Audio URL resolution
 	let localAudio = $state<Record<string, AudioEntry>>({});
 	const mergedAudio = $derived({ ...audio, ...localAudio });
 	const activeAudioEntry = $derived(
@@ -139,11 +91,20 @@
 	const audioMutation = useGenerateAudio(() => sessionId);
 	const isGenerating = $derived(audioMutation.isPending);
 	const hasAudio = $derived(!!effectiveAudioUrl);
-	let hasStartedPlayback = $state(false);
-	let generationStartedAt = $state<number | null>(null);
-	// Reset state when user navigates to a *different* node (actual value change).
-	// Using explicit string comparison avoids spurious cleanup from reactive
-	// re-evaluation when the cache is patched (same nodeId, new object ref).
+
+	// Sync generation state to context
+	$effect(() => {
+		media.narrationIsGenerating = isGenerating;
+	});
+	$effect(() => {
+		if (isGenerating && media.narrationGenerationStartedAt === null) {
+			media.narrationGenerationStartedAt = Date.now();
+		} else if (!isGenerating && media.narrationGenerationStartedAt !== null) {
+			media.narrationGenerationStartedAt = null;
+		}
+	});
+
+	// Reset local audio cache when nodeId changes
 	let lastNodeId = $state<string | undefined>(undefined);
 	let lastImmersiveAutoStartKey = $state<string | null>(null);
 
@@ -155,12 +116,7 @@
 				return;
 			}
 			if (currentId !== lastNodeId) {
-				player.pause();
-				playerVisible = false;
 				localAudio = {};
-				hasStartedPlayback = false;
-				generationStartedAt = null;
-				player.resetPlayback();
 				lastImmersiveAutoStartKey = null;
 				lastNodeId = currentId;
 			}
@@ -176,34 +132,46 @@
 					: null)
 	);
 
-	$effect(() => {
-		if (isGenerating && generationStartedAt === null) {
-			generationStartedAt = Date.now();
-		} else if (!isGenerating && generationStartedAt !== null) {
-			generationStartedAt = null;
+	// ── Voice picker delegate registration ──
+
+	function handleVoicePickerOpenChange(_isOpen: boolean) {
+		// Intentional no-op; playback continues at the session level.
+	}
+
+	function handleVoiceSelect(voiceId: string) {
+		media.selectVoice(voiceId);
+
+		const entry = mergedAudio[voiceId];
+		if (entry) {
+			if (immersiveStory.active && !entry.timestamps_url) {
+				immersiveStory.setActive(false);
+				showWarning('Captions unavailable', 'This narration does not include caption timestamps.');
+			}
+			media.loadNarration(nodeId, entry.audio_url, entry.timestamps_url);
+			media.showBar();
+		} else if (isNodeCompleted) {
+			generateForVoice(voiceId, { requireTimestamps: immersiveStory.active });
 		}
-	});
+	}
 
 	$effect(() => {
-		narrationStatus = {
-			nodeId,
-			currentTime: player.currentTime,
-			duration: player.duration,
-			paused: player.paused,
-			ended: player.ended,
-			isGenerating,
-			audioUrl: effectiveAudioUrl,
-			timestampsUrl: effectiveTimestampsUrl,
-			hasAudio,
-			voiceId: effectiveVoiceId,
-			captionsUnavailable,
-			hasStartedPlayback,
-			generationStartedAt
+		if (voices.length > 0 && effectiveVoiceId) {
+			media.registerVoicePicker({
+				voices,
+				selectedVoiceId: effectiveVoiceId,
+				onSelect: handleVoiceSelect,
+				onOpenChange: handleVoicePickerOpenChange
+			});
+		}
+		return () => {
+			media.unregisterVoicePicker();
 		};
 	});
 
+	// ── Activation ──
+
 	function handleToggle() {
-		if (playerVisible) {
+		if (media.barVisible && media.narrationNodeId === nodeId) {
 			handleClose();
 			return;
 		}
@@ -215,30 +183,26 @@
 		const activationNodeId = nodeId;
 
 		if (options.requireTimestamps && captionsUnavailable) {
-			immersiveActive = false;
+			immersiveStory.setActive(false);
 			showWarning('Captions unavailable', 'This narration does not include caption timestamps.');
 			return;
 		}
 
-		if (playerVisible) {
+		if (media.barVisible && media.narrationNodeId === nodeId) {
 			if (options.requireTimestamps && !effectiveTimestampsUrl && hasAudio) {
-				immersiveActive = false;
+				immersiveStory.setActive(false);
 				showWarning('Captions unavailable', 'This narration does not include caption timestamps.');
 				return;
-			}
-			if (player.paused) {
-				await player.waitAndPlay();
 			}
 			return;
 		}
 
-		await loadPlayerBar();
 		if (activationNodeId !== nodeId) return;
 
 		const voiceId = effectiveVoiceId;
-		if (!voiceId) return; // Voices haven't loaded yet
+		if (!voiceId) return;
 
-		playerVisible = true;
+		media.showBar();
 		trackEvent('narration_started', {
 			world_id: rootWorldId,
 			session_id: sessionId,
@@ -246,15 +210,17 @@
 		});
 
 		if (hasAudio) {
-			// Audio already cached - show player and play immediately
-			await player.waitAndPlay();
+			media.loadNarration(nodeId, effectiveAudioUrl!, effectiveTimestampsUrl);
 		} else if (isNodeCompleted) {
-			// Generate audio first, then auto-play
 			await generateForVoice(voiceId, options);
+		}
+
+		// Start soundtrack on first activation
+		if (!media.soundtrackStarted && soundtrackPlaylistId) {
+			media.startSoundtrack(soundtrackPlaylistId);
 		}
 	}
 
-	/** Generate audio for a specific voice, update local cache, and auto-play */
 	async function generateForVoice(voiceId: string, options: { requireTimestamps?: boolean } = {}) {
 		const requestedNodeId = nodeId;
 		try {
@@ -268,28 +234,33 @@
 			localAudio = { ...localAudio, [voiceId]: entry };
 
 			if (options.requireTimestamps && !entry.timestamps_url) {
-				playerVisible = false;
-				immersiveActive = false;
+				media.hideBar();
+				immersiveStory.setActive(false);
 				showWarning('Captions unavailable', 'This narration does not include caption timestamps.');
 				return;
 			}
 
-			await player.waitAndPlay();
+			media.loadNarration(requestedNodeId, entry.audio_url, entry.timestamps_url);
+			media.showBar();
+
+			if (!media.soundtrackStarted && soundtrackPlaylistId) {
+				media.startSoundtrack(soundtrackPlaylistId);
+			}
 		} catch (err) {
 			if (err instanceof ApiError && err.isRateLimited) {
-				playerVisible = false;
-				if (options.requireTimestamps) immersiveActive = false;
+				media.hideBar();
+				if (options.requireTimestamps) immersiveStory.setActive(false);
 				showWarning(
 					'Slow down',
 					"You're generating audio too quickly. Please wait a moment and try again."
 				);
 			} else if (err instanceof ApiError && err.isQuotaExceeded) {
-				playerVisible = false;
-				if (options.requireTimestamps) immersiveActive = false;
+				media.hideBar();
+				if (options.requireTimestamps) immersiveStory.setActive(false);
 				onQuotaExceeded();
 			} else {
-				playerVisible = false;
-				if (options.requireTimestamps) immersiveActive = false;
+				media.hideBar();
+				if (options.requireTimestamps) immersiveStory.setActive(false);
 				showError(
 					'Audio generation failed',
 					err instanceof Error ? err.message : 'Please try again later.'
@@ -299,111 +270,30 @@
 	}
 
 	function handleClose() {
-		player.pause();
-		playerVisible = false;
-		immersiveActive = false;
-		hasStartedPlayback = false;
-	}
-
-	function seekToTime(time: number) {
-		if (!Number.isFinite(time)) return;
-		if (!effectiveAudioUrl || isGenerating) return;
-
-		const audioElement = player.audioElement;
-		if (!audioElement) return;
-
-		const haveMetadata =
-			typeof HTMLMediaElement === 'undefined' ? 1 : HTMLMediaElement.HAVE_METADATA;
-		if (audioElement.readyState < haveMetadata) return;
-
-		const duration =
-			Number.isFinite(player.duration) && player.duration > 0
-				? player.duration
-				: Number.isFinite(audioElement.duration) && audioElement.duration > 0
-					? audioElement.duration
-					: time;
-		const nextTime = Math.min(Math.max(time, 0), duration);
-
-		try {
-			audioElement.currentTime = nextTime;
-		} catch {
-			return;
+		media.clearNarration();
+		if (!media.soundtrackStarted) {
+			media.hideBar();
 		}
-
-		player.currentTime = nextTime;
-		player.ended = false;
+		immersiveStory.setActive(false);
 	}
-
-	$effect(() => {
-		seekNarration = seekToTime;
-		return () => {
-			seekNarration = null;
-		};
-	});
 
 	function handleImmersiveToggle() {
-		if (immersiveActive) {
-			immersiveActive = false;
+		if (immersiveStory.active) {
+			immersiveStory.setActive(false);
 			return;
 		}
 
-		immersiveActive = true;
+		immersiveStory.setActive(true);
 		handleActivate({ requireTimestamps: true });
 	}
 
-	// ── Voice picker integration ──
-
-	/** Track whether the main audio was playing before the voice picker opened */
-	let wasPlayingBeforePickerOpen = $state(false);
-
-	function handleVoicePickerOpenChange(isOpen: boolean) {
-		if (isOpen) {
-			// Pause main audio while previewing samples
-			if (player.audioElement && !player.audioElement.paused) {
-				wasPlayingBeforePickerOpen = true;
-				player.pause();
-			} else {
-				wasPlayingBeforePickerOpen = false;
-			}
-		} else {
-			if (wasPlayingBeforePickerOpen && player.audioElement) {
-				player.audioElement.play().catch(() => {});
-				wasPlayingBeforePickerOpen = false;
-			}
-		}
-	}
-
-	function handleVoiceSelect(voiceId: string) {
-		player.selectVoice(voiceId);
-		hasStartedPlayback = false;
-
-		// Check if audio already exists for the new voice
-		const url = mergedAudio[voiceId];
-		if (url) {
-			if (immersiveActive && !url.timestamps_url) {
-				immersiveActive = false;
-				showWarning('Captions unavailable', 'This narration does not include caption timestamps.');
-			}
-			// Audio exists - reset playback position (src changes reactively)
-			player.currentTime = 0;
-			player.ended = false;
-			// The wasPlayingBeforePickerOpen flag won't apply since the picker
-			// closes on selection, but we want to auto-play the new voice
-			wasPlayingBeforePickerOpen = false;
-			player.waitAndPlay();
-		} else if (isNodeCompleted) {
-			// No audio for this voice yet - generate it
-			wasPlayingBeforePickerOpen = false;
-			generateForVoice(voiceId, { requireTimestamps: immersiveActive });
-		}
-	}
-
+	// Immersive auto-start when entering immersive mode on a new node
 	$effect(() => {
 		const voiceId = effectiveVoiceId;
 		const key = `${nodeId}:${voiceId ?? 'voice-loading'}:${effectiveAudioUrl ?? 'pending'}`;
 
 		if (
-			!immersiveActive ||
+			!immersiveStory.active ||
 			!isNodeCompleted ||
 			narrationDisabledMessage ||
 			!voiceId ||
@@ -419,53 +309,21 @@
 		});
 	});
 
-	function handleAudioError() {
-		player.pause();
-		playerVisible = false;
-		immersiveActive = false;
-		hasStartedPlayback = false;
-		if (effectiveVoiceId && localAudio[effectiveVoiceId]) {
-			const { [effectiveVoiceId]: _, ...rest } = localAudio;
-			localAudio = rest;
-		}
-		showError('Playback failed', 'The audio file could not be loaded. Please try again.');
-	}
-
-	// Stop audio and clean up when the component is destroyed.
-	// No reactive reads in the body → runs once on mount, cleanup runs on destroy only.
+	// Sync current node's audio availability to context for display purposes
 	$effect(() => {
-		return () => {
-			player.pause();
-			playerVisible = false;
-			localAudio = {};
-			hasStartedPlayback = false;
-		};
+		media.narrationHasAudio = hasAudio;
+		media.narrationCaptionsUnavailable = captionsUnavailable;
 	});
 
-	function handleAudioPlay() {
-		hasStartedPlayback = true;
-	}
+	// Cleanup on destroy — unregister but do NOT stop playback
+	$effect(() => {
+		return () => {
+			localAudio = {};
+		};
+	});
 </script>
 
-<!-- Hidden audio element -->
-{#if effectiveAudioUrl}
-	<audio
-		bind:this={player.audioElement}
-		bind:currentTime={player.currentTime}
-		bind:duration={player.duration}
-		bind:paused={player.paused}
-		bind:ended={player.ended}
-		bind:playbackRate={player.playbackRate}
-		bind:volume={player.volume}
-		src={effectiveAudioUrl}
-		preload="auto"
-		onplay={handleAudioPlay}
-		onerror={handleAudioError}
-	></audio>
-{/if}
-
 <div class="flex shrink-0 items-center gap-1">
-	<!-- Speaker icon toggle (always visible, disabled until node text is ready) -->
 	{#if narrationDisabledMessage}
 		<Tooltip.Provider>
 			<Tooltip.Root bind:open={tooltipOpen} delayDuration={0}>
@@ -509,7 +367,9 @@
 			size="icon-sm"
 			onclick={handleToggle}
 			disabled={!effectiveVoiceId}
-			aria-label={playerVisible ? 'Close narration' : 'Play narration'}
+			aria-label={media.barVisible && media.narrationNodeId === nodeId
+				? 'Close narration'
+				: 'Play narration'}
 			class="shrink-0"
 		>
 			<Volume2 class="h-4 w-4" />
@@ -555,38 +415,15 @@
 		</Tooltip.Provider>
 	{:else}
 		<Button
-			variant={immersiveActive ? 'secondary' : 'ghost'}
+			variant={immersiveStory.active ? 'secondary' : 'ghost'}
 			size="icon-sm"
 			onclick={handleImmersiveToggle}
 			disabled={!effectiveVoiceId}
-			aria-pressed={immersiveActive}
-			aria-label={immersiveActive ? 'Exit immersive view' : 'Enter immersive view'}
+			aria-pressed={immersiveStory.active}
+			aria-label={immersiveStory.active ? 'Exit immersive view' : 'Enter immersive view'}
 			class="shrink-0"
 		>
 			<Maximize2 class="h-4 w-4" />
 		</Button>
 	{/if}
 </div>
-
-{#if playerVisible && AudioPlayerBar}
-	<AudioPlayerBar
-		currentTime={player.currentTime}
-		duration={player.duration}
-		paused={player.paused}
-		volume={player.volume}
-		volumeProgress={player.volumeProgress}
-		playbackRate={player.playbackRate}
-		immersive={immersiveActive}
-		{isGenerating}
-		{voices}
-		{effectiveVoiceId}
-		onTogglePlayPause={player.togglePlayPause}
-		onSeek={player.handleSeek}
-		onVolumeChange={player.setVolumeProgress}
-		onToggleMute={player.toggleMute}
-		onPlaybackRateChange={(rate: number) => (player.playbackRate = rate)}
-		onVoiceSelect={handleVoiceSelect}
-		onVoicePickerOpenChange={handleVoicePickerOpenChange}
-		onClose={handleClose}
-	/>
-{/if}
