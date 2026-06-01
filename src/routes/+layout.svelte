@@ -4,7 +4,6 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { useAuth } from '$lib/auth/auth.svelte';
-	import { isDevEnvironment, PRODUCTION_URL, DEV_ALLOWED_EMAILS } from '$lib/config';
 	import { trackPageView } from '$lib/utils/analytics';
 	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -105,15 +104,6 @@
 		if (!auth.isLoading && !auth.isAuthenticated && !isPublicRoute(page.url.pathname)) {
 			const redirectPath = page.url.pathname + page.url.search;
 			goto(`/login?redirect=${encodeURIComponent(redirectPath)}`);
-		}
-	});
-
-	// Redirect non-allowlisted users away from the dev environment to production
-	$effect(() => {
-		if (isDevEnvironment && !auth.isLoading && auth.isAuthenticated && auth.user?.email) {
-			if (!DEV_ALLOWED_EMAILS.includes(auth.user.email)) {
-				window.location.href = PRODUCTION_URL;
-			}
 		}
 	});
 

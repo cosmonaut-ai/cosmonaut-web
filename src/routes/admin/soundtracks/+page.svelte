@@ -686,9 +686,11 @@
 <AdminDeleteDialog
 	open={soundtrackPendingDelete !== null}
 	title="Delete soundtrack?"
-	description="This permanently deletes <span class='font-medium text-foreground'>{soundtrackPendingDelete?.title ||
+	description="This permanently deletes "
+	descriptionEmphasis={soundtrackPendingDelete?.title ||
 		soundtrackPendingDelete?.id ||
-		'this soundtrack'}</span> from the library. This action cannot be undone."
+		'this soundtrack'}
+	descriptionSuffix=" from the library. This action cannot be undone."
 	loading={actionPending.startsWith('delete:')}
 	onConfirm={() => void deleteSoundtrack(soundtrackPendingDelete)}
 	onOpenChange={(open) => {

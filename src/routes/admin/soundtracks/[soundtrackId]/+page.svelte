@@ -300,7 +300,7 @@
 					<CardHeader>
 						<div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
 							<div class="min-w-0">
-								<CardTitle class="break-words">
+								<CardTitle class="wrap-break-word">
 									{soundtrack.title || 'Untitled soundtrack'}
 								</CardTitle>
 								<p
@@ -708,7 +708,9 @@
 <AdminDeleteDialog
 	open={deleteDialogOpen}
 	title="Delete soundtrack?"
-	description="This permanently deletes <span class='font-medium text-foreground'>{soundtrack?.title || soundtrack?.id || 'this soundtrack'}</span> from the library. This action cannot be undone."
+	description="This permanently deletes "
+	descriptionEmphasis={soundtrack?.title || soundtrack?.id || 'this soundtrack'}
+	descriptionSuffix=" from the library. This action cannot be undone."
 	loading={actionPending === 'delete'}
 	onConfirm={() => void deleteSoundtrack()}
 	onOpenChange={(open) => {

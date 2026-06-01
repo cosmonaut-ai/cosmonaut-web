@@ -31,16 +31,9 @@ function resolveEnv(): 'local' | 'dev' | 'prod' {
 export const ENV = resolveEnv();
 
 export const isLocalEnvironment = ENV === 'local';
-export const isDevEnvironment = ENV === 'dev';
-export const PRODUCTION_URL = 'https://cosmonaut-ai.com';
 
 // Sentry release (git SHA) set at build time in CI
 export const SENTRY_RELEASE: string = import.meta.env.PUBLIC_SENTRY_RELEASE || '';
-
-// Emails allowed to access the dev environment - all others are redirected to production
-export const DEV_ALLOWED_EMAILS: string[] = import.meta.env.PUBLIC_DEV_ALLOWED_EMAILS
-	? (import.meta.env.PUBLIC_DEV_ALLOWED_EMAILS as string).split(',').map((e) => e.trim())
-	: [];
 
 // Check if auth is configured (non-local environments require Cognito)
 export const isAuthConfigured =

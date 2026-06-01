@@ -7,6 +7,8 @@
 		open: boolean;
 		title?: string;
 		description: string;
+		descriptionEmphasis?: string;
+		descriptionSuffix?: string;
 		loading?: boolean;
 		disabled?: boolean;
 		onConfirm: () => void;
@@ -17,6 +19,8 @@
 		open,
 		title = 'Confirm deletion',
 		description,
+		descriptionEmphasis,
+		descriptionSuffix = '',
 		loading = false,
 		disabled = false,
 		onConfirm,
@@ -29,7 +33,11 @@
 		<AlertDialog.Header>
 			<AlertDialog.Title>{title}</AlertDialog.Title>
 			<AlertDialog.Description>
-				{@html description}
+				{description}
+				{#if descriptionEmphasis}
+					<span class="font-medium text-foreground">{descriptionEmphasis}</span>
+				{/if}
+				{descriptionSuffix}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
