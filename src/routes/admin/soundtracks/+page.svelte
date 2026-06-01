@@ -19,7 +19,8 @@
 	import { routeWithQuery } from '$lib/admin/url';
 	import { showError, showSuccess } from '$lib/utils/toast';
 	import CopyButton from '$lib/components/admin/CopyButton.svelte';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
+	import AdminDeleteDialog from '$lib/components/admin/AdminDeleteDialog.svelte';
+	import AdminPagination from '$lib/components/admin/AdminPagination.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -668,108 +669,43 @@
 					<p class="mt-4 text-sm text-muted-foreground">No soundtracks match the current status.</p>
 				{/if}
 
-				<div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-					<p class="text-sm text-muted-foreground">
-						Showing {soundtracks.length} soundtrack{soundtracks.length === 1 ? '' : 's'} on this page.
-					</p>
-					<div class="flex gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={!cursorParam || loading}
-							onclick={goToFirstPage}
-						>
-							First Page
-						</Button>
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={!nextCursor || loading}
-							onclick={goToNextPage}
-						>
-							{#if loading}
-								<Spinner class="h-4 w-4" />
-							{/if}
-							Next Page
-						</Button>
-					</div>
-				</div>
+				<AdminPagination
+					count={soundtracks.length}
+					label="soundtrack"
+					hasPrevious={!!cursorParam}
+					hasNext={!!nextCursor}
+					{loading}
+					onFirst={goToFirstPage}
+					onNext={goToNextPage}
+				/>
 			{/if}
 		</CardContent>
 	</Card>
 </section>
 
-<AlertDialog.Root
+<AdminDeleteDialog
 	open={soundtrackPendingDelete !== null}
+	title="Delete soundtrack?"
+	description="This permanently deletes <span class='font-medium text-foreground'>{soundtrackPendingDelete?.title ||
+		soundtrackPendingDelete?.id ||
+		'this soundtrack'}</span> from the library. This action cannot be undone."
+	loading={actionPending.startsWith('delete:')}
+	onConfirm={() => void deleteSoundtrack(soundtrackPendingDelete)}
 	onOpenChange={(open) => {
 		if (!open && !isMutating) soundtrackPendingDelete = null;
 	}}
->
-	<AlertDialog.Content>
-		<AlertDialog.Header>
-			<AlertDialog.Title>Delete soundtrack?</AlertDialog.Title>
-			<AlertDialog.Description>
-				This permanently deletes
-				<span class="font-medium text-foreground"
-					>{soundtrackPendingDelete?.title ||
-						soundtrackPendingDelete?.id ||
-						'this soundtrack'}</span
-				>
-				from the library. This action cannot be undone.
-			</AlertDialog.Description>
-		</AlertDialog.Header>
-		<AlertDialog.Footer>
-			<AlertDialog.Cancel disabled={isMutating}>Cancel</AlertDialog.Cancel>
-			<AlertDialog.Action
-				variant="destructive"
-				disabled={isMutating}
-				onclick={(event) => {
-					event.preventDefault();
-					void deleteSoundtrack(soundtrackPendingDelete);
-				}}
-			>
-				{#if actionPending.startsWith('delete:')}
-					<Spinner class="h-4 w-4" />
-				{:else}
-					<Trash2 class="h-4 w-4" />
-				{/if}
-				Delete
-			</AlertDialog.Action>
-		</AlertDialog.Footer>
-	</AlertDialog.Content>
-</AlertDialog.Root>
+/>
 
-<AlertDialog.Root
+<AdminDeleteDialog
 	open={batchDeleteDialogOpen}
+	title="Delete selected soundtracks?"
+	description="This permanently deletes {selectedCount} selected soundtrack{selectedCount === 1
+		? ''
+		: 's'} from the library. This action cannot be undone."
+	loading={actionPending === 'batch:delete'}
+	disabled={selectedCount === 0}
+	onConfirm={() => void deleteSelectedSoundtracks()}
 	onOpenChange={(open) => {
 		if (!isMutating) batchDeleteDialogOpen = open;
 	}}
->
-	<AlertDialog.Content>
-		<AlertDialog.Header>
-			<AlertDialog.Title>Delete selected soundtracks?</AlertDialog.Title>
-			<AlertDialog.Description>
-				This permanently deletes {selectedCount} selected soundtrack{selectedCount === 1 ? '' : 's'} from
-				the library. This action cannot be undone.
-			</AlertDialog.Description>
-		</AlertDialog.Header>
-		<AlertDialog.Footer>
-			<AlertDialog.Cancel disabled={isMutating}>Cancel</AlertDialog.Cancel>
-			<AlertDialog.Action
-				variant="destructive"
-				disabled={isMutating || selectedCount === 0}
-				onclick={(event) => {
-					event.preventDefault();
-					void deleteSelectedSoundtracks();
-				}}
-			>
-				{#if actionPending === 'batch:delete'}
-					<Spinner class="h-4 w-4" />
-				{:else}
-					<Trash2 class="h-4 w-4" />
-				{/if}
-				Delete selected
-			</AlertDialog.Action>
-		</AlertDialog.Footer>
-	</AlertDialog.Content>
-</AlertDialog.Root>
+/>

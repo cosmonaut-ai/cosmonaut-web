@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import type { World } from '$lib/types/api';
+	import type { WorldSessionSummary } from '$lib/types/api';
 	import {
 		Card,
 		CardContent,
@@ -15,8 +15,6 @@
 	import { Trash2, Shield, ShieldPlus, Play } from '@lucide/svelte';
 	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
 	import { getStatusBadgeVariant, getStatusText } from '$lib/utils/worldStatus';
-	import { getWorldProgress } from '$lib/api/nodes';
-	import { logger } from '$lib/utils/logger';
 
 	function getWorldLengthLabel(length: string | null): string | null {
 		switch (length) {
@@ -32,15 +30,16 @@
 	}
 
 	interface Props {
-		world: World;
-		onDelete: (worldId: string) => void;
+		session: WorldSessionSummary;
+		onDelete: (sessionId: string) => void;
 		isDeleting?: boolean;
 		isOwner?: boolean;
 		/** Stagger index for entrance animation (0-based) */
 		index?: number;
 	}
 
-	let { world, onDelete, isDeleting = false, index = 0, isOwner = false }: Props = $props();
+	let { session, onDelete, isDeleting = false, index = 0, isOwner = false }: Props = $props();
+	const world = $derived(session.world);
 
 	let showDeleteDialog = $state(false);
 	let isPlayLoading = $state(false);
@@ -53,7 +52,7 @@
 
 	function handleClick() {
 		if (isDeleting) return;
-		goto(`/worlds/${world.id}`);
+		goto(`/sessions/${session.id}`);
 	}
 
 	async function handlePlayClick(e: Event) {
@@ -61,18 +60,8 @@
 		if (isDeleting || isPlayLoading || !world.root_node_id) return;
 
 		isPlayLoading = true;
-		let targetNodeId = world.root_node_id;
-
-		try {
-			const progress = await getWorldProgress(world.id);
-			if (progress.current_node_id) {
-				targetNodeId = progress.current_node_id;
-			}
-		} catch (err) {
-			logger.error('Failed to fetch world progress, falling back to root node:', err);
-		}
-
-		goto(`/worlds/${world.id}/nodes/${targetNodeId}`);
+		const targetNodeId = session.last_visited_node_id ?? world.root_node_id;
+		goto(`/sessions/${session.id}/nodes/${targetNodeId}`);
 		isPlayLoading = false;
 	}
 
@@ -83,7 +72,7 @@
 	}
 
 	function handleConfirmDelete() {
-		onDelete(world.id);
+		onDelete(session.id);
 	}
 
 	function handleCancelDelete() {

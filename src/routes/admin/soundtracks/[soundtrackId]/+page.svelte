@@ -20,8 +20,8 @@
 		soundtrackStatusClass
 	} from '$lib/admin/format';
 	import { showError, showSuccess } from '$lib/utils/toast';
+	import AdminDeleteDialog from '$lib/components/admin/AdminDeleteDialog.svelte';
 	import CopyButton from '$lib/components/admin/CopyButton.svelte';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -705,40 +705,13 @@
 	{/if}
 </section>
 
-<AlertDialog.Root
+<AdminDeleteDialog
 	open={deleteDialogOpen}
+	title="Delete soundtrack?"
+	description="This permanently deletes <span class='font-medium text-foreground'>{soundtrack?.title || soundtrack?.id || 'this soundtrack'}</span> from the library. This action cannot be undone."
+	loading={actionPending === 'delete'}
+	onConfirm={() => void deleteSoundtrack()}
 	onOpenChange={(open) => {
 		if (!isMutating) deleteDialogOpen = open;
 	}}
->
-	<AlertDialog.Content>
-		<AlertDialog.Header>
-			<AlertDialog.Title>Delete soundtrack?</AlertDialog.Title>
-			<AlertDialog.Description>
-				This permanently deletes
-				<span class="font-medium text-foreground"
-					>{soundtrack?.title || soundtrack?.id || 'this soundtrack'}</span
-				>
-				from the library. This action cannot be undone.
-			</AlertDialog.Description>
-		</AlertDialog.Header>
-		<AlertDialog.Footer>
-			<AlertDialog.Cancel disabled={isMutating}>Cancel</AlertDialog.Cancel>
-			<AlertDialog.Action
-				variant="destructive"
-				disabled={isMutating}
-				onclick={(event) => {
-					event.preventDefault();
-					void deleteSoundtrack();
-				}}
-			>
-				{#if actionPending === 'delete'}
-					<Spinner class="h-4 w-4" />
-				{:else}
-					<Trash2 class="h-4 w-4" />
-				{/if}
-				Delete
-			</AlertDialog.Action>
-		</AlertDialog.Footer>
-	</AlertDialog.Content>
-</AlertDialog.Root>
+/>

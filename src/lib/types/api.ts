@@ -84,9 +84,6 @@ export interface InviteToken {
 
 export interface World {
 	id: string;
-	session_id: string | null;
-	/** @deprecated Use `id` directly - it is now always the root world id. */
-	shareable_id: string | null;
 	title: string | null;
 	description: string | null;
 	genre: string | null;
@@ -119,6 +116,47 @@ export interface World {
 	invite_token?: InviteToken | null;
 	created_at: string;
 	updated_at: string;
+}
+
+export interface WorldSessionSummary {
+	id: string;
+	root_world_id: string;
+	role: 'owner' | 'member' | string;
+	last_visited_node_id: string | null;
+	visited_node_count: number;
+	joined_at: string | null;
+	last_accessed_at: string | null;
+	created_at: string | null;
+	updated_at: string | null;
+	world: World;
+}
+
+export interface WorldSession {
+	id: string;
+	root_world_id: string;
+	role: 'owner' | 'member' | string;
+	last_visited_node_id: string | null;
+	visited_node_count: number;
+	created_at: string | null;
+	updated_at: string | null;
+	world: World;
+}
+
+export interface CreateWorldSessionRequest {
+	invite_token?: string | null;
+}
+
+export interface CreateWorldResponse {
+	world: World;
+	session: WorldSession;
+}
+
+export interface SessionLinkHandoff {
+	root_world_id: string;
+	title: string | null;
+	description: string | null;
+	world_image_url: string | null;
+	world_image_alt_text: string | null;
 }
 
 export interface CreateWorldRequest {

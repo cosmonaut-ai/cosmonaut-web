@@ -1,25 +1,19 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { goto, replaceState } from '$app/navigation';
-	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { useWorld } from '$lib/queries';
 	import { setWorldContext } from '$lib/contexts/world';
-	import {
-		setImmersiveStoryContext,
-		type ImmersiveStoryModel
-	} from '$lib/contexts/immersiveStory.svelte';
 	import { ApiError } from '$lib/types/api';
-	import ImmersiveStoryView from '$lib/components/features/narrator/ImmersiveStoryView.svelte';
-	import WorldHeader from '$lib/components/features/worlds/WorldHeader.svelte';
 	import WorldGenerationProgress from '$lib/components/features/worlds/WorldGenerationProgress.svelte';
 	import WorldGenerationFailed from '$lib/components/features/worlds/WorldGenerationFailed.svelte';
-	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { TriangleAlert, ShieldAlert } from '@lucide/svelte';
+	import { ShieldAlert } from '@lucide/svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
+	import ResourceLoadingSkeleton from '$lib/components/shared/ResourceLoadingSkeleton.svelte';
+	import NetworkErrorCard from '$lib/components/shared/NetworkErrorCard.svelte';
+	import NotFoundCard from '$lib/components/shared/NotFoundCard.svelte';
 
 	interface Props {
 		children: Snippet;
@@ -27,34 +21,15 @@
 
 	let { children }: Props = $props();
 
-	const IMMERSIVE_QUERY_PARAM = 'immersive';
-	const immersiveStory = setImmersiveStoryContext();
-
-	function immersiveParamEnabled(value: string | null): boolean {
-		return value === '1' || value === 'true';
-	}
-
-	// Get worldId from params (guaranteed to exist in this route)
 	const worldId = $derived(page.params.worldId!);
-	const nodeId = $derived(page.params.nodeId);
 	const inviteToken = $derived(page.url.searchParams.get('invite'));
 
-	// Determine if we're on the graph page (which has its own full-screen layout)
-	const isGraphPage = $derived(page.url.pathname.includes('/graph'));
-	const isMapPage = $derived(page.url.pathname.includes('/map'));
-	const isNodePage = $derived(page.url.pathname.includes('/nodes/'));
-	const isMainWorldPage = $derived(
-		page.url.pathname === `/worlds/${worldId}` || page.url.pathname === `/worlds/${worldId}/`
-	);
-
-	// Use TanStack Query for world data with polling for generation status
 	const worldQuery = useWorld(() => page.params.worldId!, {
 		enablePolling: true,
 		invite: () => inviteToken
 	});
 	setWorldContext(worldQuery);
 
-	// Derived world data
 	const world = $derived(worldQuery.data);
 	const isWorldLoading = $derived(worldQuery.isLoading);
 	const isWorldComplete = $derived(world?.generation_status === 'completed');
@@ -65,86 +40,6 @@
 	);
 	const isNotFound = $derived(worldQuery.error instanceof ApiError && worldQuery.error.isNotFound);
 	const isNetworkOrServerError = $derived(!!worldQuery.error && !isAccessDenied && !isNotFound);
-
-	$effect(() => {
-		if (immersiveParamEnabled(page.url.searchParams.get(IMMERSIVE_QUERY_PARAM))) {
-			immersiveStory.active = true;
-		}
-	});
-
-	$effect(() => {
-		if (!browser || !(isNodePage || isGraphPage || isMapPage)) return;
-
-		const url = new URL(window.location.href);
-		if (immersiveStory.active) {
-			url.searchParams.set(IMMERSIVE_QUERY_PARAM, '1');
-		} else {
-			url.searchParams.delete(IMMERSIVE_QUERY_PARAM);
-		}
-
-		const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-		const nextUrl = `${url.pathname}${url.search}${url.hash}`;
-		if (currentUrl !== nextUrl) {
-			replaceState(nextUrl, page.state);
-		}
-	});
-
-	const immersiveRenderModel = $derived.by<ImmersiveStoryModel | null>(() => {
-		if (!immersiveStory.active || !isNodePage) return null;
-
-		const model = immersiveStory.model;
-		if (!model) {
-			return {
-				nodeId: nodeId ?? '',
-				text: '',
-				choices: [],
-				currentTime: 0,
-				duration: 0,
-				ended: false,
-				timestampsUrl: null,
-				isNarrationGenerating: false,
-				isStoryGenerating: false,
-				worldImageUrl: world?.world_image_url,
-				worldImageAlt: world?.world_image_alt_text,
-				title: null,
-				loadingProgress: 0,
-				isEnding: false,
-				isLoading: true,
-				isAtQuotaLimit: false,
-				showCustomChoice: false,
-				wordSeekEnabled: false,
-				canGoBack: false
-			};
-		}
-
-		if (nodeId && model.nodeId !== nodeId) {
-			return {
-				...model,
-				nodeId,
-				text: '',
-				choices: [],
-				currentTime: 0,
-				duration: 0,
-				ended: false,
-				timestampsUrl: null,
-				isNarrationGenerating: false,
-				isStoryGenerating: false,
-				title: null,
-				loadingProgress: 0,
-				isLoading: true,
-				showCustomChoice: false,
-				wordSeekEnabled: false,
-				canGoBack: false,
-				onBack: undefined,
-				onChoiceSelect: undefined,
-				onCustomChoice: undefined,
-				onRestart: undefined,
-				onWordSeek: undefined
-			};
-		}
-
-		return model;
-	});
 </script>
 
 <SEO
@@ -159,25 +54,8 @@
 />
 
 {#if isWorldLoading}
-	<!-- Loading world data -->
-	<div class="min-h-full bg-background">
-		<header class="border-b border-border bg-card/50">
-			<div class="mx-auto flex max-w-3xl items-center gap-4 px-6 py-4">
-				<Skeleton class="h-8 w-20" />
-				<div class="h-4 w-px bg-border"></div>
-				<Skeleton class="h-6 w-48" />
-			</div>
-		</header>
-		<main class="mx-auto max-w-4xl px-6 py-8">
-			<Card>
-				<CardContent class="flex items-center justify-center py-16">
-					<Spinner class="h-8 w-8" />
-				</CardContent>
-			</Card>
-		</main>
-	</div>
+	<ResourceLoadingSkeleton />
 {:else if isAccessDenied}
-	<!-- Access denied -->
 	<div class="min-h-full bg-background">
 		<main class="mx-auto max-w-3xl px-6 py-12">
 			<Card class="border-border/50">
@@ -208,94 +86,22 @@
 		</main>
 	</div>
 {:else if isNetworkOrServerError}
-	<!-- Network or server error - offer retry -->
-	<div class="min-h-full bg-background">
-		<main class="mx-auto max-w-3xl px-6 py-12">
-			<Card class="border-destructive/50">
-				<CardContent class="flex flex-col items-center py-12 text-center">
-					<TriangleAlert class="mb-4 h-8 w-8 text-destructive" />
-					<p class="mb-2 font-semibold text-foreground">Something went wrong</p>
-					<p class="mb-6 text-sm text-muted-foreground">
-						We couldn't load this story. This might be a temporary issue.
-					</p>
-					<div class="flex gap-3">
-						<Button variant="outline" onclick={() => worldQuery.refetch()}>Try Again</Button>
-						<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
-					</div>
-				</CardContent>
-			</Card>
-		</main>
-	</div>
+	<NetworkErrorCard
+		message="We couldn't load this story. This might be a temporary issue."
+		onRetry={() => worldQuery.refetch()}
+	/>
 {:else if !world}
-	<!-- World not found (404 or no data) -->
-	<div class="min-h-full bg-background">
-		<main class="mx-auto max-w-3xl px-6 py-12">
-			<Card class="border-destructive/50">
-				<CardContent class="py-12 text-center">
-					<p class="mb-4 text-muted-foreground">This story doesn't exist - or it's been deleted.</p>
-					<Button onclick={() => goto('/dashboard')}>Return to Dashboard</Button>
-				</CardContent>
-			</Card>
-		</main>
-	</div>
+	<NotFoundCard message="This story doesn't exist - or it's been deleted." />
 {:else if !isWorldComplete && !isWorldFailed}
-	<!-- World Generation Progress View -->
 	<div class="min-h-full bg-background">
 		<WorldGenerationProgress {generationStatus} />
 	</div>
 {:else if isWorldFailed}
-	<!-- World Generation Failed View -->
 	<div class="min-h-full bg-background">
 		<WorldGenerationFailed worldPrompt={world?.world_prompt} />
 	</div>
-{:else if isGraphPage || isMapPage}
-	<!-- Graph/Map pages handle their own layout (full screen, absolute to fill #main-content) -->
-	<div class="absolute inset-0 flex flex-col bg-background">
-		<WorldHeader {world} />
-		<div class="min-h-0 flex-1">
-			{@render children()}
-		</div>
-	</div>
-{:else if isMainWorldPage}
-	<!-- Main world page - has its own navigation -->
+{:else}
 	<div class="min-h-full bg-background">
 		{@render children()}
 	</div>
-{:else}
-	<!-- Story pages with scrollable content -->
-	<div class="min-h-dvh bg-background">
-		<WorldHeader {world} />
-		{@render children()}
-	</div>
-{/if}
-
-{#if immersiveRenderModel}
-	<ImmersiveStoryView
-		nodeId={immersiveRenderModel.nodeId}
-		text={immersiveRenderModel.text}
-		choices={immersiveRenderModel.choices}
-		currentTime={immersiveRenderModel.currentTime}
-		duration={immersiveRenderModel.duration}
-		ended={immersiveRenderModel.ended}
-		timestampsUrl={immersiveRenderModel.timestampsUrl}
-		isNarrationGenerating={immersiveRenderModel.isNarrationGenerating}
-		isStoryGenerating={immersiveRenderModel.isStoryGenerating}
-		worldImageUrl={immersiveRenderModel.worldImageUrl}
-		worldImageAlt={immersiveRenderModel.worldImageAlt}
-		title={immersiveRenderModel.title}
-		loadingProgress={immersiveRenderModel.loadingProgress}
-		isEnding={immersiveRenderModel.isEnding}
-		isLoading={immersiveRenderModel.isLoading}
-		isAtQuotaLimit={immersiveRenderModel.isAtQuotaLimit}
-		showCustomChoice={immersiveRenderModel.showCustomChoice}
-		wordSeekEnabled={immersiveRenderModel.wordSeekEnabled}
-		canGoBack={immersiveRenderModel.canGoBack}
-		onBack={immersiveRenderModel.onBack}
-		onOpenMap={immersiveRenderModel.onOpenMap}
-		onChoiceSelect={immersiveRenderModel.onChoiceSelect}
-		onCustomChoice={immersiveRenderModel.onCustomChoice}
-		onRestart={immersiveRenderModel.onRestart}
-		onWordSeek={immersiveRenderModel.onWordSeek}
-		onExit={() => immersiveStory.setActive(false)}
-	/>
 {/if}

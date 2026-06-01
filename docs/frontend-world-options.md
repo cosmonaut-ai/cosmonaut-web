@@ -52,7 +52,7 @@ Controls how explicit graphic material (mainly violence) can be. Sexual content 
 
 ## API Changes
 
-### `POST /worlds/` - Create a World
+### `POST /worlds/` - Create a World And Owner Session
 
 Optional fields in the request body:
 
@@ -68,9 +68,37 @@ Optional fields in the request body:
 
 All fields except `world_prompt` are optional; omitting them gives `"medium"`, `"adult"`, and `"none"` respectively.
 
-### `GET /worlds/{world_id}` and `GET /worlds/` - Read Worlds
+The response contains both the root world and the owner's initial playthrough session:
 
-The response includes these fields on every `WorldMetaDTO`:
+```json
+{
+	"world": {
+		"id": "uuid-123",
+		"generation_status": "generating_lore",
+		"story_max_nodes": 5,
+		"world_length": "short",
+		"vocab_level": "teen",
+		"content_filter": "strict"
+	},
+	"session": {
+		"id": "session-123",
+		"root_world_id": "uuid-123",
+		"role": "owner",
+		"world": {
+			"id": "uuid-123",
+			"generation_status": "generating_lore",
+			"story_max_nodes": 5,
+			"world_length": "short",
+			"vocab_level": "teen",
+			"content_filter": "strict"
+		}
+	}
+}
+```
+
+### `GET /worlds/{world_id}` and session responses - Read Worlds
+
+`GET /worlds/{world_id}` returns canonical root-world metadata only. `GET /sessions/` and `GET /sessions/{session_id}` embed world metadata on each session. In both cases, the embedded `WorldMetaDTO` includes:
 
 ```json
 {

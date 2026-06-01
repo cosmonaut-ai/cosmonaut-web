@@ -42,14 +42,14 @@ All `PUBLIC_` variables are embedded into the browser bundle at build time. Do n
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start the Vite dev server. |
-| `npm run build` | Build the static production app into `build/`. |
-| `npm run preview` | Preview the production build locally. |
-| `npm run check` | Run `svelte-check`. |
-| `npm run lint` | Run Prettier check and ESLint. |
-| `npm run verify` | Format, type-check, lint, and build. |
+| Command           | Description                                    |
+| ----------------- | ---------------------------------------------- |
+| `npm run dev`     | Start the Vite dev server.                     |
+| `npm run build`   | Build the static production app into `build/`. |
+| `npm run preview` | Preview the production build locally.          |
+| `npm run check`   | Run `svelte-check`.                            |
+| `npm run lint`    | Run Prettier check and ESLint.                 |
+| `npm run verify`  | Format, type-check, lint, and build.           |
 
 ## Project Structure
 

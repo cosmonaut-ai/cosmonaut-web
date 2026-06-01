@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useAuth } from '$lib/auth/auth.svelte';
-	import { useWorlds, useDeleteWorld, useUser } from '$lib/queries';
+	import { useDeleteSession, useSessions, useUser } from '$lib/queries';
 	import WorldCard from '$lib/components/features/worlds/WorldCard.svelte';
 	import WorldCardSkeleton from '$lib/components/features/worlds/WorldCardSkeleton.svelte';
 	import FeaturedWorldsCarousel from '$lib/components/features/worlds/FeaturedWorldsCarousel.svelte';
@@ -15,24 +14,23 @@
 	import { Plus } from '@lucide/svelte';
 	import SEO from '$lib/components/shared/SEO.svelte';
 
-	const auth = useAuth();
-	const worldsQuery = useWorlds();
-	const deleteMutation = useDeleteWorld();
+	const sessionsQuery = useSessions();
+	const deleteMutation = useDeleteSession();
 	const usageQuery = useUser();
 
-	const allWorlds = $derived(worldsQuery.data?.pages.flatMap((p) => p.items) ?? []);
+	const allSessions = $derived(sessionsQuery.data?.pages.flatMap((p) => p.items) ?? []);
 
-	let deletingWorldId = $state<string | null>(null);
+	let deletingSessionId = $state<string | null>(null);
 	let showUpgradePrompt = $state(false);
 
 	const usage = $derived(usageQuery.data);
 	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
 
-	function handleDeleteWorld(worldId: string) {
-		deletingWorldId = worldId;
-		deleteMutation.mutate(worldId, {
+	function handleDeleteSession(sessionId: string) {
+		deletingSessionId = sessionId;
+		deleteMutation.mutate(sessionId, {
 			onSettled: () => {
-				deletingWorldId = null;
+				deletingSessionId = null;
 			}
 		});
 	}
@@ -89,25 +87,25 @@
 				{/if}
 			</div>
 
-			{#if worldsQuery.isLoading}
+			{#if sessionsQuery.isLoading}
 				<!-- Loading state - show skeleton cards -->
 				<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 					{#each [1, 2, 3] as i (i)}
 						<WorldCardSkeleton />
 					{/each}
 				</div>
-			{:else if worldsQuery.isError}
+			{:else if sessionsQuery.isError}
 				<Card class="border-destructive/50 bg-destructive/10">
 					<CardContent class="py-8 text-center">
 						<p class="text-destructive">
-							Failed to load stories: {worldsQuery.error?.message ?? 'Unknown error'}
+							Failed to load stories: {sessionsQuery.error?.message ?? 'Unknown error'}
 						</p>
-						<Button variant="outline" class="mt-4" onclick={() => worldsQuery.refetch()}>
+						<Button variant="outline" class="mt-4" onclick={() => sessionsQuery.refetch()}>
 							Try Again
 						</Button>
 					</CardContent>
 				</Card>
-			{:else if allWorlds.length === 0}
+			{:else if allSessions.length === 0}
 				<!-- Empty state -->
 				<Card class="empty-card border-dashed">
 					<CardContent
@@ -134,26 +132,26 @@
 			{:else}
 				<!-- Stories grid -->
 				<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-					{#each allWorlds as world, i (world.id)}
+					{#each allSessions as session, i (session.id)}
 						<WorldCard
-							{world}
-							onDelete={handleDeleteWorld}
-							isDeleting={deletingWorldId === world.id}
-							isOwner={world.author_id === auth.user?.sub}
+							{session}
+							onDelete={handleDeleteSession}
+							isDeleting={deletingSessionId === session.id}
+							isOwner={session.role === 'owner'}
 							index={i}
 						/>
 					{/each}
 				</div>
 
-				{#if worldsQuery.hasNextPage}
+				{#if sessionsQuery.hasNextPage}
 					<div class="mt-8 flex justify-center">
 						<Button
 							variant="outline"
-							disabled={worldsQuery.isFetchingNextPage}
-							onclick={() => worldsQuery.fetchNextPage()}
+							disabled={sessionsQuery.isFetchingNextPage}
+							onclick={() => sessionsQuery.fetchNextPage()}
 							class="gap-2"
 						>
-							{#if worldsQuery.isFetchingNextPage}
+							{#if sessionsQuery.isFetchingNextPage}
 								<Spinner class="h-4 w-4" />
 								Loading...
 							{:else}

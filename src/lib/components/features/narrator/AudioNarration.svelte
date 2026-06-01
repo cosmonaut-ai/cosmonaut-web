@@ -19,7 +19,8 @@
 	}
 
 	interface Props {
-		worldId: string;
+		sessionId: string;
+		rootWorldId: string;
 		nodeId: string;
 		/** Map of voice_id → audio entry for already-generated narrations on this node */
 		audio: Record<string, AudioEntry>;
@@ -49,7 +50,8 @@
 	}
 
 	let {
-		worldId,
+		sessionId,
+		rootWorldId,
 		nodeId,
 		audio,
 		isNodeCompleted,
@@ -134,7 +136,7 @@
 	);
 
 	// Generation mutation
-	const audioMutation = useGenerateAudio(() => worldId);
+	const audioMutation = useGenerateAudio(() => sessionId);
 	const isGenerating = $derived(audioMutation.isPending);
 	const hasAudio = $derived(!!effectiveAudioUrl);
 	let hasStartedPlayback = $state(false);
@@ -237,7 +239,11 @@
 		if (!voiceId) return; // Voices haven't loaded yet
 
 		playerVisible = true;
-		trackEvent('narration_started', { world_id: worldId, node_id: nodeId });
+		trackEvent('narration_started', {
+			world_id: rootWorldId,
+			session_id: sessionId,
+			node_id: nodeId
+		});
 
 		if (hasAudio) {
 			// Audio already cached - show player and play immediately

@@ -13,6 +13,7 @@
 	import { formatDateTime, shortId, visibilityClass } from '$lib/admin/format';
 	import { queryValue, routeWithQuery } from '$lib/admin/url';
 	import { showError, showSuccess } from '$lib/utils/toast';
+	import AdminPagination from '$lib/components/admin/AdminPagination.svelte';
 	import CopyButton from '$lib/components/admin/CopyButton.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -257,33 +258,15 @@
 						{/if}
 					</div>
 
-					<div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-						<p class="text-sm text-muted-foreground">
-							Showing {featuredWorlds.length} featured world{featuredWorlds.length === 1 ? '' : 's'} on
-							this page.
-						</p>
-						<div class="flex gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={!cursorParam || loading}
-								onclick={goToFirstPage}
-							>
-								First Page
-							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={!nextCursor || loading}
-								onclick={goToNextPage}
-							>
-								{#if loading}
-									<Spinner class="h-4 w-4" />
-								{/if}
-								Next Page
-							</Button>
-						</div>
-					</div>
+					<AdminPagination
+						count={featuredWorlds.length}
+						label="featured world"
+						hasPrevious={!!cursorParam}
+						hasNext={!!nextCursor}
+						{loading}
+						onFirst={goToFirstPage}
+						onNext={goToNextPage}
+					/>
 				{/if}
 			</CardContent>
 		</Card>

@@ -1,5 +1,5 @@
 import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
-import { getNode, getWorldNodes, getWorldProgress, chooseOption } from '$lib/api/nodes';
+import { getNode, getSessionNodes, chooseOption } from '$lib/api/nodes';
 import { generateNodeAudio } from '$lib/api/voices';
 import { POLL_INTERVAL_MS } from '$lib/api/core';
 import type { StoryNode } from '$lib/types/api';
@@ -7,28 +7,14 @@ import { queryKeys } from './keys';
 import { type MaybeGetter, resolve } from './utils';
 
 /**
- * Query hook to fetch all nodes in a world
+ * Query hook to fetch all nodes in a session
  */
-export function useWorldNodes(worldId: MaybeGetter<string>) {
+export function useSessionNodes(sessionId: MaybeGetter<string>) {
 	return createQuery(() => {
-		const id = resolve(worldId);
+		const id = resolve(sessionId);
 		return {
 			queryKey: queryKeys.nodes.all(id),
-			queryFn: () => getWorldNodes(id),
-			enabled: !!id
-		};
-	});
-}
-
-/**
- * Query hook to fetch the user's last-visited node in a world
- */
-export function useWorldProgress(worldId: MaybeGetter<string>) {
-	return createQuery(() => {
-		const id = resolve(worldId);
-		return {
-			queryKey: queryKeys.nodes.progress(id),
-			queryFn: () => getWorldProgress(id),
+			queryFn: () => getSessionNodes(id),
 			enabled: !!id
 		};
 	});
@@ -40,17 +26,17 @@ export function useWorldProgress(worldId: MaybeGetter<string>) {
  * @param options.enablePolling - If true, polls every 2 seconds while node is in 'generating' status
  */
 export function useNode(
-	worldId: MaybeGetter<string>,
+	sessionId: MaybeGetter<string>,
 	nodeId: MaybeGetter<string | null | undefined>,
 	options?: { enablePolling?: boolean }
 ) {
 	return createQuery(() => {
-		const wId = resolve(worldId);
+		const sId = resolve(sessionId);
 		const nId = resolve(nodeId);
 		return {
-			queryKey: queryKeys.nodes.detail(wId, nId ?? ''),
-			queryFn: () => getNode(wId, nId!),
-			enabled: !!wId && !!nId,
+			queryKey: queryKeys.nodes.detail(sId, nId ?? ''),
+			queryFn: () => getNode(sId, nId!),
+			enabled: !!sId && !!nId,
 			refetchInterval: (query: { state: { data?: StoryNode; error: Error | null } }) => {
 				if (!options?.enablePolling) return false;
 				if (query.state.error) return false;
@@ -70,21 +56,21 @@ export type ChoiceOption = { targetId: string } | { customChoice: string };
 /**
  * Mutation hook to choose an option and navigate to the next node
  */
-export function useChooseOption(worldId: MaybeGetter<string>) {
+export function useChooseOption(sessionId: MaybeGetter<string>) {
 	const client = useQueryClient();
 	return createMutation(() => {
-		const wId = resolve(worldId);
+		const sId = resolve(sessionId);
 		return {
 			mutationFn: ({ nodeId, choice }: { nodeId: string; choice: ChoiceOption }) =>
-				chooseOption(wId, nodeId, choice),
+				chooseOption(sId, nodeId, choice),
 			onSuccess: (newNode: StoryNode, { nodeId: parentNodeId }) => {
 				// Add the new node to the cache
-				client.setQueryData(queryKeys.nodes.detail(wId, newNode.id), newNode);
+				client.setQueryData(queryKeys.nodes.detail(sId, newNode.id), newNode);
 				// Invalidate the parent node so its choices reflect the newly explored path
-				client.invalidateQueries({ queryKey: queryKeys.nodes.detail(wId, parentNodeId) });
+				client.invalidateQueries({ queryKey: queryKeys.nodes.detail(sId, parentNodeId) });
 				// Invalidate the nodes list to include the new node
 				// Use exact: true to prevent invalidating individual node queries (prefix matching)
-				client.invalidateQueries({ queryKey: queryKeys.nodes.all(wId), exact: true });
+				client.invalidateQueries({ queryKey: queryKeys.nodes.all(sId), exact: true });
 			}
 			// Note: no onError here - the caller uses mutateAsync and handles all
 			// errors directly (409 retry logic + user-facing toasts) to avoid duplicates.
@@ -97,15 +83,15 @@ export function useChooseOption(worldId: MaybeGetter<string>) {
  */
 export function updateNodeInCache(
 	client: ReturnType<typeof useQueryClient>,
-	worldId: string,
+	sessionId: string,
 	node: StoryNode
 ) {
-	client.setQueryData(queryKeys.nodes.detail(worldId, node.id), node);
+	client.setQueryData(queryKeys.nodes.detail(sessionId, node.id), node);
 
 	// Optimistically update the node within the all-nodes list cache so the
 	// graph page (and any other consumer) sees fresh data immediately without
 	// waiting for a background refetch.
-	client.setQueryData<StoryNode[]>(queryKeys.nodes.all(worldId), (prev) => {
+	client.setQueryData<StoryNode[]>(queryKeys.nodes.all(sessionId), (prev) => {
 		if (!prev) return prev;
 		const idx = prev.findIndex((n) => n.id === node.id);
 		if (idx >= 0) {
@@ -117,10 +103,10 @@ export function updateNodeInCache(
 	});
 
 	if (node.parent_id) {
-		client.invalidateQueries({ queryKey: queryKeys.nodes.detail(worldId, node.parent_id) });
+		client.invalidateQueries({ queryKey: queryKeys.nodes.detail(sessionId, node.parent_id) });
 	}
 	// Still invalidate to ensure eventual consistency with the server
-	client.invalidateQueries({ queryKey: queryKeys.nodes.all(worldId), exact: true });
+	client.invalidateQueries({ queryKey: queryKeys.nodes.all(sessionId), exact: true });
 }
 
 /**
@@ -128,19 +114,19 @@ export function updateNodeInCache(
  * On success, patches the node's `audio` dict in the TanStack cache and
  * invalidates the usage query so the audio narrations counter stays current.
  */
-export function useGenerateAudio(worldId: MaybeGetter<string>) {
+export function useGenerateAudio(sessionId: MaybeGetter<string>) {
 	const client = useQueryClient();
 	return createMutation(() => {
-		const wId = resolve(worldId);
+		const sId = resolve(sessionId);
 		return {
 			mutationFn: ({ nodeId, voiceId }: { nodeId: string; voiceId: string }) =>
-				generateNodeAudio(wId, nodeId, voiceId),
+				generateNodeAudio(sId, nodeId, voiceId),
 			onSuccess: (data, variables) => {
 				const cached = client.getQueryData<StoryNode>(
-					queryKeys.nodes.detail(wId, variables.nodeId)
+					queryKeys.nodes.detail(sId, variables.nodeId)
 				);
 				if (cached) {
-					client.setQueryData(queryKeys.nodes.detail(wId, variables.nodeId), {
+					client.setQueryData(queryKeys.nodes.detail(sId, variables.nodeId), {
 						...cached,
 						audio: {
 							...cached.audio,

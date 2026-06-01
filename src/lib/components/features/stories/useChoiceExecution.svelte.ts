@@ -7,7 +7,8 @@ import { trackEvent } from '$lib/utils/analytics';
 import { useQueryClient } from '@tanstack/svelte-query';
 
 interface UseChoiceExecutionOptions {
-	worldId: () => string;
+	sessionId: () => string;
+	rootWorldId: () => string;
 	currentNode: () => StoryNode | null;
 	isProcessingChoice: () => boolean;
 	loading: () => boolean;
@@ -17,7 +18,7 @@ interface UseChoiceExecutionOptions {
 	stream: {
 		setGeneratingNodeId: (id: string | null) => void;
 		startGeneration: (
-			worldId: string,
+			sessionId: string,
 			nodeId: string,
 			opts: { setLoading: boolean }
 		) => Promise<StoryNode | void>;
@@ -31,7 +32,7 @@ interface UseChoiceExecutionOptions {
 
 export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 	const queryClient = useQueryClient();
-	const chooseMutation = useChooseOption(options.worldId);
+	const chooseMutation = useChooseOption(options.sessionId);
 	let executionController: AbortController | null = null;
 
 	/** Cancel any in-flight choice execution (mutation + generation). */
@@ -46,10 +47,14 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 		const node = options.currentNode();
 		if (!node || options.loading() || options.isProcessingChoice()) return;
 		if (!node.parent_id) {
-			trackEvent('story_started', { world_id: options.worldId() });
+			trackEvent('story_started', {
+				world_id: options.rootWorldId(),
+				session_id: options.sessionId()
+			});
 		}
 		trackEvent('story_choice_made', {
-			world_id: options.worldId(),
+			world_id: options.rootWorldId(),
+			session_id: options.sessionId(),
 			choice_type: 'preset',
 			source: 'client'
 		});
@@ -60,7 +65,8 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 		const node = options.currentNode();
 		if (!node || options.loading() || options.isProcessingChoice()) return;
 		trackEvent('story_choice_made', {
-			world_id: options.worldId(),
+			world_id: options.rootWorldId(),
+			session_id: options.sessionId(),
 			choice_type: 'custom',
 			source: 'client'
 		});
@@ -88,7 +94,8 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 
 			options.setCurrentNodeOverride(newNode);
 			goto(
-				options.routeForNode?.(newNode.id) ?? `/worlds/${options.worldId()}/nodes/${newNode.id}`,
+				options.routeForNode?.(newNode.id) ??
+					`/sessions/${options.sessionId()}/nodes/${newNode.id}`,
 				{
 					replaceState: false,
 					noScroll: true
@@ -97,7 +104,7 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 
 			if (newNode.generation_status === 'initialized') {
 				options.stream.setGeneratingNodeId(newNode.id);
-				await options.stream.startGeneration(options.worldId(), newNode.id, { setLoading: true });
+				await options.stream.startGeneration(options.sessionId(), newNode.id, { setLoading: true });
 				return;
 			}
 		} catch (err) {
@@ -106,16 +113,19 @@ export function useChoiceExecution(options: UseChoiceExecutionOptions) {
 			if (err instanceof ApiError && err.isQuotaExceeded) {
 				options.stream.showQuotaPrompt = true;
 				queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
-				goto(options.routeForNode?.(node.id) ?? `/worlds/${options.worldId()}/nodes/${node.id}`, {
-					replaceState: true,
-					noScroll: true
-				});
+				goto(
+					options.routeForNode?.(node.id) ?? `/sessions/${options.sessionId()}/nodes/${node.id}`,
+					{
+						replaceState: true,
+						noScroll: true
+					}
+				);
 				return;
 			}
 
 			if (err instanceof ApiError && err.isNodeProcessingConflict) {
 				try {
-					await retryNodeProcessing(options.worldId(), node.id);
+					await retryNodeProcessing(options.sessionId(), node.id);
 					options.nodeQueryRefetch();
 					showError(
 						'Story node busy',

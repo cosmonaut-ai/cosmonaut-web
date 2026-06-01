@@ -4,6 +4,7 @@
 	import { listAdminUsers, type AdminCognitoUser } from '$lib/api/admin';
 	import { formatDate, shortId, statusClass, tierClass } from '$lib/admin/format';
 	import { queryValue, routeWithQuery } from '$lib/admin/url';
+	import AdminPagination from '$lib/components/admin/AdminPagination.svelte';
 	import CopyButton from '$lib/components/admin/CopyButton.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -186,36 +187,21 @@
 					<p class="mt-4 text-sm text-muted-foreground">No users match the current filters.</p>
 				{/if}
 
-				<div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-					<p class="text-sm text-muted-foreground">
-						Showing {users.length} user{users.length === 1 ? '' : 's'} on this page.
-					</p>
-					<div class="flex gap-2">
-						<Button variant="outline" size="sm" disabled={usersLoading} onclick={refreshUsers}>
-							<RefreshCw class="h-4 w-4" />
-							Refresh
-						</Button>
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={!cursorParam || usersLoading}
-							onclick={goToFirstPage}
-						>
-							First Page
-						</Button>
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={!nextCursor || usersLoading}
-							onclick={goToNextPage}
-						>
-							{#if usersLoading}
-								<Spinner class="h-4 w-4" />
-							{/if}
-							Next Page
-						</Button>
-					</div>
+				<div class="flex justify-end">
+					<Button variant="outline" size="sm" disabled={usersLoading} onclick={refreshUsers}>
+						<RefreshCw class="h-4 w-4" />
+						Refresh
+					</Button>
 				</div>
+				<AdminPagination
+					count={users.length}
+					label="user"
+					hasPrevious={!!cursorParam}
+					hasNext={!!nextCursor}
+					loading={usersLoading}
+					onFirst={goToFirstPage}
+					onNext={goToNextPage}
+				/>
 			{/if}
 		</CardContent>
 	</Card>

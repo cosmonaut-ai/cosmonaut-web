@@ -4,7 +4,8 @@
 	import { onMount } from 'svelte';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { NodeTypes } from '@xyflow/svelte';
-	import { useWorld, useWorldNodes } from '$lib/queries';
+	import { useSessionNodes } from '$lib/queries';
+	import { getSessionContext } from '$lib/contexts/session';
 	import { transformNodesToFlow } from '$lib/utils/nodeTransform';
 	import FlowNode from '$lib/components/shared/FlowNode.svelte';
 	import StoryGraph from '$lib/components/shared/StoryGraph.svelte';
@@ -14,12 +15,19 @@
 	import { BookOpen, Rocket } from '@lucide/svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
-	const worldId = $derived(page.params.worldId!);
-	onMount(() => trackEvent('map_viewed', { world_id: worldId }));
-	const worldQuery = useWorld(() => worldId);
-	const nodesQuery = useWorldNodes(() => worldId);
-	const rootNodeId = $derived(worldQuery.data?.root_node_id ?? null);
+	const sessionId = $derived(page.params.sessionId!);
+	const sessionQuery = getSessionContext();
+	const session = $derived(sessionQuery.data);
+	const rootNodeId = $derived(session?.world.root_node_id ?? null);
 
+	onMount(() =>
+		trackEvent('map_viewed', {
+			world_id: session?.root_world_id ?? sessionId,
+			session_id: sessionId
+		})
+	);
+
+	const nodesQuery = useSessionNodes(() => sessionId);
 	const storyNodes = $derived(nodesQuery.data ?? []);
 	const isLoading = $derived(nodesQuery.isLoading);
 	const currentNodeId = $derived(page.url.searchParams.get('node'));
@@ -29,7 +37,7 @@
 		searchParams.delete('node');
 
 		const query = searchParams.toString();
-		return `/worlds/${worldId}/nodes/${nodeId}${query ? `?${query}` : ''}`;
+		return `/sessions/${sessionId}/nodes/${nodeId}${query ? `?${query}` : ''}`;
 	}
 
 	function handleNodeClick(nodeId: string) {
@@ -47,6 +55,7 @@
 		if (!storyNodes.length) return { nodes: [], edges: [] };
 		const result = transformNodesToFlow(storyNodes);
 		result.nodes.forEach((node) => {
+			node.data.sessionId = sessionId;
 			node.data.onNodeClick = handleNodeClick;
 			node.data.isCurrent = node.id === currentNodeId;
 		});
@@ -61,12 +70,11 @@
 	} as NodeTypes;
 
 	function handleBackToStory() {
-		const url = currentNodeId ? routeForNode(currentNodeId) : `/worlds/${worldId}`;
+		const url = currentNodeId ? routeForNode(currentNodeId) : `/sessions/${sessionId}`;
 		goto(url);
 	}
 </script>
 
-<!-- WorldHeader is rendered by the layout -->
 <div class="relative h-full w-full">
 	{#if isLoading}
 		<div
@@ -75,7 +83,6 @@
 			aria-label="Loading story map"
 		>
 			<div class="flex flex-col items-center gap-4">
-				<!-- Skeleton placeholder mimicking the graph layout -->
 				<div class="flex items-center gap-6">
 					<Skeleton class="h-10 w-24 rounded-lg" />
 					<Skeleton class="h-1 w-12 rounded" />
@@ -146,20 +153,17 @@
 </div>
 
 <style>
-	/* Legend badge styling matching flow node colors */
 	:global(.legend-badge) {
 		border-width: 2px !important;
 	}
 
 	:global(.legend-badge-start) {
-		/* Green (green-500) */
 		background-color: color-mix(in oklch, oklch(0.723 0.219 142.5) 15%, var(--card)) !important;
 		border-color: oklch(0.723 0.219 142.5) !important;
 		color: oklch(0.723 0.219 142.5) !important;
 	}
 
 	:global(.legend-badge-end) {
-		/* Orange (orange-500) */
 		background-color: color-mix(in oklch, oklch(0.705 0.191 47.604) 15%, var(--card)) !important;
 		border-color: oklch(0.705 0.191 47.604) !important;
 		color: oklch(0.705 0.191 47.604) !important;
@@ -171,7 +175,6 @@
 		color: var(--chart-2) !important;
 	}
 
-	/* Dark theme styling for SvelteFlow - using oklch color format */
 	:global(.svelte-flow) {
 		background-color: var(--background) !important;
 	}

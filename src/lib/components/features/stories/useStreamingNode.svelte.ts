@@ -7,7 +7,7 @@ import { ApiError, type StoryNode } from '$lib/types/api';
 import type { StoryNodeGenerationStatus } from '$lib/types/api';
 
 export interface UseStreamingNodeOptions {
-	worldId: () => string;
+	sessionId: () => string;
 	nodeId: () => string;
 	effectiveNodeId: () => string | undefined;
 	effectiveNodeStatus: () => StoryNodeGenerationStatus | undefined;
@@ -34,7 +34,7 @@ export interface UseStreamingNodeOptions {
  */
 export function useStreamingNode(options: UseStreamingNodeOptions) {
 	const {
-		worldId,
+		sessionId,
 		nodeId,
 		effectiveNodeId,
 		effectiveNodeStatus,
@@ -77,7 +77,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 
 	/** Start text generation for a node. Updates streaming state via callback. */
 	function startGeneration(
-		worldIdVal: string,
+		sessionIdVal: string,
 		nodeIdVal: string,
 		opts?: { setLoading?: boolean }
 	): Promise<StoryNode | void> {
@@ -93,7 +93,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 		if (opts?.setLoading) setLoading(true);
 
 		return generateNodeText(
-			worldIdVal,
+			sessionIdVal,
 			nodeIdVal,
 			(text, done) => {
 				if (signal.aborted) return;
@@ -104,7 +104,7 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 		)
 			.then((completedNode) => {
 				if (signal.aborted) return;
-				updateNodeInCache(queryClient, worldIdVal, completedNode);
+				updateNodeInCache(queryClient, sessionIdVal, completedNode);
 				pendingNode = completedNode;
 				isStreaming = false;
 				return completedNode;
@@ -138,9 +138,9 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 				// Stream may have been interrupted (network stutter) while the backend
 				// continues generating. Check actual node status before showing an error.
 				try {
-					const freshNode = await getNode(worldIdVal, nodeIdVal);
+					const freshNode = await getNode(sessionIdVal, nodeIdVal);
 
-					updateNodeInCache(queryClient, worldIdVal, freshNode);
+					updateNodeInCache(queryClient, sessionIdVal, freshNode);
 					setCurrentNodeOverride(null);
 
 					if (freshNode.generation_status === 'generating') {
@@ -200,10 +200,10 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 
 		if (currentStatus === 'initialized') {
 			const nodeIdToGenerate = currentId;
-			const currentWorldId = worldId();
+			const currentSessionId = sessionId();
 
 			untrack(() => {
-				startGeneration(currentWorldId, nodeIdToGenerate, { setLoading: true });
+				startGeneration(currentSessionId, nodeIdToGenerate, { setLoading: true });
 			});
 		}
 	});
@@ -218,6 +218,13 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 				generatingNodeId = null;
 			}
 		}
+	});
+
+	// Abort in-flight streaming when the component unmounts
+	$effect(() => {
+		return () => {
+			abortStream();
+		};
 	});
 
 	return {

@@ -5,21 +5,7 @@ import {
 	invalidateStreamingSession,
 	handleSessionExpired
 } from '$lib/auth/auth.svelte';
-import { logger } from '$lib/utils/logger';
-
-/**
- * Build auth headers from the current token.
- */
-async function buildAuthHeaders(forceRefresh = false): Promise<Record<string, string>> {
-	const token = await getAuthToken(forceRefresh);
-	const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-	if (token) {
-		headers['Authorization'] = `Bearer ${token}`;
-	} else if (!isLocalEnvironment) {
-		logger.warn('No auth token available for API request');
-	}
-	return headers;
-}
+import { getAuthHeaders } from './core';
 
 interface FetchWithAuthRetryOptions {
 	credentials?: RequestCredentials;
@@ -37,7 +23,7 @@ export async function fetchWithAuthRetry(
 ): Promise<Response> {
 	const { credentials, handleExpired = true, signal: optionSignal } = options;
 	const signal = optionSignal ?? init.signal;
-	const headers = await buildAuthHeaders();
+	const headers = await getAuthHeaders();
 
 	const fetchOpts: RequestInit = {
 		...init,
@@ -54,7 +40,7 @@ export async function fetchWithAuthRetry(
 		await refreshStreamingSession();
 
 		if (token) {
-			const retryHeaders = await buildAuthHeaders();
+			const retryHeaders = await getAuthHeaders();
 			const retryOpts: RequestInit = {
 				...init,
 				headers: { ...retryHeaders, ...(init.headers as Record<string, string>) },

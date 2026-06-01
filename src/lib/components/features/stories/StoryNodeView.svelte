@@ -4,7 +4,7 @@
 	import { page } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { useNode, useUser } from '$lib/queries';
-	import { getWorldContext } from '$lib/contexts/world';
+	import { getSessionContext } from '$lib/contexts/session';
 	import { getImmersiveStoryContext } from '$lib/contexts/immersiveStory.svelte';
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
@@ -29,12 +29,12 @@
 	import { ChevronLeft, Undo, RotateCcw, TriangleAlert, Map, Rocket, Share2 } from '@lucide/svelte';
 
 	interface Props {
-		worldId: string;
+		sessionId: string;
 		rootNodeId: string | null;
 		nodeId: string;
 	}
 
-	let { worldId, rootNodeId, nodeId }: Props = $props();
+	let { sessionId, rootNodeId, nodeId }: Props = $props();
 
 	let currentNodeOverride = $state.raw<StoryNode | null>(null);
 	let loading = $state(false);
@@ -74,7 +74,7 @@
 		}
 
 		const query = searchParams.toString();
-		return `/worlds/${worldId}/nodes/${targetNodeId}${query ? `?${query}` : ''}`;
+		return `/sessions/${sessionId}/nodes/${targetNodeId}${query ? `?${query}` : ''}`;
 	}
 
 	function routeForMap(): string {
@@ -90,20 +90,22 @@
 		}
 
 		const query = searchParams.toString();
-		return `/worlds/${worldId}/graph${query ? `?${query}` : ''}`;
+		return `/sessions/${sessionId}/graph${query ? `?${query}` : ''}`;
 	}
 
 	// Use TanStack Query for node data (pass getters to ensure reactivity)
 	// Enable polling when node is in 'generating' status
 	const nodeQuery = useNode(
-		() => worldId,
+		() => sessionId,
 		() => nodeId,
 		{ enablePolling: true }
 	);
 
-	// ── World data for progress estimates and ShareModal ──
-	const worldQuery = getWorldContext();
-	const world = $derived(worldQuery.data);
+	// ── Session/world data for progress estimates and ShareModal ──
+	const sessionQuery = getSessionContext();
+	const session = $derived(sessionQuery.data);
+	const world = $derived(session?.world);
+	const rootWorldId = $derived(session?.root_world_id ?? world?.id ?? sessionId);
 
 	// Get stable values - prefer override (most recent) over query data
 	const effectiveNodeId = $derived(currentNodeOverride?.id ?? nodeQuery.data?.id);
@@ -111,7 +113,7 @@
 		currentNodeOverride?.generation_status ?? nodeQuery.data?.generation_status
 	);
 	const stream = useStreamingNode({
-		worldId: () => worldId,
+		sessionId: () => sessionId,
 		nodeId: () => nodeId,
 		effectiveNodeId: () => effectiveNodeId,
 		effectiveNodeStatus: () => effectiveNodeStatus,
@@ -218,7 +220,8 @@
 	});
 
 	const choices = useChoiceExecution({
-		worldId: () => worldId,
+		sessionId: () => sessionId,
+		rootWorldId: () => rootWorldId,
 		currentNode: () => currentNode,
 		isProcessingChoice: () => isProcessingChoice,
 		loading: () => loading,
@@ -278,7 +281,7 @@
 
 	async function handleRestart() {
 		if (!rootNodeId) return;
-		trackEvent('story_restarted', { world_id: worldId });
+		trackEvent('story_restarted', { world_id: rootWorldId, session_id: sessionId });
 		choices.cancel();
 		stream.abortStream();
 		slideDirection = 'back';
@@ -297,7 +300,7 @@
 	async function handleRetryGeneration() {
 		if (!currentNode || stream.isStreaming) return;
 		stream.setGeneratingNodeId(currentNode.id);
-		await stream.startGeneration(worldId, currentNode.id, { setLoading: true });
+		await stream.startGeneration(sessionId, currentNode.id, { setLoading: true });
 	}
 
 	const isEnding = $derived(
@@ -307,9 +310,15 @@
 	const canGoBack = $derived(!!currentNode?.parent_id);
 	const pathLength = $derived((currentNode?.ancestors?.length || 0) + 1);
 
+	let lastTrackedEndingNodeId = $state<string | null>(null);
 	$effect(() => {
-		if (isEnding) {
-			trackEvent('story_ended', { world_id: worldId, path_length: pathLength });
+		if (isEnding && currentNode?.id && currentNode.id !== lastTrackedEndingNodeId) {
+			lastTrackedEndingNodeId = currentNode.id;
+			trackEvent('story_ended', {
+				world_id: rootWorldId,
+				session_id: sessionId,
+				path_length: pathLength
+			});
 		}
 	});
 
@@ -379,7 +388,8 @@
 				Map
 			</Button>
 			<AudioNarration
-				{worldId}
+				{sessionId}
+				{rootWorldId}
 				nodeId={currentNode?.id ?? nodeId}
 				audio={currentNode?.audio ?? {}}
 				isNodeCompleted={currentNode?.generation_status === 'completed'}
@@ -500,12 +510,12 @@
 					path, or explore the map to find your way.
 				</p>
 				<div class="flex gap-3">
-					<Button variant="outline" onclick={() => goto(`/worlds/${worldId}/map`)}>
+					<Button variant="outline" onclick={() => goto(`/sessions/${sessionId}/map`)}>
 						<Map class="mr-2 h-4 w-4" />
 						View Map
 					</Button>
 					{#if rootNodeId}
-						<Button onclick={() => goto(`/worlds/${worldId}/nodes/${rootNodeId}`)}>
+						<Button onclick={() => goto(`/sessions/${sessionId}/nodes/${rootNodeId}`)}>
 							Start from Beginning
 						</Button>
 					{/if}
@@ -538,7 +548,7 @@
 				<div class="flex flex-col gap-3 sm:flex-row">
 					<Button
 						variant="outline"
-						onclick={() => goto(`/worlds/${worldId}/map`)}
+						onclick={() => goto(`/sessions/${sessionId}/map`)}
 						disabled={isProcessingChoice}
 					>
 						<Map class="mr-2 h-4 w-4" />
@@ -574,7 +584,7 @@
 			{world}
 			open={shareModalOpen}
 			onOpenChange={(open) => (shareModalOpen = open)}
-			onWorldUpdate={() => worldQuery.refetch()}
+			onWorldUpdate={() => sessionQuery.refetch()}
 			isOwner={world.author_id === auth.user?.sub}
 		/>
 	{/if}

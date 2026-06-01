@@ -64,19 +64,17 @@
 		}
 	}
 
-	const updateMutation = $derived.by(() => useUpdateWorldSharing(worldId));
+	const updateMutation = useUpdateWorldSharing(() => worldId);
 	const saving = $derived(updateMutation.isPending);
 
 	const isPrivate = $derived(visibility === 'private');
 
-	const inviteTokenQuery = $derived.by(() =>
-		useInviteToken(
-			() => worldId,
-			() => open && isOwner && isPrivate
-		)
+	const inviteTokenQuery = useInviteToken(
+		() => worldId,
+		() => open && isOwner && isPrivate
 	);
-	const createTokenMutation = $derived.by(() => useCreateInviteToken(worldId));
-	const deleteTokenMutation = $derived.by(() => useDeleteInviteToken(worldId));
+	const createTokenMutation = useCreateInviteToken(() => worldId);
+	const deleteTokenMutation = useDeleteInviteToken(() => worldId);
 	const activeToken = $derived(inviteTokenQuery.data as InviteToken | null | undefined);
 	const isLoadingInviteToken = $derived(inviteTokenQuery.isLoading && !inviteTokenQuery.data);
 	let isCreatingToken = $state(false);

@@ -1,32 +1,17 @@
 import type {
 	World,
 	CreateWorldRequest,
+	CreateWorldResponse,
 	UpdateWorldSharingRequest,
 	InviteToken
 } from '$lib/types/api';
 import { API_BASE_URL } from '$lib/config';
 import { apiRequest } from './core';
 
-/** Paginated response from the worlds list endpoint */
-export interface PaginatedWorldsResponse {
-	items: World[];
-	next_cursor: string | null;
-}
-
 /** Display info returned by the user batch-lookup endpoint */
 export interface UserInfo {
 	id: string;
 	display_name: string;
-}
-
-/**
- * Fetch a single page of worlds for the authenticated user.
- * Pass a cursor from a previous response to fetch subsequent pages.
- */
-export async function getWorlds(cursor?: string | null): Promise<PaginatedWorldsResponse> {
-	const url = new URL(`${API_BASE_URL}/worlds/`);
-	if (cursor) url.searchParams.set('cursor', cursor);
-	return apiRequest<PaginatedWorldsResponse>(url.toString());
 }
 
 /**
@@ -46,11 +31,11 @@ export async function getWorld(worldId: string, invite?: string | null): Promise
 }
 
 /**
- * Create a new world (unified async endpoint)
- * Returns immediately with initial world data; poll getWorld() for completion
+ * Create a new world and the owner's initial playthrough session.
+ * Returns immediately; poll the returned session for generation completion.
  */
-export async function createWorld(data: CreateWorldRequest): Promise<World> {
-	return apiRequest<World>(`${API_BASE_URL}/worlds/`, {
+export async function createWorld(data: CreateWorldRequest): Promise<CreateWorldResponse> {
+	return apiRequest<CreateWorldResponse>(`${API_BASE_URL}/worlds/`, {
 		method: 'POST',
 		body: JSON.stringify(data)
 	});
@@ -67,13 +52,6 @@ export async function updateWorldSharing(
 		method: 'POST',
 		body: JSON.stringify(data)
 	});
-}
-
-/**
- * Remove a world from the user's library (deletes their session).
- */
-export async function deleteWorld(worldId: string): Promise<void> {
-	await apiRequest<void>(`${API_BASE_URL}/worlds/${worldId}`, { method: 'DELETE' });
 }
 
 // ---------------------------------------------------------------------------

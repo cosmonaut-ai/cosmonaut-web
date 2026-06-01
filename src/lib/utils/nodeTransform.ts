@@ -4,6 +4,7 @@ import { logger } from '$lib/utils/logger';
 
 export interface FlowNodeData extends Record<string, unknown> {
 	storyNode: StoryNode;
+	sessionId?: string;
 	isRoot: boolean;
 	isLeaf: boolean;
 	isCurrent?: boolean;
