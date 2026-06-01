@@ -212,6 +212,17 @@
 		media.narrationHasStartedPlayback = false;
 	}
 
+	function handleClose() {
+		if (narrationElement) {
+			narrationElement.pause();
+		}
+		soundtrack.stop();
+		media.clearNarration();
+		media.soundtrackStarted = false;
+		lastStartedPlaylistId = null;
+		media.hideBar();
+	}
+
 	// ── Computed ──
 	const shouldShowBar = $derived(
 		media.barVisible &&
@@ -241,5 +252,5 @@
 <audio bind:this={soundtrackB} preload="none"></audio>
 
 {#if shouldShowBar}
-	<SessionMediaBar onTogglePlayPause={togglePlayPause} onSeek={handleSeek} />
+	<SessionMediaBar onTogglePlayPause={togglePlayPause} onSeek={handleSeek} onClose={handleClose} />
 {/if}

@@ -32,7 +32,7 @@
 
 	const IMMERSIVE_QUERY_PARAM = 'immersive';
 	const immersiveStory = setImmersiveStoryContext();
-	setSessionMediaContext();
+	const media = setSessionMediaContext();
 
 	function immersiveParamEnabled(value: string | null): boolean {
 		return value === '1' || value === 'true';
@@ -211,7 +211,10 @@
 {:else if isGraphPage || isMapPage}
 	<div class="absolute inset-0 flex flex-col bg-background">
 		<WorldHeader {world} {sessionId} />
-		<div class="min-h-0 flex-1">
+		<div
+			class="min-h-0 flex-1 transition-[padding-bottom] duration-300"
+			style:padding-bottom={media.barVisible ? '4rem' : '0px'}
+		>
 			{@render children()}
 		</div>
 	</div>
