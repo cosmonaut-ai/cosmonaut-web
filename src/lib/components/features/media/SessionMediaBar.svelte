@@ -172,7 +172,7 @@
 				aria-label="Volume controls"
 			>
 				{#if hasPlayableNarration}
-					<div class="flex min-w-32 flex-col gap-0.5" role="group" aria-label="Narration volume">
+					<div class="flex min-w-24 flex-col gap-0.5" role="group" aria-label="Narration volume">
 						<span
 							class="px-1 text-[0.625rem] leading-none {immersive
 								? 'text-white/55'
@@ -205,7 +205,7 @@
 								oninput={handleNarrationVolumeInput}
 								onchange={handleNarrationVolumeInput}
 								aria-label="Narration volume"
-								class="volume-range h-5 w-24 cursor-pointer appearance-none rounded-full bg-transparent"
+								class="volume-range h-5 w-16 cursor-pointer appearance-none rounded-full bg-transparent"
 								style="--vol-progress: {narrationVolumeProgress}%"
 							/>
 						</div>
@@ -213,7 +213,7 @@
 				{/if}
 
 				{#if hasSoundtrack}
-					<div class="flex min-w-32 flex-col gap-0.5" role="group" aria-label="Music volume">
+					<div class="flex min-w-24 flex-col gap-0.5" role="group" aria-label="Music volume">
 						<span
 							class="px-1 text-[0.625rem] leading-none {immersive
 								? 'text-white/55'
@@ -244,7 +244,7 @@
 								oninput={handleSoundtrackVolumeInput}
 								onchange={handleSoundtrackVolumeInput}
 								aria-label="Music volume"
-								class="volume-range h-5 w-24 cursor-pointer appearance-none rounded-full bg-transparent"
+								class="volume-range h-5 w-16 cursor-pointer appearance-none rounded-full bg-transparent"
 								style="--vol-progress: {soundtrackVolumeProgress}%"
 							/>
 						</div>
@@ -298,7 +298,7 @@
 				<DropdownMenu.Content
 					side="top"
 					align="end"
-					class="w-72 max-w-[calc(100vw-1rem)]"
+					class="w-56 max-w-[calc(100vw-1rem)]"
 					preventScroll={false}
 				>
 					{#if hasVolumeControls}
@@ -608,6 +608,34 @@
 
 	.media-bar-immersive .volume-range::-moz-range-thumb {
 		background: rgb(255 255 255 / 0.72);
+	}
+
+	.volume-range {
+		touch-action: pan-y;
+	}
+
+	@media (pointer: coarse) {
+		.volume-range {
+			height: 2rem;
+			min-height: 2rem;
+		}
+
+		.volume-range::-webkit-slider-thumb {
+			width: 16px;
+			height: 16px;
+			margin-top: -5px;
+		}
+
+		.volume-range::-moz-range-thumb {
+			width: 16px;
+			height: 16px;
+		}
+
+		.volume-range::-webkit-slider-runnable-track,
+		.volume-range::-moz-range-track,
+		.volume-range::-moz-range-progress {
+			height: 6px;
+		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {

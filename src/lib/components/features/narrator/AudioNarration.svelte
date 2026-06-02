@@ -94,13 +94,10 @@
 
 	// Sync generation state to context
 	$effect(() => {
-		media.narrationIsGenerating = isGenerating;
-	});
-	$effect(() => {
-		if (isGenerating && media.narrationGenerationStartedAt === null) {
-			media.narrationGenerationStartedAt = Date.now();
-		} else if (!isGenerating && media.narrationGenerationStartedAt !== null) {
-			media.narrationGenerationStartedAt = null;
+		if (isGenerating) {
+			media.startNarrationGeneration(nodeId);
+		} else {
+			media.finishNarrationGeneration(nodeId);
 		}
 	});
 

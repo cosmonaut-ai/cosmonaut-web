@@ -121,6 +121,9 @@
 	// Read narration state from session media context
 	const activeNarrationNodeId = $derived(currentNode?.id ?? nodeId);
 	const narrationMatchesCurrentNode = $derived(media.narrationNodeId === activeNarrationNodeId);
+	const narrationGenerationMatchesCurrentNode = $derived(
+		media.narrationGenerationNodeId === activeNarrationNodeId
+	);
 	const currentNarrationTime = $derived(
 		narrationMatchesCurrentNode ? media.narrationCurrentTime : 0
 	);
@@ -134,7 +137,7 @@
 		narrationMatchesCurrentNode ? media.narrationTimestampsUrl : null
 	);
 	const currentNarrationGenerating = $derived(
-		narrationMatchesCurrentNode ? media.narrationIsGenerating : false
+		narrationGenerationMatchesCurrentNode ? media.narrationIsGenerating : false
 	);
 	const wordSeekEnabled = $derived(
 		narrationMatchesCurrentNode &&
@@ -163,7 +166,9 @@
 	const narrationGenerationProgress = $derived(
 		estimateNarrationGenerationProgress({
 			isGenerating: currentNarrationGenerating,
-			generationStartedAt: narrationMatchesCurrentNode ? media.narrationGenerationStartedAt : null,
+			generationStartedAt: narrationGenerationMatchesCurrentNode
+				? media.narrationGenerationStartedAt
+				: null,
 			now: progressClock
 		})
 	);

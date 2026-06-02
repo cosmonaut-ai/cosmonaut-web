@@ -58,6 +58,7 @@ export class SessionMediaState {
 	narrationNodeId = $state<string | null>(null);
 	narrationUrl = $state<string | null>(null);
 	narrationTimestampsUrl = $state<string | null>(null);
+	narrationGenerationNodeId = $state<string | null>(null);
 	narrationIsGenerating = $state(false);
 	narrationGenerationStartedAt = $state<number | null>(null);
 	narrationHasAudio = $state(false);
@@ -99,6 +100,9 @@ export class SessionMediaState {
 		this.narrationNodeId = nodeId;
 		this.narrationUrl = url;
 		this.narrationTimestampsUrl = timestampsUrl ?? null;
+		if (this.narrationGenerationNodeId === nodeId) {
+			this.finishNarrationGeneration(nodeId);
+		}
 		this.narrationHasAudio = true;
 		this.narrationCaptionsUnavailable = !!url && !timestampsUrl;
 		this.narrationEnded = false;
@@ -109,6 +113,7 @@ export class SessionMediaState {
 		this.narrationNodeId = null;
 		this.narrationUrl = null;
 		this.narrationTimestampsUrl = null;
+		this.narrationGenerationNodeId = null;
 		this.narrationHasAudio = false;
 		this.narrationCaptionsUnavailable = false;
 		this.narrationIsGenerating = false;
@@ -118,6 +123,23 @@ export class SessionMediaState {
 		this.narrationPaused = true;
 		this.narrationEnded = false;
 		this.narrationHasStartedPlayback = false;
+	}
+
+	startNarrationGeneration(nodeId: string) {
+		if (this.narrationGenerationNodeId !== nodeId) {
+			this.narrationGenerationNodeId = nodeId;
+			this.narrationGenerationStartedAt = Date.now();
+		}
+		this.narrationIsGenerating = true;
+	}
+
+	finishNarrationGeneration(nodeId?: string) {
+		if (nodeId && this.narrationGenerationNodeId && this.narrationGenerationNodeId !== nodeId) {
+			return;
+		}
+		this.narrationIsGenerating = false;
+		this.narrationGenerationNodeId = null;
+		this.narrationGenerationStartedAt = null;
 	}
 
 	showBar() {
