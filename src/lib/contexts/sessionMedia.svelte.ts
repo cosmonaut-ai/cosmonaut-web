@@ -82,7 +82,7 @@ export class SessionMediaState {
 	soundtrackEnabled = $state(loadBool(SOUNDTRACK_ENABLED_KEY, true));
 	soundtrackVolume = $state(loadFloat(SOUNDTRACK_VOLUME_KEY, DEFAULT_SOUNDTRACK_VOLUME));
 	private soundtrackPreviousVolume = $state(DEFAULT_SOUNDTRACK_VOLUME);
-	soundtrackMuted = $state(false);
+	soundtrackMuted = $state(this.soundtrackVolume <= 0);
 
 	// ── UI state ──
 	barVisible = $state(false);
@@ -140,7 +140,7 @@ export class SessionMediaState {
 	toggleNarrationMute() {
 		if (this.narrationVolume > 0) {
 			this.narrationPreviousVolume = this.narrationVolume;
-			this.narrationVolume = 0;
+			this.setNarrationVolume(0);
 		} else {
 			this.setNarrationVolume(this.narrationPreviousVolume > 0 ? this.narrationPreviousVolume : 1);
 		}
@@ -184,7 +184,6 @@ export class SessionMediaState {
 
 	toggleSoundtrackMute() {
 		if (this.soundtrackMuted) {
-			this.soundtrackMuted = false;
 			this.setSoundtrackVolume(
 				this.soundtrackPreviousVolume > 0
 					? this.soundtrackPreviousVolume
@@ -192,7 +191,7 @@ export class SessionMediaState {
 			);
 		} else {
 			this.soundtrackPreviousVolume = this.soundtrackVolume;
-			this.soundtrackMuted = true;
+			this.setSoundtrackVolume(0);
 		}
 	}
 

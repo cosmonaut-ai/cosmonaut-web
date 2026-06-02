@@ -1,7 +1,11 @@
 import type { PlaylistTrack } from '$lib/types/api';
+import { applyMediaVolume, resumeMediaVolumeContext } from '$lib/utils/mediaVolume';
 
-const CROSSFADE_DURATION_MS = 3000;
-const CROSSFADE_LEAD_SECONDS = 3;
+const PRELOAD_LEAD_SECONDS = 18;
+const CROSSFADE_LEAD_SECONDS = 8;
+const CROSSFADE_DURATION_MS = 6500;
+const MIN_CROSSFADE_DURATION_MS = 1200;
+const CROSSFADE_END_BUFFER_MS = 400;
 
 interface SoundtrackElements {
 	a: HTMLAudioElement;
@@ -25,6 +29,12 @@ export function useSoundtrackPlayer() {
 	let elements: SoundtrackElements | null = null;
 	let activeSlot: 'a' | 'b' = 'a';
 	let crossfadeRafId: number | null = null;
+	let transitionRequestId = 0;
+	let prepareRequestId = 0;
+	let preparedNextIndex: number | null = null;
+	let preparingNextIndex: number | null = null;
+	let prepareNextPromise: Promise<boolean> | null = null;
+	let crossfadePending = false;
 	let crossfading = false;
 	let crossfadeProgress = 0;
 
@@ -41,6 +51,14 @@ export function useSoundtrackPlayer() {
 		return muted ? 0 : targetVolume;
 	}
 
+	function crossfadeVolumes(progress: number) {
+		const clamped = Math.min(1, Math.max(0, progress));
+		return {
+			active: Math.cos(clamped * (Math.PI / 2)),
+			idle: Math.sin(clamped * (Math.PI / 2))
+		};
+	}
+
 	function applyVolumeToElements() {
 		if (!elements) return;
 
@@ -49,36 +67,85 @@ export function useSoundtrackPlayer() {
 		const idle = idleEl();
 
 		if (crossfading) {
-			if (active) active.volume = Math.max(0, volume * (1 - crossfadeProgress));
-			if (idle) idle.volume = volume * crossfadeProgress;
+			const fade = crossfadeVolumes(crossfadeProgress);
+			applyMediaVolume(active, volume * fade.active);
+			applyMediaVolume(idle, volume * fade.idle);
 			return;
 		}
 
-		if (active) active.volume = volume;
-		if (idle) idle.volume = 0;
+		applyMediaVolume(active, volume);
+		applyMediaVolume(idle, 0);
 	}
 
 	function nextIndex(): number {
 		return (currentIndex + 1) % tracks.length;
 	}
 
-	function cancelCrossfade() {
+	function trackDurationSeconds(element: HTMLAudioElement): number | null {
+		if (Number.isFinite(element.duration) && element.duration > 0) return element.duration;
+
+		const declaredDuration = tracks[currentIndex]?.duration_seconds;
+		if (Number.isFinite(declaredDuration) && declaredDuration && declaredDuration > 0) {
+			return declaredDuration;
+		}
+
+		return null;
+	}
+
+	function remainingSeconds(element: HTMLAudioElement): number | null {
+		const duration = trackDurationSeconds(element);
+		if (duration === null) return null;
+		return duration - element.currentTime;
+	}
+
+	function crossfadeDurationMs(element: HTMLAudioElement): number {
+		const remaining = remainingSeconds(element);
+		if (remaining === null) return CROSSFADE_DURATION_MS;
+
+		const available = Math.max(0, remaining * 1000 - CROSSFADE_END_BUFFER_MS);
+		if (available <= MIN_CROSSFADE_DURATION_MS) return available;
+		return Math.min(CROSSFADE_DURATION_MS, available);
+	}
+
+	function clearAudioSource(element: HTMLAudioElement | null) {
+		if (!element) return;
+		element.pause();
+		element.removeAttribute('src');
+		element.load();
+	}
+
+	function resetPreparedNextTrack() {
+		prepareRequestId += 1;
+		preparedNextIndex = null;
+		preparingNextIndex = null;
+		prepareNextPromise = null;
+	}
+
+	function cancelCrossfade({ keepPrepared = false }: { keepPrepared?: boolean } = {}) {
+		transitionRequestId += 1;
 		if (crossfadeRafId !== null) {
 			cancelAnimationFrame(crossfadeRafId);
 			crossfadeRafId = null;
 		}
+		crossfadePending = false;
 		crossfading = false;
 		crossfadeProgress = 0;
+		if (!keepPrepared) resetPreparedNextTrack();
 		applyVolumeToElements();
 	}
 
 	function handleTimeUpdate() {
 		const el = activeEl();
-		if (!el || crossfading || tracks.length < 1) return;
+		if (!el || crossfadePending || crossfading || tracks.length < 1) return;
 
-		const remaining = el.duration - el.currentTime;
-		if (isFinite(remaining) && remaining <= CROSSFADE_LEAD_SECONDS && remaining > 0) {
-			startCrossfade();
+		const remaining = remainingSeconds(el);
+		if (remaining === null || remaining <= 0) return;
+
+		if (remaining <= PRELOAD_LEAD_SECONDS) {
+			void prepareNextTrack();
+		}
+		if (remaining <= CROSSFADE_LEAD_SECONDS) {
+			void startCrossfade();
 		}
 	}
 
@@ -87,88 +154,203 @@ export function useSoundtrackPlayer() {
 		advanceTrack();
 	}
 
-	function startCrossfade() {
-		if (crossfading || tracks.length < 1) return;
-		crossfading = true;
-
-		const next = nextIndex();
-		const idle = idleEl();
-		const active = activeEl();
-		if (!idle || !active) {
-			crossfading = false;
-			return;
+	function waitForPlayable(element: HTMLAudioElement, requestId: number): Promise<boolean> {
+		if (element.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+			return Promise.resolve(true);
 		}
 
+		return new Promise((resolve) => {
+			let settled = false;
+			const cleanup = () => {
+				element.removeEventListener('canplay', handleReady);
+				element.removeEventListener('loadeddata', handleReady);
+				element.removeEventListener('error', handleError);
+			};
+			const settle = (ready: boolean) => {
+				if (settled) return;
+				settled = true;
+				cleanup();
+				resolve(requestId === prepareRequestId && ready);
+			};
+			const handleReady = () => settle(true);
+			const handleError = () => settle(false);
+
+			element.addEventListener('canplay', handleReady, { once: true });
+			element.addEventListener('loadeddata', handleReady, { once: true });
+			element.addEventListener('error', handleError, { once: true });
+		});
+	}
+
+	function prepareNextTrack(): Promise<boolean> {
+		if (tracks.length < 1) return Promise.resolve(false);
+		const next = nextIndex();
+		const idle = idleEl();
 		const nextTrack = tracks[next];
-		if (!nextTrack?.audio_url) {
-			crossfading = false;
+		if (!idle || !nextTrack?.audio_url) return Promise.resolve(false);
+
+		if (
+			preparedNextIndex === next &&
+			idle.getAttribute('src') === nextTrack.audio_url &&
+			idle.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+		) {
+			return Promise.resolve(true);
+		}
+
+		if (preparingNextIndex === next && prepareNextPromise) {
+			return prepareNextPromise;
+		}
+
+		const requestId = ++prepareRequestId;
+		preparingNextIndex = next;
+		preparedNextIndex = null;
+		idle.crossOrigin = 'anonymous';
+		idle.preload = 'auto';
+		applyMediaVolume(idle, 0);
+
+		if (idle.getAttribute('src') !== nextTrack.audio_url) {
+			idle.pause();
+			idle.src = nextTrack.audio_url;
+			idle.load();
+		} else if (idle.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+			idle.load();
+		}
+
+		prepareNextPromise = waitForPlayable(idle, requestId).then((ready) => {
+			const stillCurrent =
+				requestId === prepareRequestId &&
+				next === nextIndex() &&
+				idle === idleEl() &&
+				idle.getAttribute('src') === nextTrack.audio_url;
+
+			if (requestId === prepareRequestId) {
+				preparingNextIndex = null;
+				prepareNextPromise = null;
+			}
+			if (ready && stillCurrent) {
+				preparedNextIndex = next;
+			}
+
+			return ready && stillCurrent;
+		});
+
+		return prepareNextPromise;
+	}
+
+	function finishCrossfade(previousActive: HTMLAudioElement, next: number) {
+		clearAudioSource(previousActive);
+		activeSlot = activeSlot === 'a' ? 'b' : 'a';
+		currentIndex = next;
+		crossfading = false;
+		crossfadeProgress = 0;
+		crossfadeRafId = null;
+		resetPreparedNextTrack();
+		applyVolumeToElements();
+	}
+
+	async function startCrossfade() {
+		if (crossfadePending || crossfading || tracks.length < 1) return;
+
+		const next = nextIndex();
+		const active = activeEl();
+		const idle = idleEl();
+		if (!idle || !active) return;
+
+		crossfadePending = true;
+		const requestId = ++transitionRequestId;
+		const ready = await prepareNextTrack();
+		if (requestId !== transitionRequestId || !crossfadePending) return;
+
+		const remaining = remainingSeconds(active);
+		if (!ready || active.ended || (remaining !== null && remaining <= 0)) {
+			crossfadePending = false;
 			advanceTrack();
 			return;
 		}
 
-		idle.src = nextTrack.audio_url;
-		idle.volume = 0;
-		idle.load();
-
-		const startFade = () => {
-			idle.play().catch(() => {});
-
-			const fadeActive = active;
-			const start = performance.now();
-			function tick(now: number) {
-				const elapsed = now - start;
-				const progress = Math.min(elapsed / CROSSFADE_DURATION_MS, 1);
-
-				crossfadeProgress = progress;
+		try {
+			resumeMediaVolumeContext();
+			await idle.play();
+		} catch {
+			if (requestId === transitionRequestId) {
+				crossfadePending = false;
 				applyVolumeToElements();
-
-				if (progress < 1) {
-					crossfadeRafId = requestAnimationFrame(tick);
-				} else {
-					fadeActive.pause();
-					fadeActive.removeAttribute('src');
-					fadeActive.load();
-					activeSlot = activeSlot === 'a' ? 'b' : 'a';
-					currentIndex = next;
-					crossfading = false;
-					crossfadeProgress = 0;
-					crossfadeRafId = null;
-					applyVolumeToElements();
-				}
 			}
-
-			crossfadeRafId = requestAnimationFrame(tick);
-		};
-
-		if (idle.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-			startFade();
-		} else {
-			idle.addEventListener('canplay', startFade, { once: true });
-			idle.addEventListener(
-				'error',
-				() => {
-					crossfading = false;
-					advanceTrack();
-				},
-				{ once: true }
-			);
+			return;
 		}
+
+		if (requestId !== transitionRequestId || !crossfadePending) return;
+
+		crossfadePending = false;
+		crossfading = true;
+		crossfadeProgress = 0;
+
+		const fadeActive = active;
+		const durationMs = crossfadeDurationMs(active);
+		if (durationMs <= 0) {
+			finishCrossfade(fadeActive, next);
+			return;
+		}
+
+		const start = performance.now();
+		function tick(now: number) {
+			if (requestId !== transitionRequestId || !crossfading) return;
+
+			const elapsed = now - start;
+			const progress = Math.min(elapsed / durationMs, 1);
+
+			crossfadeProgress = progress;
+			applyVolumeToElements();
+
+			if (progress < 1) {
+				crossfadeRafId = requestAnimationFrame(tick);
+			} else {
+				finishCrossfade(fadeActive, next);
+			}
+		}
+
+		crossfadeRafId = requestAnimationFrame(tick);
 	}
 
 	function advanceTrack() {
-		cancelCrossfade();
+		if (tracks.length < 1) return;
+
+		cancelCrossfade({ keepPrepared: true });
 		const next = nextIndex();
+		const track = tracks[next];
+
+		const preparedIdle = idleEl();
+		const previousActive = activeEl();
+		if (
+			preparedIdle &&
+			track?.audio_url &&
+			preparedNextIndex === next &&
+			preparedIdle.getAttribute('src') === track.audio_url
+		) {
+			clearAudioSource(previousActive);
+			activeSlot = activeSlot === 'a' ? 'b' : 'a';
+			currentIndex = next;
+			resetPreparedNextTrack();
+			applyVolumeToElements();
+			resumeMediaVolumeContext();
+			activeEl()
+				?.play()
+				.catch(() => {});
+			return;
+		}
+
+		resetPreparedNextTrack();
 		currentIndex = next;
 
 		const el = activeEl();
-		const track = tracks[next];
 		if (!el || !track?.audio_url) return;
 
+		el.crossOrigin = 'anonymous';
 		el.src = track.audio_url;
-		el.volume = effectiveVolume();
+		applyMediaVolume(el, effectiveVolume());
 		el.load();
 
 		const play = () => {
+			resumeMediaVolumeContext();
 			el.play().catch(() => {});
 		};
 
@@ -189,6 +371,7 @@ export function useSoundtrackPlayer() {
 	}
 
 	function unbindElements() {
+		cancelCrossfade();
 		if (elements) {
 			elements.a.removeEventListener('timeupdate', handleTimeUpdate);
 			elements.b.removeEventListener('timeupdate', handleTimeUpdate);
@@ -206,16 +389,19 @@ export function useSoundtrackPlayer() {
 		tracks = playable;
 		currentIndex = 0;
 		playing = true;
+		activeSlot = 'a';
 
 		const el = activeEl();
 		const first = playable[0];
 		if (!el || !first.audio_url) return;
 
+		el.crossOrigin = 'anonymous';
 		el.src = first.audio_url;
-		el.volume = effectiveVolume();
+		applyMediaVolume(el, effectiveVolume());
 		el.load();
 
 		const play = () => {
+			resumeMediaVolumeContext();
 			el.play().catch(() => {});
 		};
 
@@ -230,12 +416,8 @@ export function useSoundtrackPlayer() {
 		cancelCrossfade();
 		playing = false;
 		if (elements) {
-			elements.a.pause();
-			elements.b.pause();
-			elements.a.removeAttribute('src');
-			elements.b.removeAttribute('src');
-			elements.a.load();
-			elements.b.load();
+			clearAudioSource(elements.a);
+			clearAudioSource(elements.b);
 		}
 	}
 
@@ -258,6 +440,7 @@ export function useSoundtrackPlayer() {
 		if (!playing || tracks.length === 0) return;
 		const el = activeEl();
 		if (el && el.src) {
+			resumeMediaVolumeContext();
 			el.play().catch(() => {});
 		}
 	}

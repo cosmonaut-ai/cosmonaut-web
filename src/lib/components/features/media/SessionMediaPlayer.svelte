@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { usePlaylist } from '$lib/queries';
 	import { getSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
+	import { applyMediaVolume, resumeMediaVolumeContext } from '$lib/utils/mediaVolume';
 	import { useSoundtrackPlayer } from './useSoundtrackPlayer.svelte';
 	import SessionMediaBar from './SessionMediaBar.svelte';
 
@@ -46,9 +47,7 @@
 
 		if (!element) return;
 
-		if (element.volume !== volume) {
-			element.volume = volume;
-		}
+		applyMediaVolume(element, volume);
 		if (Number.isFinite(playbackRate) && element.playbackRate !== playbackRate) {
 			element.playbackRate = playbackRate;
 		}
@@ -164,6 +163,7 @@
 		if (!ready || requestId !== playRequestId || element !== narrationElement) return false;
 
 		try {
+			resumeMediaVolumeContext();
 			await element.play();
 			return true;
 		} catch {
@@ -175,6 +175,7 @@
 		if (!narrationElement) return;
 		if (narrationPaused) {
 			if (narrationEnded) narrationElement.currentTime = 0;
+			resumeMediaVolumeContext();
 			narrationElement.play().catch(() => {});
 		} else {
 			narrationElement.pause();
@@ -253,6 +254,7 @@
 		bind:paused={narrationPaused}
 		bind:ended={narrationEnded}
 		src={media.narrationUrl}
+		crossorigin="anonymous"
 		preload="auto"
 		onplay={handleNarrationPlay}
 		onerror={handleNarrationError}
@@ -260,8 +262,8 @@
 {/if}
 
 <!-- Soundtrack A/B elements -->
-<audio bind:this={soundtrackA} preload="none"></audio>
-<audio bind:this={soundtrackB} preload="none"></audio>
+<audio bind:this={soundtrackA} crossorigin="anonymous" preload="none"></audio>
+<audio bind:this={soundtrackB} crossorigin="anonymous" preload="none"></audio>
 
 {#if shouldShowBar}
 	<SessionMediaBar onTogglePlayPause={togglePlayPause} onSeek={handleSeek} onClose={handleClose} />

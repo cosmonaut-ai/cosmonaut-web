@@ -18,6 +18,7 @@
 	import { cubicOut } from 'svelte/easing';
 	import { getSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
 	import { getImmersiveStoryContext } from '$lib/contexts/immersiveStory.svelte';
+	import { enableMediaVolumeContext } from '$lib/utils/mediaVolume';
 
 	const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
@@ -42,12 +43,13 @@
 	const soundtrackVolumeProgress = $derived(
 		media.soundtrackMuted ? 0 : media.soundtrackVolume * 100
 	);
+	const narrationMuted = $derived(media.narrationVolume <= 0);
+	const soundtrackMuted = $derived(media.soundtrackMuted || media.soundtrackVolume <= 0);
 
 	const hasNarration = $derived(!!media.narrationUrl || media.narrationIsGenerating);
 	const hasSoundtrack = $derived(media.soundtrackStarted && media.soundtrackEnabled);
 	const hasPlayableNarration = $derived(hasNarration && !media.narrationIsGenerating);
 	const hasVolumeControls = $derived(hasPlayableNarration || hasSoundtrack);
-	const hasBothVolumeControls = $derived(hasPlayableNarration && hasSoundtrack);
 
 	function formatTime(seconds: number): string {
 		if (!isFinite(seconds) || seconds < 0) return '0:00';
@@ -61,11 +63,36 @@
 	}
 
 	function handleNarrationVolumeChange(val: number) {
+		enableMediaVolumeContext();
 		media.setNarrationVolume(val / 100);
 	}
 
 	function handleSoundtrackVolumeChange(val: number) {
+		enableMediaVolumeContext();
 		media.setSoundtrackVolume(val / 100);
+	}
+
+	function handleNarrationMuteClick() {
+		enableMediaVolumeContext();
+		media.toggleNarrationMute();
+	}
+
+	function handleSoundtrackMuteClick() {
+		enableMediaVolumeContext();
+		media.toggleSoundtrackMute();
+	}
+
+	function rangeValue(event: Event): number {
+		const input = event.currentTarget as HTMLInputElement;
+		return Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : Number(input.value);
+	}
+
+	function handleNarrationVolumeInput(event: Event) {
+		handleNarrationVolumeChange(rangeValue(event));
+	}
+
+	function handleSoundtrackVolumeInput(event: Event) {
+		handleSoundtrackVolumeChange(rangeValue(event));
 	}
 
 	function stopMenuEvent(e: Event) {
@@ -140,12 +167,12 @@
 		{#if hasVolumeControls}
 			<!-- Desktop: combined volume controls -->
 			<div
-				class="hidden shrink-0 items-end gap-2 sm:flex"
+				class="hidden shrink-0 flex-col items-stretch gap-1 sm:flex"
 				role="group"
 				aria-label="Volume controls"
 			>
 				{#if hasPlayableNarration}
-					<div class="flex min-w-20 flex-col gap-0.5" role="group" aria-label="Narration volume">
+					<div class="flex min-w-32 flex-col gap-0.5" role="group" aria-label="Narration volume">
 						<span
 							class="px-1 text-[0.625rem] leading-none {immersive
 								? 'text-white/55'
@@ -155,13 +182,13 @@
 							<Button
 								variant="ghost"
 								size="icon-sm"
-								onclick={() => media.toggleNarrationMute()}
-								aria-label={media.narrationVolume === 0 ? 'Unmute narration' : 'Mute narration'}
+								onclick={handleNarrationMuteClick}
+								aria-label={narrationMuted ? 'Unmute narration' : 'Mute narration'}
 								class="shrink-0 {immersive
 									? 'text-white/75 hover:bg-white/10 hover:text-white'
 									: ''}"
 							>
-								{#if media.narrationVolume === 0}
+								{#if narrationMuted}
 									<VolumeX class="h-4 w-4" />
 								{:else if media.narrationVolume < 0.5}
 									<Volume1 class="h-4 w-4" />
@@ -174,9 +201,11 @@
 								min="0"
 								max="100"
 								step="1"
-								bind:value={() => narrationVolumeProgress, handleNarrationVolumeChange}
+								value={narrationVolumeProgress}
+								oninput={handleNarrationVolumeInput}
+								onchange={handleNarrationVolumeInput}
 								aria-label="Narration volume"
-								class="volume-range h-5 w-14 cursor-pointer appearance-none rounded-full bg-transparent"
+								class="volume-range h-5 w-24 cursor-pointer appearance-none rounded-full bg-transparent"
 								style="--vol-progress: {narrationVolumeProgress}%"
 							/>
 						</div>
@@ -184,7 +213,7 @@
 				{/if}
 
 				{#if hasSoundtrack}
-					<div class="flex min-w-20 flex-col gap-0.5" role="group" aria-label="Music volume">
+					<div class="flex min-w-32 flex-col gap-0.5" role="group" aria-label="Music volume">
 						<span
 							class="px-1 text-[0.625rem] leading-none {immersive
 								? 'text-white/55'
@@ -194,13 +223,13 @@
 							<Button
 								variant="ghost"
 								size="icon-sm"
-								onclick={() => media.toggleSoundtrackMute()}
-								aria-label={media.soundtrackMuted ? 'Unmute music' : 'Mute music'}
+								onclick={handleSoundtrackMuteClick}
+								aria-label={soundtrackMuted ? 'Unmute music' : 'Mute music'}
 								class="shrink-0 {immersive
 									? 'text-white/75 hover:bg-white/10 hover:text-white'
 									: ''}"
 							>
-								{#if media.soundtrackMuted}
+								{#if soundtrackMuted}
 									<Music class="h-4 w-4 opacity-50" />
 								{:else}
 									<Music2 class="h-4 w-4" />
@@ -211,9 +240,11 @@
 								min="0"
 								max="100"
 								step="1"
-								bind:value={() => soundtrackVolumeProgress, handleSoundtrackVolumeChange}
+								value={soundtrackVolumeProgress}
+								oninput={handleSoundtrackVolumeInput}
+								onchange={handleSoundtrackVolumeInput}
 								aria-label="Music volume"
-								class="volume-range h-5 w-14 cursor-pointer appearance-none rounded-full bg-transparent"
+								class="volume-range h-5 w-24 cursor-pointer appearance-none rounded-full bg-transparent"
 								style="--vol-progress: {soundtrackVolumeProgress}%"
 							/>
 						</div>
@@ -275,9 +306,7 @@
 							<DropdownMenu.Label>Volume</DropdownMenu.Label>
 							<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 							<div
-								class="grid gap-3 px-2 py-1.5 {hasBothVolumeControls
-									? 'grid-cols-2'
-									: 'grid-cols-1'}"
+								class="grid grid-cols-1 gap-3 px-2 py-1.5"
 								onclick={stopMenuEvent}
 								onkeydown={stopMenuEvent}
 								onpointerdown={stopMenuEvent}
@@ -295,14 +324,12 @@
 												size="icon-sm"
 												onclick={(e) => {
 													stopMenuEvent(e);
-													media.toggleNarrationMute();
+													handleNarrationMuteClick();
 												}}
-												aria-label={media.narrationVolume === 0
-													? 'Unmute narration'
-													: 'Mute narration'}
+												aria-label={narrationMuted ? 'Unmute narration' : 'Mute narration'}
 												class="h-6 w-6 shrink-0"
 											>
-												{#if media.narrationVolume === 0}
+												{#if narrationMuted}
 													<VolumeX class="h-3.5 w-3.5" />
 												{:else if media.narrationVolume < 0.5}
 													<Volume1 class="h-3.5 w-3.5" />
@@ -316,7 +343,9 @@
 											min="0"
 											max="100"
 											step="1"
-											bind:value={() => narrationVolumeProgress, handleNarrationVolumeChange}
+											value={narrationVolumeProgress}
+											oninput={handleNarrationVolumeInput}
+											onchange={handleNarrationVolumeInput}
 											aria-label="Narration volume"
 											class="volume-range h-5 w-full cursor-pointer appearance-none rounded-full bg-transparent"
 											style="--vol-progress: {narrationVolumeProgress}%"
@@ -335,12 +364,12 @@
 												size="icon-sm"
 												onclick={(e) => {
 													stopMenuEvent(e);
-													media.toggleSoundtrackMute();
+													handleSoundtrackMuteClick();
 												}}
-												aria-label={media.soundtrackMuted ? 'Unmute music' : 'Mute music'}
+												aria-label={soundtrackMuted ? 'Unmute music' : 'Mute music'}
 												class="h-6 w-6 shrink-0"
 											>
-												{#if media.soundtrackMuted}
+												{#if soundtrackMuted}
 													<Music class="h-3.5 w-3.5 opacity-50" />
 												{:else}
 													<Music2 class="h-3.5 w-3.5" />
@@ -352,7 +381,9 @@
 											min="0"
 											max="100"
 											step="1"
-											bind:value={() => soundtrackVolumeProgress, handleSoundtrackVolumeChange}
+											value={soundtrackVolumeProgress}
+											oninput={handleSoundtrackVolumeInput}
+											onchange={handleSoundtrackVolumeInput}
 											aria-label="Music volume"
 											class="volume-range h-5 w-full cursor-pointer appearance-none rounded-full bg-transparent"
 											style="--vol-progress: {soundtrackVolumeProgress}%"
