@@ -115,6 +115,7 @@ export interface World {
 	featured_order: number | null;
 	invite_token?: InviteToken | null;
 	default_playlist_id?: string | null;
+	soundtrack_description?: string | null;
 	created_at: string;
 	updated_at: string;
 }

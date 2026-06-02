@@ -307,6 +307,32 @@
 							</p>
 						</div>
 
+						<div class="space-y-2">
+							<p class="text-sm font-medium text-foreground">Soundtrack</p>
+							<div class="space-y-3 rounded-md border border-border p-3 text-sm">
+								<div class="flex flex-wrap items-center justify-between gap-3">
+									<span class="text-muted-foreground">Default playlist</span>
+									{#if world.default_playlist_id}
+										<span class="flex min-w-0 items-center gap-1 font-mono text-xs text-foreground">
+											<span class="text-right break-all">{world.default_playlist_id}</span>
+											<CopyButton
+												value={world.default_playlist_id}
+												label="Copy playlist ID"
+												successLabel="Playlist ID copied"
+												class="h-6 w-6 shrink-0 text-muted-foreground"
+											/>
+										</span>
+									{:else}
+										<span class="font-medium text-foreground">N/A</span>
+									{/if}
+								</div>
+								<div class="space-y-1">
+									<p class="text-muted-foreground">Description</p>
+									<p class="text-foreground">{world.soundtrack_description || 'N/A'}</p>
+								</div>
+							</div>
+						</div>
+
 						<div class="grid gap-4 lg:grid-cols-2">
 							<div class="space-y-2">
 								<p class="text-sm font-medium text-foreground">Story Configuration</p>

@@ -23,7 +23,7 @@
 	const searchParam = $derived(queryValue(page.url, 'search'));
 	const cursorParam = $derived(page.url.searchParams.get('cursor'));
 
-	let worldSearch = $state('');
+	let worldSearch = $derived(searchParam);
 	let worlds = $state<World[]>([]);
 	let nextCursor = $state<string | null>(null);
 	let worldsLoading = $state(false);
@@ -35,7 +35,6 @@
 
 	$effect(() => {
 		const currentRequest = ++requestId;
-		worldSearch = searchParam;
 		void loadWorlds(searchParam, cursorParam, currentRequest);
 	});
 
@@ -187,13 +186,14 @@
 				</div>
 			{:else}
 				<div class="overflow-x-auto">
-					<table class="w-full min-w-[900px] text-left text-sm">
+					<table class="w-full min-w-[1100px] text-left text-sm">
 						<thead class="border-b border-border text-xs text-muted-foreground uppercase">
 							<tr>
 								<th class="py-3 pr-4 font-medium">World</th>
 								<th class="px-4 py-3 font-medium">Author</th>
 								<th class="px-4 py-3 font-medium">Visibility</th>
 								<th class="px-4 py-3 font-medium">Status</th>
+								<th class="px-4 py-3 font-medium">Soundtrack</th>
 								<th class="px-4 py-3 font-medium">Updated</th>
 								<th class="py-3 pl-4 text-right font-medium">Actions</th>
 							</tr>
@@ -248,6 +248,26 @@
 										>
 									</td>
 									<td class="px-4 py-3 text-muted-foreground">{world.generation_status}</td>
+									<td class="px-4 py-3">
+										<div class="max-w-[18rem] space-y-1">
+											<p class="line-clamp-2 text-xs text-muted-foreground">
+												{world.soundtrack_description || 'N/A'}
+											</p>
+											{#if world.default_playlist_id}
+												<div
+													class="flex items-center gap-1 font-mono text-xs text-muted-foreground"
+												>
+													{shortId(world.default_playlist_id)}
+													<CopyButton
+														value={world.default_playlist_id}
+														label="Copy playlist ID"
+														successLabel="Playlist ID copied"
+														class="h-6 w-6 text-muted-foreground"
+													/>
+												</div>
+											{/if}
+										</div>
+									</td>
 									<td class="px-4 py-3 text-muted-foreground">{formatDateTime(world.updated_at)}</td
 									>
 									<td class="py-3 pl-4">
