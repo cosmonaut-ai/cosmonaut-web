@@ -13,8 +13,6 @@
 	let narrationDuration = $state(0);
 	let narrationPaused = $state(true);
 	let narrationEnded = $state(false);
-	let narrationPlaybackRate = $derived.by(() => media.narrationPlaybackRate);
-	let narrationVolume = $derived.by(() => media.narrationVolume);
 	let playRequestId = 0;
 
 	// ── Soundtrack audio elements ──
@@ -38,6 +36,22 @@
 	});
 	$effect(() => {
 		media.narrationEnded = narrationEnded;
+	});
+
+	// Keep shared slider state wired to the actual media element, not just the bar UI.
+	$effect(() => {
+		const element = narrationElement;
+		const volume = Math.min(1, Math.max(0, media.narrationVolume));
+		const playbackRate = media.narrationPlaybackRate;
+
+		if (!element) return;
+
+		if (element.volume !== volume) {
+			element.volume = volume;
+		}
+		if (Number.isFinite(playbackRate) && element.playbackRate !== playbackRate) {
+			element.playbackRate = playbackRate;
+		}
 	});
 
 	// Auto-play when narration URL changes
@@ -238,8 +252,6 @@
 		bind:duration={narrationDuration}
 		bind:paused={narrationPaused}
 		bind:ended={narrationEnded}
-		bind:playbackRate={narrationPlaybackRate}
-		bind:volume={narrationVolume}
 		src={media.narrationUrl}
 		preload="auto"
 		onplay={handleNarrationPlay}

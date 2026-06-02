@@ -26,6 +26,7 @@ export function useSoundtrackPlayer() {
 	let activeSlot: 'a' | 'b' = 'a';
 	let crossfadeRafId: number | null = null;
 	let crossfading = false;
+	let crossfadeProgress = 0;
 
 	function activeEl(): HTMLAudioElement | null {
 		return elements ? elements[activeSlot] : null;
@@ -40,6 +41,23 @@ export function useSoundtrackPlayer() {
 		return muted ? 0 : targetVolume;
 	}
 
+	function applyVolumeToElements() {
+		if (!elements) return;
+
+		const volume = effectiveVolume();
+		const active = activeEl();
+		const idle = idleEl();
+
+		if (crossfading) {
+			if (active) active.volume = Math.max(0, volume * (1 - crossfadeProgress));
+			if (idle) idle.volume = volume * crossfadeProgress;
+			return;
+		}
+
+		if (active) active.volume = volume;
+		if (idle) idle.volume = 0;
+	}
+
 	function nextIndex(): number {
 		return (currentIndex + 1) % tracks.length;
 	}
@@ -50,6 +68,8 @@ export function useSoundtrackPlayer() {
 			crossfadeRafId = null;
 		}
 		crossfading = false;
+		crossfadeProgress = 0;
+		applyVolumeToElements();
 	}
 
 	function handleTimeUpdate() {
@@ -94,16 +114,13 @@ export function useSoundtrackPlayer() {
 			idle.play().catch(() => {});
 
 			const fadeActive = active;
-			const fadeIdle = idle;
 			const start = performance.now();
-			const vol = effectiveVolume();
-
 			function tick(now: number) {
 				const elapsed = now - start;
 				const progress = Math.min(elapsed / CROSSFADE_DURATION_MS, 1);
 
-				fadeActive.volume = Math.max(0, vol * (1 - progress));
-				fadeIdle.volume = vol * progress;
+				crossfadeProgress = progress;
+				applyVolumeToElements();
 
 				if (progress < 1) {
 					crossfadeRafId = requestAnimationFrame(tick);
@@ -114,7 +131,9 @@ export function useSoundtrackPlayer() {
 					activeSlot = activeSlot === 'a' ? 'b' : 'a';
 					currentIndex = next;
 					crossfading = false;
+					crossfadeProgress = 0;
 					crossfadeRafId = null;
+					applyVolumeToElements();
 				}
 			}
 
@@ -162,6 +181,7 @@ export function useSoundtrackPlayer() {
 
 	function bindElements(a: HTMLAudioElement, b: HTMLAudioElement) {
 		elements = { a, b };
+		applyVolumeToElements();
 		a.addEventListener('timeupdate', handleTimeUpdate);
 		b.addEventListener('timeupdate', handleTimeUpdate);
 		a.addEventListener('ended', handleEnded);
@@ -221,18 +241,12 @@ export function useSoundtrackPlayer() {
 
 	function setVolume(v: number) {
 		targetVolume = Math.min(1, Math.max(0, v));
-		if (!crossfading) {
-			const el = activeEl();
-			if (el) el.volume = effectiveVolume();
-		}
+		applyVolumeToElements();
 	}
 
 	function setMuted(m: boolean) {
 		muted = m;
-		if (!crossfading) {
-			const el = activeEl();
-			if (el) el.volume = effectiveVolume();
-		}
+		applyVolumeToElements();
 	}
 
 	function pause() {
