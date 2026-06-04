@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { usePlaylist } from '$lib/queries';
 	import { getSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
+	import { getImmersiveStoryContext } from '$lib/contexts/immersiveStory.svelte';
 	import {
 		applyMediaVolume,
 		mediaGain,
@@ -11,6 +12,7 @@
 	import SessionMediaBar from './SessionMediaBar.svelte';
 
 	const media = getSessionMediaContext();
+	const immersiveStory = getImmersiveStoryContext();
 	const soundtrack = useSoundtrackPlayer();
 
 	// ── Narration audio element ──
@@ -234,6 +236,7 @@
 	}
 
 	function handleClose() {
+		immersiveStory.setActive(false);
 		if (narrationElement) {
 			narrationElement.pause();
 		}
