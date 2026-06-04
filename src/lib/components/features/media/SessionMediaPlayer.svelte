@@ -34,6 +34,16 @@
 		enabled: () => media.soundtrackStarted && !!media.soundtrackPlaylistId
 	});
 	const narrationGain = $derived(mediaGain(media.narrationVolume, NARRATION_GAIN_BASELINE));
+	const soundtrackReady = $derived(media.soundtrackStarted && soundtrack.tracks.length > 0);
+	const narrationCanDriveSoundtrack = $derived(
+		!!media.narrationUrl &&
+			!media.narrationPaused &&
+			!media.narrationEnded &&
+			!media.narrationIsGenerating
+	);
+	const soundtrackShouldPlay = $derived(
+		media.soundtrackEnabled && soundtrackReady && narrationCanDriveSoundtrack
+	);
 
 	// Sync narration playback state → context
 	$effect(() => {
@@ -110,16 +120,16 @@
 			id !== lastStartedPlaylistId
 		) {
 			lastStartedPlaylistId = id;
-			soundtrack.start(data.tracks);
+			soundtrack.start(data.tracks, { autoplay: narrationCanDriveSoundtrack });
 		}
 	});
 
-	// Pause/resume soundtrack when enabled toggles
+	// The bar's play/pause button controls the whole listening session.
 	$effect(() => {
-		if (!media.soundtrackEnabled) {
-			soundtrack.pause();
-		} else if (media.soundtrackStarted && soundtrack.tracks.length > 0) {
+		if (soundtrackShouldPlay) {
 			soundtrack.resume();
+		} else {
+			soundtrack.pause();
 		}
 	});
 

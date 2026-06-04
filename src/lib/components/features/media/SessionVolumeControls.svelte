@@ -130,41 +130,54 @@
 
 <style>
 	.volume-controls {
+		--volume-thumb-fill: var(--popover);
+		--volume-thumb-stroke: var(--muted-foreground);
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
 		gap: 0.5rem;
 		padding: 0.25rem 0.5rem;
 	}
 
+	.volume-controls-immersive {
+		--volume-thumb-fill: rgb(12 16 22);
+		--volume-thumb-stroke: rgb(255 255 255 / 0.72);
+	}
+
 	.volume-range::-webkit-slider-thumb {
 		-webkit-appearance: none;
 		appearance: none;
-		width: 10px;
-		height: 10px;
-		border: none;
+		width: 12px;
+		height: 12px;
+		border: 2px solid var(--volume-thumb-stroke);
 		border-radius: 50%;
-		background: var(--muted-foreground);
+		background-color: var(--volume-thumb-fill);
+		box-shadow: 0 0 0 1px var(--volume-thumb-fill);
 		cursor: pointer;
-		margin-top: -3px;
-		transition: background 0.15s ease;
+		margin-top: -4px;
+		transition:
+			border-color 0.15s ease,
+			box-shadow 0.15s ease;
 	}
 
 	.volume-range:hover::-webkit-slider-thumb {
-		background: var(--primary);
+		border-color: var(--primary);
 	}
 
 	.volume-range::-moz-range-thumb {
-		width: 10px;
-		height: 10px;
-		border: none;
+		width: 12px;
+		height: 12px;
+		border: 2px solid var(--volume-thumb-stroke);
 		border-radius: 50%;
-		background: var(--muted-foreground);
+		background-color: var(--volume-thumb-fill);
+		box-shadow: 0 0 0 1px var(--volume-thumb-fill);
 		cursor: pointer;
-		transition: background 0.15s ease;
+		transition:
+			border-color 0.15s ease,
+			box-shadow 0.15s ease;
 	}
 
 	.volume-range:hover::-moz-range-thumb {
-		background: var(--primary);
+		border-color: var(--primary);
 	}
 
 	.volume-range::-webkit-slider-runnable-track {
@@ -209,14 +222,6 @@
 		background: rgb(255 255 255 / 0.64);
 	}
 
-	.volume-controls-immersive .volume-range::-webkit-slider-thumb {
-		background: rgb(255 255 255 / 0.72);
-	}
-
-	.volume-controls-immersive .volume-range::-moz-range-thumb {
-		background: rgb(255 255 255 / 0.72);
-	}
-
 	.volume-range {
 		touch-action: pan-y;
 	}
@@ -228,14 +233,14 @@
 		}
 
 		.volume-range::-webkit-slider-thumb {
-			width: 16px;
-			height: 16px;
-			margin-top: -5px;
+			width: 18px;
+			height: 18px;
+			margin-top: -6px;
 		}
 
 		.volume-range::-moz-range-thumb {
-			width: 16px;
-			height: 16px;
+			width: 18px;
+			height: 18px;
 		}
 
 		.volume-range::-webkit-slider-runnable-track,

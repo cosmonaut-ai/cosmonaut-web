@@ -17,6 +17,10 @@ interface SoundtrackElements {
 	b: HTMLAudioElement;
 }
 
+interface StartOptions {
+	autoplay?: boolean;
+}
+
 /**
  * A/B ping-pong crossfade engine for seamless playlist playback.
  *
@@ -30,6 +34,7 @@ export function useSoundtrackPlayer() {
 	let playing = $state(false);
 	let targetVolume = $state(1);
 	let muted = $state(false);
+	let shouldPlay = false;
 
 	let elements: SoundtrackElements | null = null;
 	let activeSlot: 'a' | 'b' = 'a';
@@ -119,6 +124,24 @@ export function useSoundtrackPlayer() {
 		element.load();
 	}
 
+	function playIfAllowed(element: HTMLAudioElement | null, expectedSrc?: string) {
+		if (!element || !shouldPlay) return;
+		if (expectedSrc && element.getAttribute('src') !== expectedSrc) return;
+
+		resumeMediaVolumeContext();
+		element.play().catch(() => {});
+	}
+
+	function playWhenReady(element: HTMLAudioElement, expectedSrc: string) {
+		const play = () => playIfAllowed(element, expectedSrc);
+
+		if (element.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+			play();
+		} else {
+			element.addEventListener('canplay', play, { once: true });
+		}
+	}
+
 	function resetPreparedNextTrack() {
 		prepareRequestId += 1;
 		preparedNextIndex = null;
@@ -141,7 +164,7 @@ export function useSoundtrackPlayer() {
 
 	function handleTimeUpdate() {
 		const el = activeEl();
-		if (!el || crossfadePending || crossfading || tracks.length < 1) return;
+		if (!el || !shouldPlay || crossfadePending || crossfading || tracks.length < 1) return;
 
 		const remaining = remainingSeconds(el);
 		if (remaining === null || remaining <= 0) return;
@@ -155,6 +178,7 @@ export function useSoundtrackPlayer() {
 	}
 
 	function handleEnded() {
+		if (!shouldPlay) return;
 		if (crossfading) return;
 		advanceTrack();
 	}
@@ -253,7 +277,7 @@ export function useSoundtrackPlayer() {
 	}
 
 	async function startCrossfade() {
-		if (crossfadePending || crossfading || tracks.length < 1) return;
+		if (!shouldPlay || crossfadePending || crossfading || tracks.length < 1) return;
 
 		const next = nextIndex();
 		const active = activeEl();
@@ -264,6 +288,11 @@ export function useSoundtrackPlayer() {
 		const requestId = ++transitionRequestId;
 		const ready = await prepareNextTrack();
 		if (requestId !== transitionRequestId || !crossfadePending) return;
+		if (!shouldPlay) {
+			crossfadePending = false;
+			applyVolumeToElements();
+			return;
+		}
 
 		const remaining = remainingSeconds(active);
 		if (!ready || active.ended || (remaining !== null && remaining <= 0)) {
@@ -284,6 +313,12 @@ export function useSoundtrackPlayer() {
 		}
 
 		if (requestId !== transitionRequestId || !crossfadePending) return;
+		if (!shouldPlay) {
+			idle.pause();
+			crossfadePending = false;
+			applyVolumeToElements();
+			return;
+		}
 
 		crossfadePending = false;
 		crossfading = true;
@@ -336,10 +371,7 @@ export function useSoundtrackPlayer() {
 			currentIndex = next;
 			resetPreparedNextTrack();
 			applyVolumeToElements();
-			resumeMediaVolumeContext();
-			activeEl()
-				?.play()
-				.catch(() => {});
+			playIfAllowed(activeEl(), track.audio_url);
 			return;
 		}
 
@@ -353,17 +385,7 @@ export function useSoundtrackPlayer() {
 		el.src = track.audio_url;
 		applyMediaVolume(el, effectiveVolume());
 		el.load();
-
-		const play = () => {
-			resumeMediaVolumeContext();
-			el.play().catch(() => {});
-		};
-
-		if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-			play();
-		} else {
-			el.addEventListener('canplay', play, { once: true });
-		}
+		playWhenReady(el, track.audio_url);
 	}
 
 	function bindElements(a: HTMLAudioElement, b: HTMLAudioElement) {
@@ -386,7 +408,8 @@ export function useSoundtrackPlayer() {
 		elements = null;
 	}
 
-	function start(playlist: PlaylistTrack[]) {
+	function start(playlist: PlaylistTrack[], options: StartOptions = {}) {
+		const { autoplay = true } = options;
 		const playable = playlist.filter((t) => !!t.audio_url);
 		if (playable.length === 0) return;
 
@@ -394,6 +417,7 @@ export function useSoundtrackPlayer() {
 		tracks = playable;
 		currentIndex = 0;
 		playing = true;
+		shouldPlay = autoplay;
 		activeSlot = 'a';
 
 		const el = activeEl();
@@ -405,19 +429,11 @@ export function useSoundtrackPlayer() {
 		applyMediaVolume(el, effectiveVolume());
 		el.load();
 
-		const play = () => {
-			resumeMediaVolumeContext();
-			el.play().catch(() => {});
-		};
-
-		if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-			play();
-		} else {
-			el.addEventListener('canplay', play, { once: true });
-		}
+		if (autoplay) playWhenReady(el, first.audio_url);
 	}
 
 	function stop() {
+		shouldPlay = false;
 		cancelCrossfade();
 		playing = false;
 		if (elements) {
@@ -437,16 +453,18 @@ export function useSoundtrackPlayer() {
 	}
 
 	function pause() {
+		shouldPlay = false;
+		cancelCrossfade();
 		activeEl()?.pause();
 		idleEl()?.pause();
 	}
 
 	function resume() {
 		if (!playing || tracks.length === 0) return;
+		shouldPlay = true;
 		const el = activeEl();
 		if (el && el.src) {
-			resumeMediaVolumeContext();
-			el.play().catch(() => {});
+			playWhenReady(el, el.getAttribute('src') ?? el.src);
 		}
 	}
 
