@@ -453,6 +453,7 @@ export function useSoundtrackPlayer() {
 	}
 
 	function pause() {
+		if (!shouldPlay && !crossfadePending && !crossfading) return;
 		shouldPlay = false;
 		cancelCrossfade();
 		activeEl()?.pause();

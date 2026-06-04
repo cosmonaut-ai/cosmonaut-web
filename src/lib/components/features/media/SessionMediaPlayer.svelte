@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { usePlaylist } from '$lib/queries';
 	import { getSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
 	import { getImmersiveStoryContext } from '$lib/contexts/immersiveStory.svelte';
@@ -24,6 +25,7 @@
 	let playRequestId = 0;
 	let lastNarrationUrl: string | null = null;
 	let lastStartedPlaylistId: string | null = null;
+	let soundtrackPlaybackRequested = false;
 
 	// ── Soundtrack audio elements ──
 	let soundtrackA = $state<HTMLAudioElement | null>(null);
@@ -35,14 +37,8 @@
 	});
 	const narrationGain = $derived(mediaGain(media.narrationVolume, NARRATION_GAIN_BASELINE));
 	const soundtrackReady = $derived(media.soundtrackStarted && soundtrack.tracks.length > 0);
-	const narrationCanDriveSoundtrack = $derived(
-		!!media.narrationUrl &&
-			!media.narrationPaused &&
-			!media.narrationEnded &&
-			!media.narrationIsGenerating
-	);
 	const soundtrackShouldPlay = $derived(
-		media.soundtrackEnabled && soundtrackReady && narrationCanDriveSoundtrack
+		media.barVisible && media.soundtrackEnabled && soundtrackReady
 	);
 
 	// Sync narration playback state → context
@@ -94,18 +90,25 @@
 
 	// ── Soundtrack: bind elements and start when playlist loads ──
 	$effect(() => {
-		if (soundtrackA && soundtrackB) {
-			soundtrack.bindElements(soundtrackA, soundtrackB);
-			return () => soundtrack.unbindElements();
+		const a = soundtrackA;
+		const b = soundtrackB;
+
+		if (a && b) {
+			untrack(() => soundtrack.bindElements(a, b));
+			return () => {
+				untrack(() => soundtrack.unbindElements());
+			};
 		}
 	});
 
 	// Sync soundtrack volume/muted from context
 	$effect(() => {
-		soundtrack.setVolume(media.soundtrackVolume);
+		const volume = media.soundtrackVolume;
+		untrack(() => soundtrack.setVolume(volume));
 	});
 	$effect(() => {
-		soundtrack.setMuted(media.soundtrackMuted || !media.soundtrackEnabled);
+		const muted = media.soundtrackMuted || !media.soundtrackEnabled;
+		untrack(() => soundtrack.setMuted(muted));
 	});
 
 	// Start soundtrack playback when playlist data arrives
@@ -119,17 +122,23 @@
 			media.soundtrackEnabled &&
 			id !== lastStartedPlaylistId
 		) {
+			const autoplay = soundtrackShouldPlay;
 			lastStartedPlaylistId = id;
-			soundtrack.start(data.tracks, { autoplay: narrationCanDriveSoundtrack });
+			soundtrackPlaybackRequested = autoplay;
+			untrack(() => soundtrack.start(data.tracks, { autoplay }));
 		}
 	});
 
-	// The bar's play/pause button controls the whole listening session.
+	// Soundtrack ambience follows the audio tray, not narration play/pause.
 	$effect(() => {
-		if (soundtrackShouldPlay) {
-			soundtrack.resume();
+		const shouldPlay = soundtrackShouldPlay;
+		if (shouldPlay === soundtrackPlaybackRequested) return;
+
+		soundtrackPlaybackRequested = shouldPlay;
+		if (shouldPlay) {
+			untrack(() => soundtrack.resume());
 		} else {
-			soundtrack.pause();
+			untrack(() => soundtrack.pause());
 		}
 	});
 
@@ -250,7 +259,8 @@
 		if (narrationElement) {
 			narrationElement.pause();
 		}
-		soundtrack.stop();
+		soundtrackPlaybackRequested = false;
+		untrack(() => soundtrack.stop());
 		media.clearNarration();
 		media.soundtrackStarted = false;
 		lastStartedPlaylistId = null;
