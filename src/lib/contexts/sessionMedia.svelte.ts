@@ -1,18 +1,20 @@
 import { getContext, setContext } from 'svelte';
 import type { Voice } from '$lib/types/api';
 import { getItem, setItem } from '$lib/utils/storage';
+import { SOUNDTRACK_GAIN_BASELINE } from '$lib/utils/mediaVolume';
 
 const SESSION_MEDIA_CONTEXT_KEY = Symbol('session-media');
 
 const NARRATION_VOLUME_KEY = 'cosmonaut-audio-volume';
 const NARRATION_SPEED_KEY = 'cosmonaut-audio-speed';
 const NARRATION_VOICE_KEY = 'cosmonaut-audio-voice';
-const SOUNDTRACK_VOLUME_KEY = 'cosmonaut-music-volume';
+const LEGACY_SOUNDTRACK_VOLUME_KEY = 'cosmonaut-music-volume';
+const SOUNDTRACK_VOLUME_KEY = 'cosmonaut-music-volume-v2';
 const SOUNDTRACK_ENABLED_KEY = 'cosmonaut-music-enabled';
 
 const VALID_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const DEFAULT_VOICE_ID = 'theo';
-const DEFAULT_SOUNDTRACK_VOLUME = 0.3;
+const DEFAULT_SOUNDTRACK_VOLUME = 1;
 
 function loadFloat(key: string, fallback: number, min = 0, max = 1): number {
 	const stored = getItem(key);
@@ -37,6 +39,26 @@ function loadBool(key: string, fallback: boolean): boolean {
 	if (stored === 'true') return true;
 	if (stored === 'false') return false;
 	return fallback;
+}
+
+function loadSoundtrackVolume(): number {
+	const stored = getItem(SOUNDTRACK_VOLUME_KEY);
+	if (stored) {
+		const parsed = parseFloat(stored);
+		if (isFinite(parsed) && parsed >= 0 && parsed <= 1) return parsed;
+	}
+
+	const legacyStored = getItem(LEGACY_SOUNDTRACK_VOLUME_KEY);
+	if (legacyStored) {
+		const parsed = parseFloat(legacyStored);
+		if (isFinite(parsed) && parsed >= 0 && parsed <= 1) {
+			const migrated = Math.min(1, Math.max(0, parsed / SOUNDTRACK_GAIN_BASELINE));
+			setItem(SOUNDTRACK_VOLUME_KEY, String(migrated));
+			return migrated;
+		}
+	}
+
+	return DEFAULT_SOUNDTRACK_VOLUME;
 }
 
 export interface VoicePickerDelegate {
@@ -81,8 +103,10 @@ export class SessionMediaState {
 	soundtrackPlaylistId = $state<string | null>(null);
 	soundtrackStarted = $state(false);
 	soundtrackEnabled = $state(loadBool(SOUNDTRACK_ENABLED_KEY, true));
-	soundtrackVolume = $state(loadFloat(SOUNDTRACK_VOLUME_KEY, DEFAULT_SOUNDTRACK_VOLUME));
-	private soundtrackPreviousVolume = $state(DEFAULT_SOUNDTRACK_VOLUME);
+	soundtrackVolume = $state(loadSoundtrackVolume());
+	private soundtrackPreviousVolume = $state(
+		this.soundtrackVolume > 0 ? this.soundtrackVolume : DEFAULT_SOUNDTRACK_VOLUME
+	);
 	soundtrackMuted = $state(this.soundtrackVolume <= 0);
 
 	// ── UI state ──

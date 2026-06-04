@@ -1,5 +1,10 @@
 import type { PlaylistTrack } from '$lib/types/api';
-import { applyMediaVolume, resumeMediaVolumeContext } from '$lib/utils/mediaVolume';
+import {
+	applyMediaVolume,
+	mediaGain,
+	resumeMediaVolumeContext,
+	SOUNDTRACK_GAIN_BASELINE
+} from '$lib/utils/mediaVolume';
 
 const PRELOAD_LEAD_SECONDS = 18;
 const CROSSFADE_LEAD_SECONDS = 8;
@@ -23,7 +28,7 @@ export function useSoundtrackPlayer() {
 	let tracks = $state<PlaylistTrack[]>([]);
 	let currentIndex = $state(0);
 	let playing = $state(false);
-	let targetVolume = $state(0.3);
+	let targetVolume = $state(1);
 	let muted = $state(false);
 
 	let elements: SoundtrackElements | null = null;
@@ -48,7 +53,7 @@ export function useSoundtrackPlayer() {
 	}
 
 	function effectiveVolume(): number {
-		return muted ? 0 : targetVolume;
+		return muted ? 0 : mediaGain(targetVolume, SOUNDTRACK_GAIN_BASELINE);
 	}
 
 	function crossfadeVolumes(progress: number) {

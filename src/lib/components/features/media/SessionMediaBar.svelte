@@ -18,7 +18,6 @@
 	import { cubicOut } from 'svelte/easing';
 	import { getSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
 	import { getImmersiveStoryContext } from '$lib/contexts/immersiveStory.svelte';
-	import { enableMediaVolumeContext } from '$lib/utils/mediaVolume';
 
 	const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
@@ -50,6 +49,9 @@
 	const hasSoundtrack = $derived(media.soundtrackStarted && media.soundtrackEnabled);
 	const hasPlayableNarration = $derived(hasNarration && !media.narrationIsGenerating);
 	const hasVolumeControls = $derived(hasPlayableNarration || hasSoundtrack);
+	const allVolumeMuted = $derived(
+		(!hasPlayableNarration || narrationMuted) && (!hasSoundtrack || soundtrackMuted)
+	);
 
 	function formatTime(seconds: number): string {
 		if (!isFinite(seconds) || seconds < 0) return '0:00';
@@ -63,22 +65,18 @@
 	}
 
 	function handleNarrationVolumeChange(val: number) {
-		enableMediaVolumeContext();
 		media.setNarrationVolume(val / 100);
 	}
 
 	function handleSoundtrackVolumeChange(val: number) {
-		enableMediaVolumeContext();
 		media.setSoundtrackVolume(val / 100);
 	}
 
 	function handleNarrationMuteClick() {
-		enableMediaVolumeContext();
 		media.toggleNarrationMute();
 	}
 
 	function handleSoundtrackMuteClick() {
-		enableMediaVolumeContext();
 		media.toggleSoundtrackMute();
 	}
 
@@ -99,6 +97,97 @@
 		e.stopPropagation();
 	}
 </script>
+
+{#snippet volumeControlsContent()}
+	<DropdownMenu.Group>
+		<DropdownMenu.Label>Volume</DropdownMenu.Label>
+		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+		<div
+			class="grid grid-cols-1 gap-3 px-2 py-1.5"
+			onclick={stopMenuEvent}
+			onkeydown={stopMenuEvent}
+			onpointerdown={stopMenuEvent}
+			role="group"
+			aria-label="Volume controls"
+		>
+			{#if hasPlayableNarration}
+				<div class="min-w-0" role="group" aria-label="Narration volume">
+					<div class="mb-1 flex h-6 items-center justify-between gap-1">
+						<span class="truncate text-[0.6875rem] font-medium text-muted-foreground">
+							Narration
+						</span>
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							onclick={(e) => {
+								stopMenuEvent(e);
+								handleNarrationMuteClick();
+							}}
+							aria-label={narrationMuted ? 'Unmute narration' : 'Mute narration'}
+							class="h-6 w-6 shrink-0"
+						>
+							{#if narrationMuted}
+								<VolumeX class="h-3.5 w-3.5" />
+							{:else if media.narrationVolume < 0.5}
+								<Volume1 class="h-3.5 w-3.5" />
+							{:else}
+								<Volume2 class="h-3.5 w-3.5" />
+							{/if}
+						</Button>
+					</div>
+					<input
+						type="range"
+						min="0"
+						max="100"
+						step="1"
+						value={narrationVolumeProgress}
+						oninput={handleNarrationVolumeInput}
+						onchange={handleNarrationVolumeInput}
+						aria-label="Narration volume"
+						class="volume-range h-5 w-full cursor-pointer appearance-none rounded-full bg-transparent"
+						style="--vol-progress: {narrationVolumeProgress}%"
+					/>
+				</div>
+			{/if}
+
+			{#if hasSoundtrack}
+				<div class="min-w-0" role="group" aria-label="Music volume">
+					<div class="mb-1 flex h-6 items-center justify-between gap-1">
+						<span class="truncate text-[0.6875rem] font-medium text-muted-foreground">Music</span>
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							onclick={(e) => {
+								stopMenuEvent(e);
+								handleSoundtrackMuteClick();
+							}}
+							aria-label={soundtrackMuted ? 'Unmute music' : 'Mute music'}
+							class="h-6 w-6 shrink-0"
+						>
+							{#if soundtrackMuted}
+								<Music class="h-3.5 w-3.5 opacity-50" />
+							{:else}
+								<Music2 class="h-3.5 w-3.5" />
+							{/if}
+						</Button>
+					</div>
+					<input
+						type="range"
+						min="0"
+						max="100"
+						step="1"
+						value={soundtrackVolumeProgress}
+						oninput={handleSoundtrackVolumeInput}
+						onchange={handleSoundtrackVolumeInput}
+						aria-label="Music volume"
+						class="volume-range h-5 w-full cursor-pointer appearance-none rounded-full bg-transparent"
+						style="--vol-progress: {soundtrackVolumeProgress}%"
+					/>
+				</div>
+			{/if}
+		</div>
+	</DropdownMenu.Group>
+{/snippet}
 
 <div
 	class="media-bar fixed inset-x-0 bottom-0 isolate z-50 overflow-visible border-t {immersive
@@ -165,92 +254,28 @@
 		{/if}
 
 		{#if hasVolumeControls}
-			<!-- Desktop: combined volume controls -->
-			<div
-				class="hidden shrink-0 flex-col items-stretch gap-1 sm:flex"
-				role="group"
-				aria-label="Volume controls"
-			>
-				{#if hasPlayableNarration}
-					<div class="flex min-w-24 flex-col gap-0.5" role="group" aria-label="Narration volume">
-						<span
-							class="px-1 text-[0.625rem] leading-none {immersive
-								? 'text-white/55'
-								: 'text-muted-foreground'}">Narration</span
-						>
-						<div class="flex items-center gap-1">
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								onclick={handleNarrationMuteClick}
-								aria-label={narrationMuted ? 'Unmute narration' : 'Mute narration'}
-								class="shrink-0 {immersive
-									? 'text-white/75 hover:bg-white/10 hover:text-white'
-									: ''}"
-							>
-								{#if narrationMuted}
-									<VolumeX class="h-4 w-4" />
-								{:else if media.narrationVolume < 0.5}
-									<Volume1 class="h-4 w-4" />
-								{:else}
-									<Volume2 class="h-4 w-4" />
-								{/if}
-							</Button>
-							<input
-								type="range"
-								min="0"
-								max="100"
-								step="1"
-								value={narrationVolumeProgress}
-								oninput={handleNarrationVolumeInput}
-								onchange={handleNarrationVolumeInput}
-								aria-label="Narration volume"
-								class="volume-range h-5 w-16 cursor-pointer appearance-none rounded-full bg-transparent"
-								style="--vol-progress: {narrationVolumeProgress}%"
-							/>
-						</div>
-					</div>
-				{/if}
-
-				{#if hasSoundtrack}
-					<div class="flex min-w-24 flex-col gap-0.5" role="group" aria-label="Music volume">
-						<span
-							class="px-1 text-[0.625rem] leading-none {immersive
-								? 'text-white/55'
-								: 'text-muted-foreground'}">Music</span
-						>
-						<div class="flex items-center gap-1">
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								onclick={handleSoundtrackMuteClick}
-								aria-label={soundtrackMuted ? 'Unmute music' : 'Mute music'}
-								class="shrink-0 {immersive
-									? 'text-white/75 hover:bg-white/10 hover:text-white'
-									: ''}"
-							>
-								{#if soundtrackMuted}
-									<Music class="h-4 w-4 opacity-50" />
-								{:else}
-									<Music2 class="h-4 w-4" />
-								{/if}
-							</Button>
-							<input
-								type="range"
-								min="0"
-								max="100"
-								step="1"
-								value={soundtrackVolumeProgress}
-								oninput={handleSoundtrackVolumeInput}
-								onchange={handleSoundtrackVolumeInput}
-								aria-label="Music volume"
-								class="volume-range h-5 w-16 cursor-pointer appearance-none rounded-full bg-transparent"
-								style="--vol-progress: {soundtrackVolumeProgress}%"
-							/>
-						</div>
-					</div>
-				{/if}
-			</div>
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger
+					class="shrink-0 rounded-md p-1.5 transition-colors {immersive
+						? 'text-white/70 hover:bg-white/10 hover:text-white'
+						: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
+					aria-label="Volume controls"
+				>
+					{#if allVolumeMuted}
+						<VolumeX class="h-4 w-4" />
+					{:else}
+						<Volume2 class="h-4 w-4" />
+					{/if}
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content
+					side="top"
+					align="end"
+					class="w-56 max-w-[calc(100vw-1rem)]"
+					preventScroll={false}
+				>
+					{@render volumeControlsContent()}
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
 		{/if}
 
 		{#if hasPlayableNarration}
@@ -284,8 +309,8 @@
 			</div>
 		{/if}
 
-		<!-- Mobile overflow menu (only visible on small screens when there's narration or soundtrack) -->
-		{#if hasPlayableNarration || hasSoundtrack}
+		<!-- Mobile overflow menu keeps secondary narration controls off the main bar. -->
+		{#if hasPlayableNarration}
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger
 					class="shrink-0 rounded-md p-1.5 transition-colors sm:hidden {immersive
@@ -301,123 +326,26 @@
 					class="w-56 max-w-[calc(100vw-1rem)]"
 					preventScroll={false}
 				>
-					{#if hasVolumeControls}
-						<DropdownMenu.Group>
-							<DropdownMenu.Label>Volume</DropdownMenu.Label>
-							<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-							<div
-								class="grid grid-cols-1 gap-3 px-2 py-1.5"
-								onclick={stopMenuEvent}
-								onkeydown={stopMenuEvent}
-								onpointerdown={stopMenuEvent}
-								role="group"
-								aria-label="Volume controls"
-							>
-								{#if hasPlayableNarration}
-									<div class="min-w-0" role="group" aria-label="Narration volume">
-										<div class="mb-1 flex h-6 items-center justify-between gap-1">
-											<span class="truncate text-[0.6875rem] font-medium text-muted-foreground">
-												Narration
-											</span>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												onclick={(e) => {
-													stopMenuEvent(e);
-													handleNarrationMuteClick();
-												}}
-												aria-label={narrationMuted ? 'Unmute narration' : 'Mute narration'}
-												class="h-6 w-6 shrink-0"
-											>
-												{#if narrationMuted}
-													<VolumeX class="h-3.5 w-3.5" />
-												{:else if media.narrationVolume < 0.5}
-													<Volume1 class="h-3.5 w-3.5" />
-												{:else}
-													<Volume2 class="h-3.5 w-3.5" />
-												{/if}
-											</Button>
-										</div>
-										<input
-											type="range"
-											min="0"
-											max="100"
-											step="1"
-											value={narrationVolumeProgress}
-											oninput={handleNarrationVolumeInput}
-											onchange={handleNarrationVolumeInput}
-											aria-label="Narration volume"
-											class="volume-range h-5 w-full cursor-pointer appearance-none rounded-full bg-transparent"
-											style="--vol-progress: {narrationVolumeProgress}%"
-										/>
-									</div>
-								{/if}
-
-								{#if hasSoundtrack}
-									<div class="min-w-0" role="group" aria-label="Music volume">
-										<div class="mb-1 flex h-6 items-center justify-between gap-1">
-											<span class="truncate text-[0.6875rem] font-medium text-muted-foreground">
-												Music
-											</span>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												onclick={(e) => {
-													stopMenuEvent(e);
-													handleSoundtrackMuteClick();
-												}}
-												aria-label={soundtrackMuted ? 'Unmute music' : 'Mute music'}
-												class="h-6 w-6 shrink-0"
-											>
-												{#if soundtrackMuted}
-													<Music class="h-3.5 w-3.5 opacity-50" />
-												{:else}
-													<Music2 class="h-3.5 w-3.5" />
-												{/if}
-											</Button>
-										</div>
-										<input
-											type="range"
-											min="0"
-											max="100"
-											step="1"
-											value={soundtrackVolumeProgress}
-											oninput={handleSoundtrackVolumeInput}
-											onchange={handleSoundtrackVolumeInput}
-											aria-label="Music volume"
-											class="volume-range h-5 w-full cursor-pointer appearance-none rounded-full bg-transparent"
-											style="--vol-progress: {soundtrackVolumeProgress}%"
-										/>
-									</div>
-								{/if}
-							</div>
-						</DropdownMenu.Group>
-					{/if}
-
-					{#if hasPlayableNarration}
-						<DropdownMenu.Separator />
-
-						<DropdownMenu.Sub>
-							<DropdownMenu.SubTrigger class="[&>svg:last-child]:rotate-180">
-								Speed: {formatSpeed(media.narrationPlaybackRate)}
-							</DropdownMenu.SubTrigger>
-							<DropdownMenu.SubContent class="min-w-28">
-								{#each SPEED_OPTIONS as speed (speed)}
-									<DropdownMenu.Item
-										class="cursor-pointer gap-2"
-										onclick={() => media.setNarrationSpeed(speed)}
-									>
-										{#if media.narrationPlaybackRate === speed}
-											<Check class="h-3 w-3 text-primary" />
-										{:else}
-											<span class="h-3 w-3"></span>
-										{/if}
-										{formatSpeed(speed)}
-									</DropdownMenu.Item>
-								{/each}
-							</DropdownMenu.SubContent>
-						</DropdownMenu.Sub>
-					{/if}
+					<DropdownMenu.Sub>
+						<DropdownMenu.SubTrigger class="[&>svg:last-child]:rotate-180">
+							Speed: {formatSpeed(media.narrationPlaybackRate)}
+						</DropdownMenu.SubTrigger>
+						<DropdownMenu.SubContent class="min-w-28">
+							{#each SPEED_OPTIONS as speed (speed)}
+								<DropdownMenu.Item
+									class="cursor-pointer gap-2"
+									onclick={() => media.setNarrationSpeed(speed)}
+								>
+									{#if media.narrationPlaybackRate === speed}
+										<Check class="h-3 w-3 text-primary" />
+									{:else}
+										<span class="h-3 w-3"></span>
+									{/if}
+									{formatSpeed(speed)}
+								</DropdownMenu.Item>
+							{/each}
+						</DropdownMenu.SubContent>
+					</DropdownMenu.Sub>
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
 		{/if}

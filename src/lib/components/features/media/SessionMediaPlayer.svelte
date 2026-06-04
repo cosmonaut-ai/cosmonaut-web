@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { usePlaylist } from '$lib/queries';
 	import { getSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
-	import { applyMediaVolume, resumeMediaVolumeContext } from '$lib/utils/mediaVolume';
+	import {
+		applyMediaVolume,
+		mediaGain,
+		NARRATION_GAIN_BASELINE,
+		resumeMediaVolumeContext
+	} from '$lib/utils/mediaVolume';
 	import { useSoundtrackPlayer } from './useSoundtrackPlayer.svelte';
 	import SessionMediaBar from './SessionMediaBar.svelte';
 
@@ -15,6 +20,8 @@
 	let narrationPaused = $state(true);
 	let narrationEnded = $state(false);
 	let playRequestId = 0;
+	let lastNarrationUrl: string | null = null;
+	let lastStartedPlaylistId: string | null = null;
 
 	// ── Soundtrack audio elements ──
 	let soundtrackA = $state<HTMLAudioElement | null>(null);
@@ -24,6 +31,7 @@
 	const playlistQuery = usePlaylist(() => media.soundtrackPlaylistId, {
 		enabled: () => media.soundtrackStarted && !!media.soundtrackPlaylistId
 	});
+	const narrationGain = $derived(mediaGain(media.narrationVolume, NARRATION_GAIN_BASELINE));
 
 	// Sync narration playback state → context
 	$effect(() => {
@@ -42,7 +50,7 @@
 	// Keep shared slider state wired to the actual media element, not just the bar UI.
 	$effect(() => {
 		const element = narrationElement;
-		const volume = Math.min(1, Math.max(0, media.narrationVolume));
+		const volume = narrationGain;
 		const playbackRate = media.narrationPlaybackRate;
 
 		if (!element) return;
@@ -54,7 +62,6 @@
 	});
 
 	// Auto-play when narration URL changes
-	let lastNarrationUrl = $state<string | null>(null);
 	$effect(() => {
 		const url = media.narrationUrl;
 		if (url && url !== lastNarrationUrl) {
@@ -90,7 +97,6 @@
 	});
 
 	// Start soundtrack playback when playlist data arrives
-	let lastStartedPlaylistId = $state<string | null>(null);
 	$effect(() => {
 		const data = playlistQuery.data;
 		const id = media.soundtrackPlaylistId;

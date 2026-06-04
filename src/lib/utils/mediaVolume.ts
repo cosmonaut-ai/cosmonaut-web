@@ -1,4 +1,6 @@
 const AUDIO_CONTEXT_OPTIONS: AudioContextOptions = { latencyHint: 'interactive' };
+export const NARRATION_GAIN_BASELINE = 1;
+export const SOUNDTRACK_GAIN_BASELINE = 0.28;
 
 declare global {
 	interface Window {
@@ -7,7 +9,6 @@ declare global {
 }
 
 let audioContext: AudioContext | null = null;
-let gainControlEnabled = false;
 const mediaGains = new WeakMap<HTMLMediaElement, GainNode>();
 const mediaSources = new WeakMap<HTMLMediaElement, MediaElementAudioSourceNode>();
 
@@ -48,21 +49,20 @@ function ensureGain(element: HTMLMediaElement): GainNode | null {
 }
 
 export function resumeMediaVolumeContext() {
-	audioContext?.resume().catch(() => {});
-}
-
-export function enableMediaVolumeContext() {
-	gainControlEnabled = true;
 	getAudioContext()
 		?.resume()
 		.catch(() => {});
+}
+
+export function mediaGain(userVolume: number, baselineGain = 1): number {
+	return clampVolume(userVolume) * clampVolume(baselineGain);
 }
 
 export function applyMediaVolume(element: HTMLMediaElement | null, volume: number) {
 	if (!element) return;
 
 	const clamped = clampVolume(volume);
-	const gain = gainControlEnabled ? ensureGain(element) : mediaGains.get(element);
+	const gain = ensureGain(element);
 
 	if (gain && audioContext) {
 		element.muted = false;
@@ -71,10 +71,5 @@ export function applyMediaVolume(element: HTMLMediaElement | null, volume: numbe
 		}
 		gain.gain.setTargetAtTime(clamped, audioContext.currentTime, 0.015);
 		return;
-	}
-
-	element.muted = clamped === 0;
-	if (typeof element.volume === 'number') {
-		element.volume = clamped;
 	}
 }
