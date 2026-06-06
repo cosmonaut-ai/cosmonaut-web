@@ -257,7 +257,12 @@
 												<div
 													class="flex items-center gap-1 font-mono text-xs text-muted-foreground"
 												>
-													{shortId(world.default_playlist_id)}
+													<a
+														href={`/admin/playlists/${world.default_playlist_id}`}
+														class="text-primary hover:underline"
+													>
+														{shortId(world.default_playlist_id)}
+													</a>
 													<CopyButton
 														value={world.default_playlist_id}
 														label="Copy playlist ID"

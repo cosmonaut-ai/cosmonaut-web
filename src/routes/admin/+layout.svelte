@@ -31,10 +31,17 @@
 		{ href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 		{ href: '/admin/users', label: 'Users', icon: Users },
 		{ href: '/admin/worlds', label: 'Worlds', icon: Globe2 },
-		{ href: '/admin/soundtracks', label: 'Soundtracks', icon: Music2 },
+		{
+			href: '/admin/soundtracks',
+			label: 'Soundtracks',
+			icon: Music2,
+			activePrefixes: ['/admin/playlists']
+		},
 		{ href: '/admin/featured', label: 'Featured', icon: Crown }
 	];
-	const activeNavItem = $derived(navItems.find((item) => isActive(item.href)) ?? navItems[0]);
+	const activeNavItem = $derived(
+		navItems.find((item) => isActive(item.href, item.activePrefixes)) ?? navItems[0]
+	);
 
 	onMount(() => {
 		routeReady = true;
@@ -47,8 +54,12 @@
 		}
 	});
 
-	function isActive(href: string): boolean {
-		return pathname === href || pathname.startsWith(`${href}/`);
+	function isActive(href: string, activePrefixes: string[] = []): boolean {
+		return (
+			pathname === href ||
+			pathname.startsWith(`${href}/`) ||
+			activePrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+		);
 	}
 </script>
 
@@ -102,7 +113,7 @@
 								<DropdownMenu.Item onclick={() => goto(item.href)} class="cursor-pointer">
 									<Icon class="h-4 w-4" />
 									<span class="min-w-0 flex-1 truncate">{item.label}</span>
-									{#if isActive(item.href)}
+									{#if isActive(item.href, item.activePrefixes)}
 										<Check class="h-4 w-4 text-primary" />
 									{/if}
 								</DropdownMenu.Item>

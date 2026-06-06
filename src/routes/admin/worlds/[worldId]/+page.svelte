@@ -314,7 +314,12 @@
 									<span class="text-muted-foreground">Default playlist</span>
 									{#if world.default_playlist_id}
 										<span class="flex min-w-0 items-center gap-1 font-mono text-xs text-foreground">
-											<span class="text-right break-all">{world.default_playlist_id}</span>
+											<a
+												href={`/admin/playlists/${world.default_playlist_id}`}
+												class="text-right break-all text-primary hover:underline"
+											>
+												{world.default_playlist_id}
+											</a>
 											<CopyButton
 												value={world.default_playlist_id}
 												label="Copy playlist ID"
@@ -560,6 +565,11 @@
 						<ExternalLink class="h-4 w-4" />
 						Open Story
 					</Button>
+					{#if world.default_playlist_id}
+						<Button href={`/admin/playlists/${world.default_playlist_id}`} variant="outline">
+							Open Playlist
+						</Button>
+					{/if}
 					<div class="rounded-md border border-border p-3">
 						<p class="text-xs text-muted-foreground">Shareable URL</p>
 						<div class="mt-1 flex items-center gap-1">
