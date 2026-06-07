@@ -33,7 +33,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { Ban, ChevronLeft, ExternalLink, Trash2, UserCheck } from '@lucide/svelte';
+	import { Activity, Ban, ChevronLeft, ExternalLink, Trash2, UserCheck } from '@lucide/svelte';
 
 	const userId = $derived(page.params.userId ?? '');
 
@@ -211,7 +211,17 @@
 				/>
 			</p>
 		</div>
-		<Button variant="outline" size="sm" disabled={loading} onclick={refreshUser}>Refresh</Button>
+		<div class="flex flex-wrap gap-2 md:justify-end">
+			<Button
+				href={`/admin/sessions?mode=user&q=${encodeURIComponent(userId)}`}
+				variant="outline"
+				size="sm"
+			>
+				<Activity class="h-4 w-4" />
+				Sessions
+			</Button>
+			<Button variant="outline" size="sm" disabled={loading} onclick={refreshUser}>Refresh</Button>
+		</div>
 	</div>
 
 	{#if error}

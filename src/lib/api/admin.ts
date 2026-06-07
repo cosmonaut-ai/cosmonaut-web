@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '$lib/config';
-import type { StoryNode, World } from '$lib/types/api';
+import type { Playlist, StoryNode, World, WorldSessionSummary } from '$lib/types/api';
 import type { SubscriptionTier } from '$lib/types/subscription';
 import { apiRequest } from './core';
 
@@ -52,6 +52,29 @@ export interface AdminUserGroupsResponse {
 	groups: string[];
 }
 
+export interface AdminSessionMember {
+	user_id: string;
+	role: string | null;
+	last_visited_node_id: string | null;
+	visited_node_count: number;
+	joined_at: string | null;
+	last_accessed_at: string | null;
+}
+
+export interface AdminSession {
+	id: string;
+	root_world_id: string;
+	created_by: string | null;
+	members: string[];
+	member_details: AdminSessionMember[];
+	per_member_progress: Record<string, string>;
+	visited_node_count: number;
+	soundtrack_playlist_id: string | null;
+	created_at: string | null;
+	updated_at: string | null;
+	world: World | null;
+}
+
 export interface AdminBanResponse {
 	status: 'banned';
 	sessions_revoked: boolean;
@@ -70,6 +93,7 @@ export type SoundtrackStatus = 'draft' | 'active' | 'disabled' | 'rejected';
 export type SoundtrackContentRating = 'child' | 'teen' | 'adult';
 export type SoundtrackLoopStrategy = 'crossfade' | 'fade_restart' | 'none';
 export type SoundtrackProvider = 'suno';
+export type AdminDiagnosticsContentFilter = 'none' | 'moderate' | 'strict';
 
 export interface Soundtrack {
 	id: string | null;
@@ -113,6 +137,68 @@ export interface SoundtrackUpdatePayload {
 	generated_at?: string | null;
 	quality_score?: number | null;
 	curation_notes?: string | null;
+}
+
+export interface AdminSoundtrackMatchRequest {
+	query: string;
+	content_filter: AdminDiagnosticsContentFilter;
+	top_k?: number;
+}
+
+export interface AdminSoundtrackMatchHit {
+	rank: number;
+	soundtrack_id: string | null;
+	pinecone_record_id: string | null;
+	score: number | null;
+	matched_text: string | null;
+	missing_soundtrack: boolean;
+	soundtrack: Soundtrack | null;
+}
+
+export interface AdminSoundtrackMatchResponse {
+	query: string;
+	content_filter: AdminDiagnosticsContentFilter;
+	allowed_ratings: string[];
+	matches: AdminSoundtrackMatchHit[];
+}
+
+export interface AdminWorldContextPreviewRequest {
+	world_id: string;
+	node_id?: string | null;
+	text?: string | null;
+	ancestor_node_ids?: string[];
+	world_facts_top_k?: number;
+	branch_facts_top_k?: number;
+	similar_nodes_top_k?: number;
+}
+
+export interface AdminStoryNodeContext {
+	world_facts: string[];
+	branch_facts: string[];
+	similar_nodes: string[];
+}
+
+export interface AdminWorldContextFactHit {
+	id: string;
+	text: string;
+	origin_node_id: string | null;
+}
+
+export interface AdminWorldContextSimilarNodeHit {
+	id: string;
+	text: string;
+	world_id: string | null;
+}
+
+export interface AdminWorldContextPreviewResponse {
+	world_id: string;
+	source_node_id: string | null;
+	query_text: string;
+	ancestor_node_ids: string[];
+	stored_context: AdminStoryNodeContext | null;
+	world_facts: AdminWorldContextFactHit[];
+	branch_facts: AdminWorldContextFactHit[];
+	similar_nodes: AdminWorldContextSimilarNodeHit[];
 }
 
 interface ListAdminUsersOptions {
@@ -173,6 +259,16 @@ export async function listAdminUserWorlds(
 	return apiRequest<PaginatedAdminResponse<World>>(url.toString());
 }
 
+export async function listAdminUserSessions(
+	userId: string,
+	{ cursor, limit = 50 }: CursorOptions = {}
+): Promise<PaginatedAdminResponse<WorldSessionSummary>> {
+	const url = new URL(`${API_BASE_URL}/admin/users/${userId}/sessions`);
+	url.searchParams.set('limit', String(limit));
+	if (cursor) url.searchParams.set('cursor', cursor);
+	return apiRequest<PaginatedAdminResponse<WorldSessionSummary>>(url.toString());
+}
+
 export async function updateAdminUserTier(
 	userId: string,
 	tier: SubscriptionTier
@@ -227,6 +323,34 @@ export async function listAdminWorldNodes(
 	return apiRequest<PaginatedAdminResponse<StoryNode>>(url.toString());
 }
 
+export async function listAdminWorldSessions(
+	worldId: string,
+	{ cursor, limit = 50 }: CursorOptions = {}
+): Promise<PaginatedAdminResponse<AdminSession>> {
+	const url = new URL(`${API_BASE_URL}/admin/worlds/${worldId}/sessions`);
+	url.searchParams.set('limit', String(limit));
+	if (cursor) url.searchParams.set('cursor', cursor);
+	return apiRequest<PaginatedAdminResponse<AdminSession>>(url.toString());
+}
+
+export async function getAdminPlaylist(playlistId: string): Promise<Playlist> {
+	return apiRequest<Playlist>(`${API_BASE_URL}/admin/playlists/${playlistId}`);
+}
+
+export async function getAdminSession(sessionId: string): Promise<AdminSession> {
+	return apiRequest<AdminSession>(`${API_BASE_URL}/admin/sessions/${sessionId}`);
+}
+
+export async function listAdminSessionNodes(
+	sessionId: string,
+	{ cursor, limit = 100 }: CursorOptions = {}
+): Promise<PaginatedAdminResponse<StoryNode>> {
+	const url = new URL(`${API_BASE_URL}/admin/sessions/${sessionId}/nodes`);
+	url.searchParams.set('limit', String(limit));
+	if (cursor) url.searchParams.set('cursor', cursor);
+	return apiRequest<PaginatedAdminResponse<StoryNode>>(url.toString());
+}
+
 export async function deleteAdminWorld(worldId: string): Promise<void> {
 	await apiRequest<void>(`${API_BASE_URL}/admin/worlds/${worldId}`, { method: 'DELETE' });
 }
@@ -258,6 +382,30 @@ export async function updateAdminFeaturedOrder(items: AdminFeaturedOrderItem[]):
 		method: 'PATCH',
 		body: JSON.stringify({ items })
 	});
+}
+
+export async function previewAdminSoundtrackMatches(
+	payload: AdminSoundtrackMatchRequest
+): Promise<AdminSoundtrackMatchResponse> {
+	return apiRequest<AdminSoundtrackMatchResponse>(
+		`${API_BASE_URL}/admin/diagnostics/soundtrack-matches`,
+		{
+			method: 'POST',
+			body: JSON.stringify(payload)
+		}
+	);
+}
+
+export async function previewAdminWorldContext(
+	payload: AdminWorldContextPreviewRequest
+): Promise<AdminWorldContextPreviewResponse> {
+	return apiRequest<AdminWorldContextPreviewResponse>(
+		`${API_BASE_URL}/admin/diagnostics/world-context`,
+		{
+			method: 'POST',
+			body: JSON.stringify(payload)
+		}
+	);
 }
 
 export async function listAdminSoundtracks({

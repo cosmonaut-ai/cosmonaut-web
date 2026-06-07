@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import {
 		deleteAdminWorld,
@@ -22,6 +22,16 @@
 
 	const searchParam = $derived(queryValue(page.url, 'search'));
 	const cursorParam = $derived(page.url.searchParams.get('cursor'));
+	const hasLookup = $derived(searchParam.trim().length > 0);
+	const worldsCardTitle = $derived(hasLookup ? 'Lookup Results' : 'Recent Worlds');
+	const worldsDescription = $derived(
+		hasLookup
+			? 'Review exact world and author matches without scanning the library.'
+			: 'Review the newest indexed worlds and their soundtrack coverage.'
+	);
+	const emptyWorldsMessage = $derived(
+		hasLookup ? 'No world or author matched this lookup.' : 'No indexed worlds are available yet.'
+	);
 
 	let worldSearch = $derived(searchParam);
 	let worlds = $state<World[]>([]);
@@ -33,12 +43,12 @@
 
 	const isMutating = $derived(actionPending !== '');
 
-	$effect(() => {
-		const currentRequest = ++requestId;
-		void loadWorlds(searchParam, cursorParam, currentRequest);
+	afterNavigate(() => {
+		void loadWorlds(searchParam, cursorParam);
 	});
 
-	async function loadWorlds(search: string, cursor: string | null, currentRequest = ++requestId) {
+	async function loadWorlds(search: string, cursor: string | null) {
+		const currentRequest = ++requestId;
 		worldsLoading = true;
 		worldsError = '';
 		try {
@@ -128,7 +138,7 @@
 	<div class="flex items-center justify-between gap-4">
 		<div>
 			<h2 class="text-xl font-semibold text-foreground">Worlds</h2>
-			<p class="mt-1 text-sm text-muted-foreground">Inspect and moderate every world.</p>
+			<p class="mt-1 text-sm text-muted-foreground">{worldsDescription}</p>
 		</div>
 		<Button variant="outline" size="sm" disabled={worldsLoading} onclick={refreshWorlds}>
 			<RefreshCw class="h-4 w-4" />
@@ -139,7 +149,7 @@
 	<Card class="min-w-0">
 		<CardHeader>
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<CardTitle>All Worlds</CardTitle>
+				<CardTitle>{worldsCardTitle}</CardTitle>
 				<form
 					class="flex w-full min-w-0 flex-col gap-2 sm:flex-row md:max-w-lg"
 					onsubmit={(event) => {
@@ -149,7 +159,7 @@
 				>
 					<Input
 						bind:value={worldSearch}
-						placeholder="Search title, world ID, author ID, or genre"
+						placeholder="World ID or author ID"
 						aria-label="Search worlds"
 						class="min-w-0"
 					/>
@@ -194,7 +204,7 @@
 								<th class="px-4 py-3 font-medium">Visibility</th>
 								<th class="px-4 py-3 font-medium">Status</th>
 								<th class="px-4 py-3 font-medium">Soundtrack</th>
-								<th class="px-4 py-3 font-medium">Updated</th>
+								<th class="px-4 py-3 font-medium">Created</th>
 								<th class="py-3 pl-4 text-right font-medium">Actions</th>
 							</tr>
 						</thead>
@@ -273,7 +283,8 @@
 											{/if}
 										</div>
 									</td>
-									<td class="px-4 py-3 text-muted-foreground">{formatDateTime(world.updated_at)}</td
+									<td class="px-4 py-3 text-muted-foreground"
+										>{formatDateTime(world.created_at || world.updated_at)}</td
 									>
 									<td class="py-3 pl-4">
 										<div class="flex justify-end gap-2">
@@ -316,7 +327,7 @@
 				</div>
 
 				{#if worlds.length === 0}
-					<p class="mt-4 text-sm text-muted-foreground">No worlds match the current filters.</p>
+					<p class="mt-4 text-sm text-muted-foreground">{emptyWorldsMessage}</p>
 				{/if}
 
 				<AdminPagination

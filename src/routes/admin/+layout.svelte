@@ -9,14 +9,17 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import SEO from '$lib/components/shared/SEO.svelte';
 	import {
+		Activity,
 		Check,
 		ChevronDown,
 		Crown,
 		Globe2,
 		LayoutDashboard,
+		ListMusic,
 		Music2,
 		ShieldCheck,
-		Users
+		Users,
+		Wrench
 	} from '@lucide/svelte';
 
 	let { children } = $props();
@@ -29,19 +32,15 @@
 
 	const navItems = [
 		{ href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+		{ href: '/admin/diagnostics', label: 'Diagnostics', icon: Wrench },
 		{ href: '/admin/users', label: 'Users', icon: Users },
 		{ href: '/admin/worlds', label: 'Worlds', icon: Globe2 },
-		{
-			href: '/admin/soundtracks',
-			label: 'Soundtracks',
-			icon: Music2,
-			activePrefixes: ['/admin/playlists']
-		},
+		{ href: '/admin/sessions', label: 'Sessions', icon: Activity },
+		{ href: '/admin/soundtracks', label: 'Soundtracks', icon: Music2 },
+		{ href: '/admin/playlists', label: 'Playlists', icon: ListMusic },
 		{ href: '/admin/featured', label: 'Featured', icon: Crown }
 	];
-	const activeNavItem = $derived(
-		navItems.find((item) => isActive(item.href, item.activePrefixes)) ?? navItems[0]
-	);
+	const activeNavItem = $derived(navItems.find((item) => isActive(item.href)) ?? navItems[0]);
 
 	onMount(() => {
 		routeReady = true;
@@ -49,17 +48,13 @@
 
 	$effect(() => {
 		if (!routeReady || auth.isLoading) return;
-		if (auth.isAuthenticated && !isAdminUser(auth.user)) {
+		if (auth.isAuthenticated && !canUseAdmin) {
 			goto('/', { replaceState: true });
 		}
 	});
 
-	function isActive(href: string, activePrefixes: string[] = []): boolean {
-		return (
-			pathname === href ||
-			pathname.startsWith(`${href}/`) ||
-			activePrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
-		);
+	function isActive(href: string): boolean {
+		return pathname === href || pathname.startsWith(`${href}/`);
 	}
 </script>
 
@@ -88,7 +83,7 @@
 					</div>
 					<h1 class="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Admin</h1>
 					<p class="mt-1 max-w-2xl text-sm text-muted-foreground">
-						User support, moderation, featured story, and soundtrack operations.
+						User support, moderation, diagnostics, featured story, and soundtrack operations.
 					</p>
 				</div>
 
@@ -113,7 +108,7 @@
 								<DropdownMenu.Item onclick={() => goto(item.href)} class="cursor-pointer">
 									<Icon class="h-4 w-4" />
 									<span class="min-w-0 flex-1 truncate">{item.label}</span>
-									{#if isActive(item.href, item.activePrefixes)}
+									{#if isActive(item.href)}
 										<Check class="h-4 w-4 text-primary" />
 									{/if}
 								</DropdownMenu.Item>
