@@ -1,6 +1,6 @@
 const AUDIO_CONTEXT_OPTIONS: AudioContextOptions = { latencyHint: 'interactive' };
 export const NARRATION_GAIN_BASELINE = 1;
-export const SOUNDTRACK_GAIN_BASELINE = 0.28;
+export const SOUNDTRACK_GAIN_BASELINE = 0.07;
 
 declare global {
 	interface Window {
