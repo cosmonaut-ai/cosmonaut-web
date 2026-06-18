@@ -4,7 +4,7 @@
 	import { showError, showWarning } from '$lib/utils/toast';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { Maximize2, Volume2 } from '@lucide/svelte';
+	import { Sparkles, Volume2 } from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 	import { getSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
@@ -400,7 +400,7 @@
 								aria-hidden="true"
 								class="pointer-events-none"
 							>
-								<Maximize2 class="h-4 w-4" />
+								<Sparkles class="h-4 w-4" />
 							</Button>
 						</span>
 					{/snippet}
@@ -425,7 +425,7 @@
 				aria-label={immersiveStory.active ? 'Exit immersive view' : 'Enter immersive view'}
 				class="shrink-0 {!immersiveStory.active && effectiveVoiceId ? 'text-primary' : ''}"
 			>
-				<Maximize2 class="h-4 w-4" />
+				<Sparkles class="h-4 w-4" />
 			</Button>
 		</span>
 	{/if}
