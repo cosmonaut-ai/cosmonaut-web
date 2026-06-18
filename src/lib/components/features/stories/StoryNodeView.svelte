@@ -362,6 +362,14 @@
 				<Map class="h-4 w-4" />
 				Map
 			</Button>
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				onclick={() => (shareModalOpen = true)}
+				aria-label="Share"
+			>
+				<Share2 class="h-4 w-4" />
+			</Button>
 			<AudioNarration
 				{sessionId}
 				{rootWorldId}
@@ -372,14 +380,6 @@
 				soundtrackPlaylistId={session?.soundtrack_playlist_id}
 				nodeTextLength={currentNode?.text?.length ?? 0}
 			/>
-			<Button
-				variant="ghost"
-				size="icon-sm"
-				onclick={() => (shareModalOpen = true)}
-				aria-label="Share"
-			>
-				<Share2 class="h-4 w-4" />
-			</Button>
 		</div>
 	</div>
 
