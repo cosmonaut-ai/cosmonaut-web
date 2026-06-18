@@ -411,16 +411,102 @@
 			</Tooltip.Root>
 		</Tooltip.Provider>
 	{:else}
-		<Button
-			variant={immersiveStory.active ? 'secondary' : 'ghost'}
-			size="icon-sm"
-			onclick={handleImmersiveToggle}
-			disabled={!effectiveVoiceId}
-			aria-pressed={immersiveStory.active}
-			aria-label={immersiveStory.active ? 'Exit immersive view' : 'Enter immersive view'}
-			class="shrink-0"
+		<span
+			class="immersive-cta {!immersiveStory.active && effectiveVoiceId
+				? 'immersive-cta--animate'
+				: ''}"
 		>
-			<Maximize2 class="h-4 w-4" />
-		</Button>
+			<Button
+				variant={immersiveStory.active ? 'secondary' : 'ghost'}
+				size="icon-sm"
+				onclick={handleImmersiveToggle}
+				disabled={!effectiveVoiceId}
+				aria-pressed={immersiveStory.active}
+				aria-label={immersiveStory.active ? 'Exit immersive view' : 'Enter immersive view'}
+				class="shrink-0 {!immersiveStory.active && effectiveVoiceId ? 'text-primary' : ''}"
+			>
+				<Maximize2 class="h-4 w-4" />
+			</Button>
+		</span>
 	{/if}
 </div>
+
+<style>
+	/* Smooth, animatable angle for the rotating conic-gradient border. */
+	@property --cta-angle {
+		syntax: '<angle>';
+		initial-value: 0deg;
+		inherits: false;
+	}
+
+	.immersive-cta {
+		position: relative;
+		display: inline-flex;
+		isolation: isolate;
+		border-radius: calc(var(--radius) + 2px);
+	}
+
+	/* Rotating gradient ring drawn just outside the button to draw the eye
+	   toward immersive ("interactive") mode while it is inactive. */
+	.immersive-cta--animate::before {
+		content: '';
+		position: absolute;
+		inset: -2px;
+		border-radius: inherit;
+		padding: 2px;
+		background: conic-gradient(
+			from var(--cta-angle),
+			var(--primary),
+			var(--chart-3),
+			var(--chart-5),
+			var(--chart-2),
+			var(--primary)
+		);
+		/* Show only the padding (the ring), masking out the button area. */
+		-webkit-mask:
+			linear-gradient(#000 0 0) content-box,
+			linear-gradient(#000 0 0);
+		mask:
+			linear-gradient(#000 0 0) content-box,
+			linear-gradient(#000 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+		animation: immersive-cta-spin 4s linear infinite;
+		pointer-events: none;
+	}
+
+	/* Soft glow behind the button echoing the same gradient. */
+	.immersive-cta--animate::after {
+		content: '';
+		position: absolute;
+		inset: -2px;
+		border-radius: inherit;
+		background: conic-gradient(
+			from var(--cta-angle),
+			var(--primary),
+			var(--chart-3),
+			var(--chart-5),
+			var(--chart-2),
+			var(--primary)
+		);
+		filter: blur(6px);
+		opacity: 0.35;
+		animation: immersive-cta-spin 4s linear infinite;
+		pointer-events: none;
+		z-index: -1;
+	}
+
+	@keyframes immersive-cta-spin {
+		to {
+			--cta-angle: 360deg;
+		}
+	}
+
+	/* Respect reduced-motion: keep the accent ring, drop the rotation. */
+	@media (prefers-reduced-motion: reduce) {
+		.immersive-cta--animate::before,
+		.immersive-cta--animate::after {
+			animation: none;
+		}
+	}
+</style>
