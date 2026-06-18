@@ -1,15 +1,13 @@
 import { getContext, setContext } from 'svelte';
 import type { Voice } from '$lib/types/api';
 import { getItem, setItem } from '$lib/utils/storage';
-import { SOUNDTRACK_GAIN_BASELINE } from '$lib/utils/mediaVolume';
 
 const SESSION_MEDIA_CONTEXT_KEY = Symbol('session-media');
 
 const NARRATION_VOLUME_KEY = 'cosmonaut-audio-volume';
 const NARRATION_SPEED_KEY = 'cosmonaut-audio-speed';
 const NARRATION_VOICE_KEY = 'cosmonaut-audio-voice';
-const LEGACY_SOUNDTRACK_VOLUME_KEY = 'cosmonaut-music-volume';
-const SOUNDTRACK_VOLUME_KEY = 'cosmonaut-music-volume-v2';
+const SOUNDTRACK_VOLUME_KEY = 'cosmonaut-music-volume';
 const SOUNDTRACK_ENABLED_KEY = 'cosmonaut-music-enabled';
 
 const VALID_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -42,23 +40,7 @@ function loadBool(key: string, fallback: boolean): boolean {
 }
 
 function loadSoundtrackVolume(): number {
-	const stored = getItem(SOUNDTRACK_VOLUME_KEY);
-	if (stored) {
-		const parsed = parseFloat(stored);
-		if (isFinite(parsed) && parsed >= 0 && parsed <= 1) return parsed;
-	}
-
-	const legacyStored = getItem(LEGACY_SOUNDTRACK_VOLUME_KEY);
-	if (legacyStored) {
-		const parsed = parseFloat(legacyStored);
-		if (isFinite(parsed) && parsed >= 0 && parsed <= 1) {
-			const migrated = Math.min(1, Math.max(0, parsed / SOUNDTRACK_GAIN_BASELINE));
-			setItem(SOUNDTRACK_VOLUME_KEY, String(migrated));
-			return migrated;
-		}
-	}
-
-	return DEFAULT_SOUNDTRACK_VOLUME;
+	return loadFloat(SOUNDTRACK_VOLUME_KEY, DEFAULT_SOUNDTRACK_VOLUME);
 }
 
 export interface VoicePickerDelegate {
