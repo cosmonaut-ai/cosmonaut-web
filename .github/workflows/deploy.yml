@@ -143,7 +143,10 @@ jobs:
       - name: Clean up stale immutable assets
         continue-on-error: true
         run: |
-          CUTOFF=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          # Keep old immutable chunks around long enough that long-lived tabs
+          # (iOS Safari can keep a tab alive for weeks) don't fall off a cliff
+          # and hit chunk-load failures after a deploy.
+          CUTOFF=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)
 
           aws s3api list-objects-v2 \
             --bucket "${{ env.S3_BUCKET }}" \

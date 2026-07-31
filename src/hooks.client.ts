@@ -4,18 +4,28 @@ import posthog from 'posthog-js';
 import { PUBLIC_POSTHOG_PROJECT_TOKEN, PUBLIC_POSTHOG_HOST } from '$env/static/public';
 import { ENV, SENTRY_RELEASE, isLocalEnvironment } from '$lib/config';
 
-function reloadIfStale(key: string) {
+// Returns true only when it actually triggered a reload. Callers must gate
+// preventDefault() on this: cancelling vite:preloadError makes __vitePreload
+// resolve the dynamic import to `undefined` instead of rejecting, so if we
+// suppress the error without reloading, SvelteKit's router dereferences the
+// undefined route node and throws (e.g. "Cannot read properties of undefined
+// (reading 'universal')"). When throttled, let the real chunk-load error
+// propagate instead — it symbolicates into something readable.
+function reloadIfStale(key: string): boolean {
 	const last = sessionStorage.getItem(key);
 	const now = Date.now();
 	if (!last || now - parseInt(last) > 10_000) {
 		sessionStorage.setItem(key, now.toString());
 		window.location.reload();
+		return true;
 	}
+	return false;
 }
 
 window.addEventListener('vite:preloadError', (event) => {
-	event.preventDefault();
-	reloadIfStale('vite:preloadError:reload');
+	if (reloadIfStale('vite:preloadError:reload')) {
+		event.preventDefault();
+	}
 });
 
 window.addEventListener('unhandledrejection', (event) => {
@@ -25,8 +35,9 @@ window.addEventListener('unhandledrejection', (event) => {
 		msg.includes('Failed to fetch dynamically imported module') ||
 		msg.includes('error loading dynamically imported module')
 	) {
-		event.preventDefault();
-		reloadIfStale('asset-load-error:reload');
+		if (reloadIfStale('asset-load-error:reload')) {
+			event.preventDefault();
+		}
 	}
 });
 
