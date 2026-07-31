@@ -67,6 +67,9 @@ export async function init() {
 			defaults: '2026-01-30',
 			capture_exceptions: true
 		});
+		if (SENTRY_RELEASE) {
+			posthog.register({ release: SENTRY_RELEASE });
+		}
 	}
 }
 
