@@ -6,12 +6,13 @@
 
 	interface Props {
 		world: World;
+		sessionId?: string | null;
 	}
 
-	let { world }: Props = $props();
+	let { world, sessionId = null }: Props = $props();
 
 	function handleWorldHome() {
-		goto(`/worlds/${world.id}`);
+		goto(sessionId ? `/sessions/${sessionId}` : `/worlds/${world.id}`);
 	}
 </script>
 

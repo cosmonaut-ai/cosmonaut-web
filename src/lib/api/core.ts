@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/sveltekit';
+import posthog from 'posthog-js';
 import { ApiError } from '$lib/types/api';
 import { isLocalEnvironment } from '$lib/config';
 import { logger } from '$lib/utils/logger';
@@ -68,6 +69,18 @@ async function handleResponse<T>(response: Response, method?: string): Promise<T
 				tags: { api_status: response.status, api_code: error.code },
 				contexts: { api: { url: response.url, method: method ?? 'unknown' } }
 			});
+			if (posthog.__loaded) {
+				try {
+					posthog.captureException(error, {
+						api_status: response.status,
+						api_code: error.code,
+						api_url: response.url,
+						api_method: method ?? 'unknown'
+					});
+				} catch {
+					// PostHog capture must never break error handling
+				}
+			}
 		}
 		throw error;
 	}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { World } from '$lib/types/api';
+	import type { World, WorldSession } from '$lib/types/api';
 	import { useAuth } from '$lib/auth/auth.svelte';
 	import { Shield, ShieldPlus, BookOpen } from '@lucide/svelte';
 	import WorldHeroSection from './WorldHeroSection.svelte';
@@ -22,13 +22,24 @@
 
 	interface Props {
 		world: World;
+		session?: WorldSession | null;
+		inviteToken?: string | null;
 		lastNodeId?: string | null;
 		onWorldUpdate?: (world: World) => void;
 	}
 
-	let { world, lastNodeId = null, onWorldUpdate }: Props = $props();
+	let {
+		world,
+		session = null,
+		inviteToken = null,
+		lastNodeId = null,
+		onWorldUpdate
+	}: Props = $props();
 
-	const hasProgress = $derived(lastNodeId !== null && lastNodeId !== world.root_node_id);
+	const effectiveLastNodeId = $derived(lastNodeId ?? session?.last_visited_node_id ?? null);
+	const hasProgress = $derived(
+		effectiveLastNodeId !== null && effectiveLastNodeId !== world.root_node_id
+	);
 	const hasEndings = $derived(
 		world.potential_endings !== null && world.potential_endings.length > 0
 	);
@@ -42,7 +53,9 @@
 
 	<WorldQuickActions
 		{world}
-		{lastNodeId}
+		{session}
+		{inviteToken}
+		lastNodeId={effectiveLastNodeId}
 		{hasProgress}
 		{hasEndings}
 		onShare={() => (shareModalOpen = true)}

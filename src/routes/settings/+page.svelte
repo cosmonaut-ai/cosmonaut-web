@@ -6,6 +6,7 @@
 	import AppPageHeader from '$lib/components/shared/AppPageHeader.svelte';
 	import AccountSection from '$lib/components/features/subscription/AccountSection.svelte';
 	import SubscriptionSection from '$lib/components/features/subscription/SubscriptionSection.svelte';
+	import NarrationPreferencesSection from '$lib/components/features/settings/NarrationPreferencesSection.svelte';
 	import DangerZone from '$lib/components/features/subscription/DangerZone.svelte';
 
 	const usageQuery = useUser();
@@ -28,6 +29,8 @@
 			<AccountSection />
 
 			<SubscriptionSection {usage} isLoading={usageQuery.isLoading} />
+
+			<NarrationPreferencesSection />
 
 			<Card>
 				<CardHeader>

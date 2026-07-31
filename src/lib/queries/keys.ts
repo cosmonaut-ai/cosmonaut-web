@@ -6,20 +6,26 @@
  *
  * Keys are structured hierarchically: entity → scope → params.
  * This ensures prefix-based invalidation works correctly (e.g., invalidating
- * `queryKeys.nodes.all(worldId)` also invalidates all node detail queries
- * for that world when `exact` is not set).
+ * `queryKeys.nodes.all(sessionId)` also invalidates all node detail queries
+ * for that session when `exact` is not set).
  */
 export const queryKeys = {
 	worlds: {
-		all: ['worlds'] as const,
 		featured: ['worlds', 'featured'] as const,
 		detail: (id: string) => ['worlds', id] as const,
 		inviteToken: (id: string) => ['worlds', id, 'invite-token'] as const
 	},
+	sessions: {
+		all: ['sessions'] as const,
+		detail: (sessionId: string) => ['sessions', sessionId] as const,
+		handoff: (sessionId: string) => ['sessions', sessionId, 'handoff'] as const
+	},
 	nodes: {
-		all: (worldId: string) => ['worlds', worldId, 'nodes'] as const,
-		detail: (worldId: string, nodeId: string) => ['worlds', worldId, 'nodes', nodeId] as const,
-		progress: (worldId: string) => ['worlds', worldId, 'progress'] as const
+		all: (sessionId: string) => ['sessions', sessionId, 'nodes'] as const,
+		detail: (sessionId: string, nodeId: string) => ['sessions', sessionId, 'nodes', nodeId] as const
+	},
+	playlists: {
+		detail: (id: string) => ['playlists', id] as const
 	},
 	voices: {
 		all: ['voices'] as const

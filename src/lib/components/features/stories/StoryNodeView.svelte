@@ -4,8 +4,9 @@
 	import { page } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { useNode, useUser } from '$lib/queries';
-	import { getWorldContext } from '$lib/contexts/world';
+	import { getSessionContext } from '$lib/contexts/session';
 	import { getImmersiveStoryContext } from '$lib/contexts/immersiveStory.svelte';
+	import { getSessionMediaContext } from '$lib/contexts/sessionMedia.svelte';
 	import { ApiError, type StoryNode } from '$lib/types/api';
 	import StoryCard from './StoryCard.svelte';
 	import SlideTransition from './SlideTransition.svelte';
@@ -29,39 +30,20 @@
 	import { ChevronLeft, Undo, RotateCcw, TriangleAlert, Map, Rocket, Share2 } from '@lucide/svelte';
 
 	interface Props {
-		worldId: string;
+		sessionId: string;
 		rootNodeId: string | null;
 		nodeId: string;
 	}
 
-	let { worldId, rootNodeId, nodeId }: Props = $props();
+	let { sessionId, rootNodeId, nodeId }: Props = $props();
 
 	let currentNodeOverride = $state.raw<StoryNode | null>(null);
 	let loading = $state(false);
 	const immersiveStory = getImmersiveStoryContext();
+	const media = getSessionMediaContext();
 	const IMMERSIVE_QUERY_PARAM = 'immersive';
 
-	// Navigation direction for slide animation
 	let slideDirection = $state<'forward' | 'back'>('forward');
-
-	// ── Audio Narration ──
-	let audioPlayerVisible = $state(false);
-	let narrationStatus = $state({
-		nodeId: null as string | null,
-		currentTime: 0,
-		duration: 0,
-		paused: true,
-		ended: false,
-		isGenerating: false,
-		audioUrl: null as string | null,
-		timestampsUrl: null as string | null,
-		hasAudio: false,
-		voiceId: null as string | null,
-		captionsUnavailable: false,
-		hasStartedPlayback: false,
-		generationStartedAt: null as number | null
-	});
-	let seekNarration = $state<((time: number) => void) | null>(null);
 
 	function routeForNode(targetNodeId: string): string {
 		const searchParams = new SvelteURLSearchParams(
@@ -74,7 +56,7 @@
 		}
 
 		const query = searchParams.toString();
-		return `/worlds/${worldId}/nodes/${targetNodeId}${query ? `?${query}` : ''}`;
+		return `/sessions/${sessionId}/nodes/${targetNodeId}${query ? `?${query}` : ''}`;
 	}
 
 	function routeForMap(): string {
@@ -90,28 +72,26 @@
 		}
 
 		const query = searchParams.toString();
-		return `/worlds/${worldId}/graph${query ? `?${query}` : ''}`;
+		return `/sessions/${sessionId}/graph${query ? `?${query}` : ''}`;
 	}
 
-	// Use TanStack Query for node data (pass getters to ensure reactivity)
-	// Enable polling when node is in 'generating' status
 	const nodeQuery = useNode(
-		() => worldId,
+		() => sessionId,
 		() => nodeId,
 		{ enablePolling: true }
 	);
 
-	// ── World data for progress estimates and ShareModal ──
-	const worldQuery = getWorldContext();
-	const world = $derived(worldQuery.data);
+	const sessionQuery = getSessionContext();
+	const session = $derived(sessionQuery.data);
+	const world = $derived(session?.world);
+	const rootWorldId = $derived(session?.root_world_id ?? world?.id ?? sessionId);
 
-	// Get stable values - prefer override (most recent) over query data
 	const effectiveNodeId = $derived(currentNodeOverride?.id ?? nodeQuery.data?.id);
 	const effectiveNodeStatus = $derived(
 		currentNodeOverride?.generation_status ?? nodeQuery.data?.generation_status
 	);
 	const stream = useStreamingNode({
-		worldId: () => worldId,
+		sessionId: () => sessionId,
 		nodeId: () => nodeId,
 		effectiveNodeId: () => effectiveNodeId,
 		effectiveNodeStatus: () => effectiveNodeStatus,
@@ -134,38 +114,37 @@
 		}
 	});
 
-	// Check if node is being generated elsewhere (poll until complete)
 	const isNodeGenerating = $derived(effectiveNodeStatus === 'generating' && !stream.isStreaming);
-
-	// Check if node generation failed
 	const isNodeFailed = $derived(effectiveNodeStatus === 'failed');
-
-	// The current node is either the override (during streaming/navigation) or from the query
 	const currentNode = $derived(currentNodeOverride ?? nodeQuery.data ?? null);
 
+	// Read narration state from session media context
 	const activeNarrationNodeId = $derived(currentNode?.id ?? nodeId);
-	const narrationMatchesCurrentNode = $derived(narrationStatus.nodeId === activeNarrationNodeId);
+	const narrationMatchesCurrentNode = $derived(media.narrationNodeId === activeNarrationNodeId);
+	const narrationGenerationMatchesCurrentNode = $derived(
+		media.narrationGenerationNodeId === activeNarrationNodeId
+	);
 	const currentNarrationTime = $derived(
-		narrationMatchesCurrentNode ? narrationStatus.currentTime : 0
+		narrationMatchesCurrentNode ? media.narrationCurrentTime : 0
 	);
 	const currentNarrationDuration = $derived(
-		narrationMatchesCurrentNode ? narrationStatus.duration : 0
+		narrationMatchesCurrentNode ? media.narrationDuration : 0
 	);
 	const currentNarrationEnded = $derived(
-		narrationMatchesCurrentNode ? narrationStatus.ended : false
+		narrationMatchesCurrentNode ? media.narrationEnded : false
 	);
 	const currentNarrationTimestampsUrl = $derived(
-		narrationMatchesCurrentNode ? narrationStatus.timestampsUrl : null
+		narrationMatchesCurrentNode ? media.narrationTimestampsUrl : null
 	);
 	const currentNarrationGenerating = $derived(
-		narrationMatchesCurrentNode ? narrationStatus.isGenerating : false
+		narrationGenerationMatchesCurrentNode ? media.narrationIsGenerating : false
 	);
 	const wordSeekEnabled = $derived(
 		narrationMatchesCurrentNode &&
-			narrationStatus.hasAudio &&
-			narrationStatus.hasStartedPlayback &&
-			!narrationStatus.isGenerating &&
-			!!seekNarration
+			media.narrationHasAudio &&
+			media.narrationHasStartedPlayback &&
+			!media.narrationIsGenerating &&
+			!!media.seekNarration
 	);
 	let progressClock = $state(Date.now());
 	const storyGenerationActive = $derived(stream.isStreaming || isNodeGenerating);
@@ -187,7 +166,9 @@
 	const narrationGenerationProgress = $derived(
 		estimateNarrationGenerationProgress({
 			isGenerating: currentNarrationGenerating,
-			generationStartedAt: narrationMatchesCurrentNode ? narrationStatus.generationStartedAt : null,
+			generationStartedAt: narrationGenerationMatchesCurrentNode
+				? media.narrationGenerationStartedAt
+				: null,
 			now: progressClock
 		})
 	);
@@ -218,7 +199,8 @@
 	});
 
 	const choices = useChoiceExecution({
-		worldId: () => worldId,
+		sessionId: () => sessionId,
+		rootWorldId: () => rootWorldId,
 		currentNode: () => currentNode,
 		isProcessingChoice: () => isProcessingChoice,
 		loading: () => loading,
@@ -236,7 +218,6 @@
 		routeForNode
 	});
 
-	// Proactive quota check
 	const usageQuery = useUser();
 	const usage = $derived(usageQuery.data);
 	const isAtNodeLimit = $derived(usage ? usage.nodes_used >= usage.nodes_limit : false);
@@ -246,15 +227,12 @@
 		loading || nodeQuery.isLoading || isNodeGenerating || choices.isPending
 	);
 
-	// Clear override when nodeId changes (e.g., back/forward navigation)
 	$effect(() => {
 		if (nodeId && currentNodeOverride?.id !== nodeId) {
 			currentNodeOverride = null;
 		}
 	});
 
-	// Reset scroll position when navigating to a new node so the footer
-	// (pushed off-screen by min-h-dvh) doesn't stay in view.
 	$effect(() => {
 		void nodeId;
 		if (browser) {
@@ -278,7 +256,7 @@
 
 	async function handleRestart() {
 		if (!rootNodeId) return;
-		trackEvent('story_restarted', { world_id: worldId });
+		trackEvent('story_restarted', { world_id: rootWorldId, session_id: sessionId });
 		choices.cancel();
 		stream.abortStream();
 		slideDirection = 'back';
@@ -297,7 +275,7 @@
 	async function handleRetryGeneration() {
 		if (!currentNode || stream.isStreaming) return;
 		stream.setGeneratingNodeId(currentNode.id);
-		await stream.startGeneration(worldId, currentNode.id, { setLoading: true });
+		await stream.startGeneration(sessionId, currentNode.id, { setLoading: true });
 	}
 
 	const isEnding = $derived(
@@ -307,9 +285,15 @@
 	const canGoBack = $derived(!!currentNode?.parent_id);
 	const pathLength = $derived((currentNode?.ancestors?.length || 0) + 1);
 
+	let lastTrackedEndingNodeId = $state<string | null>(null);
 	$effect(() => {
-		if (isEnding) {
-			trackEvent('story_ended', { world_id: worldId, path_length: pathLength });
+		if (isEnding && currentNode?.id && currentNode.id !== lastTrackedEndingNodeId) {
+			lastTrackedEndingNodeId = currentNode.id;
+			trackEvent('story_ended', {
+				world_id: rootWorldId,
+				session_id: sessionId,
+				path_length: pathLength
+			});
 		}
 	});
 
@@ -352,7 +336,7 @@
 			onWordSeek: routeLoading
 				? undefined
 				: (time) => {
-						if (wordSeekEnabled) seekNarration?.(time);
+						if (wordSeekEnabled) media.seekNarration?.(time);
 					}
 		});
 	});
@@ -362,7 +346,7 @@
 </script>
 
 <main
-	class="mx-auto max-w-4xl px-6 py-8 {audioPlayerVisible || immersiveStory.active ? 'pb-24' : ''}"
+	class="mx-auto max-w-4xl px-6 py-8 {media.barVisible || immersiveStory.active ? 'pb-24' : ''}"
 >
 	<!-- Toolbar -->
 	<div class="mb-6 flex items-center justify-between">
@@ -378,18 +362,6 @@
 				<Map class="h-4 w-4" />
 				Map
 			</Button>
-			<AudioNarration
-				{worldId}
-				nodeId={currentNode?.id ?? nodeId}
-				audio={currentNode?.audio ?? {}}
-				isNodeCompleted={currentNode?.generation_status === 'completed'}
-				onQuotaExceeded={() => (stream.showAudioQuotaPrompt = true)}
-				bind:playerVisible={audioPlayerVisible}
-				bind:immersiveActive={immersiveStory.active}
-				bind:narrationStatus
-				bind:seekNarration
-				nodeTextLength={currentNode?.text?.length ?? 0}
-			/>
 			<Button
 				variant="ghost"
 				size="icon-sm"
@@ -398,17 +370,24 @@
 			>
 				<Share2 class="h-4 w-4" />
 			</Button>
+			<AudioNarration
+				{sessionId}
+				{rootWorldId}
+				nodeId={currentNode?.id ?? nodeId}
+				audio={currentNode?.audio ?? {}}
+				isNodeCompleted={currentNode?.generation_status === 'completed'}
+				onQuotaExceeded={() => (stream.showAudioQuotaPrompt = true)}
+				soundtrackPlaylistId={session?.soundtrack_playlist_id}
+				nodeTextLength={currentNode?.text?.length ?? 0}
+			/>
 		</div>
 	</div>
 
 	<!-- Story Content with Slide Transition -->
 	{#if stream.isStreaming || isNodeGenerating || isNodeFailed || currentNode}
 		<div class="-mx-6 sm:mx-0">
-			<!-- Key on the current node ID (or a streaming key when streaming a new node) -->
-			<!-- This ensures transition plays when switching between nodes OR entering streaming -->
 			<SlideTransition key={currentNode?.id ?? 'streaming'} direction={slideDirection}>
 				{#if stream.isStreaming}
-					<!-- Streaming state - show text as it arrives -->
 					<StoryCard
 						text={stream.streamingText.trim()}
 						choices={[]}
@@ -418,7 +397,6 @@
 						showCustomChoice={false}
 					/>
 				{:else if isNodeGenerating}
-					<!-- Node is being generated by another session - show loading state -->
 					<StoryCard
 						text=""
 						choices={[]}
@@ -428,7 +406,6 @@
 						showCustomChoice={false}
 					/>
 				{:else if isNodeFailed}
-					<!-- Node generation failed - show error page with retry -->
 					<Card class="border-destructive bg-destructive/5">
 						<CardContent class="flex flex-col items-center justify-center py-16">
 							<TriangleAlert class="mb-4 h-12 w-12 text-destructive" />
@@ -476,7 +453,6 @@
 			</SlideTransition>
 		</div>
 	{:else if isLoading}
-		<!-- Loading state -->
 		<Card>
 			<CardContent class="flex items-center justify-center py-16">
 				<div class="flex items-center gap-3 text-muted-foreground">
@@ -486,7 +462,6 @@
 			</CardContent>
 		</Card>
 	{:else if nodeQuery.isError && nodeQuery.error instanceof ApiError && nodeQuery.error.isWrongSession}
-		<!-- Node belongs to a different playthrough session -->
 		<Card class="border-border/50">
 			<CardContent class="flex flex-col items-center py-12 text-center">
 				<div
@@ -500,12 +475,12 @@
 					path, or explore the map to find your way.
 				</p>
 				<div class="flex gap-3">
-					<Button variant="outline" onclick={() => goto(`/worlds/${worldId}/map`)}>
+					<Button variant="outline" onclick={() => goto(`/sessions/${sessionId}/map`)}>
 						<Map class="mr-2 h-4 w-4" />
 						View Map
 					</Button>
 					{#if rootNodeId}
-						<Button onclick={() => goto(`/worlds/${worldId}/nodes/${rootNodeId}`)}>
+						<Button onclick={() => goto(`/sessions/${sessionId}/nodes/${rootNodeId}`)}>
 							Start from Beginning
 						</Button>
 					{/if}
@@ -513,7 +488,6 @@
 			</CardContent>
 		</Card>
 	{:else if nodeQuery.isError}
-		<!-- Query error state -->
 		<Card class="border-destructive bg-destructive/5">
 			<CardContent class="flex flex-col items-center justify-center gap-4 py-16">
 				<TriangleAlert class="h-12 w-12 text-destructive" />
@@ -522,7 +496,6 @@
 			</CardContent>
 		</Card>
 	{:else}
-		<!-- No node available -->
 		<Card class="border-dashed">
 			<CardContent class="flex flex-col items-center justify-center gap-4 py-16 text-center">
 				<div class="rounded-full border border-dashed border-muted-foreground/40 bg-muted/20 p-3">
@@ -538,7 +511,7 @@
 				<div class="flex flex-col gap-3 sm:flex-row">
 					<Button
 						variant="outline"
-						onclick={() => goto(`/worlds/${worldId}/map`)}
+						onclick={() => goto(`/sessions/${sessionId}/map`)}
 						disabled={isProcessingChoice}
 					>
 						<Map class="mr-2 h-4 w-4" />
@@ -574,7 +547,7 @@
 			{world}
 			open={shareModalOpen}
 			onOpenChange={(open) => (shareModalOpen = open)}
-			onWorldUpdate={() => worldQuery.refetch()}
+			onWorldUpdate={() => sessionQuery.refetch()}
 			isOwner={world.author_id === auth.user?.sub}
 		/>
 	{/if}

@@ -1,25 +1,17 @@
+import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
 import {
-	createQuery,
-	createMutation,
-	createInfiniteQuery,
-	useQueryClient,
-	type InfiniteData
-} from '@tanstack/svelte-query';
-import {
-	getWorlds,
 	getWorld,
 	getFeaturedWorlds,
 	createWorld,
-	deleteWorld,
 	updateWorldSharing,
 	createInviteToken,
 	getInviteToken,
 	deleteInviteToken
 } from '$lib/api/worlds';
-import type { PaginatedWorldsResponse } from '$lib/api/worlds';
 import {
 	ApiError,
 	type CreateWorldRequest,
+	type CreateWorldResponse,
 	type InviteToken,
 	type UpdateWorldSharingRequest,
 	type World
@@ -37,26 +29,6 @@ export function useFeaturedWorlds() {
 		queryKey: queryKeys.worlds.featured,
 		queryFn: getFeaturedWorlds,
 		staleTime: 10 * 60_000
-	}));
-}
-
-/**
- * Infinite query hook to fetch worlds for the current user with cursor pagination.
- * Pages are accumulated; call `fetchNextPage()` to load more when `hasNextPage` is true.
- */
-export function useWorlds() {
-	return createInfiniteQuery<
-		PaginatedWorldsResponse,
-		Error,
-		InfiniteData<PaginatedWorldsResponse>,
-		typeof queryKeys.worlds.all,
-		string | null
-	>(() => ({
-		queryKey: queryKeys.worlds.all,
-		queryFn: ({ pageParam }) => getWorlds(pageParam),
-		initialPageParam: null,
-		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
-		staleTime: 5 * 60_000
 	}));
 }
 
@@ -103,8 +75,10 @@ export function useCreateWorld() {
 	const client = useQueryClient();
 	return createMutation(() => ({
 		mutationFn: (data: CreateWorldRequest) => createWorld(data),
-		onSuccess: () => {
-			client.invalidateQueries({ queryKey: queryKeys.worlds.all });
+		onSuccess: (result: CreateWorldResponse) => {
+			client.setQueryData(queryKeys.worlds.detail(result.world.id), result.world);
+			client.setQueryData(queryKeys.sessions.detail(result.session.id), result.session);
+			client.invalidateQueries({ queryKey: queryKeys.sessions.all });
 			client.invalidateQueries({ queryKey: queryKeys.user.all });
 			showSuccess('World created', 'Your world is being generated');
 		},
@@ -128,24 +102,6 @@ export function useCreateWorld() {
 }
 
 /**
- * Mutation hook to delete a world
- */
-export function useDeleteWorld() {
-	const client = useQueryClient();
-	return createMutation(() => ({
-		mutationFn: (worldId: string) => deleteWorld(worldId),
-		onSuccess: () => {
-			client.invalidateQueries({ queryKey: queryKeys.worlds.all });
-			client.invalidateQueries({ queryKey: queryKeys.user.all });
-			showSuccess('World deleted');
-		},
-		onError: (error: Error) => {
-			showError('Failed to delete world', error.message);
-		}
-	}));
-}
-
-/**
  * Mutation hook to update world sharing settings
  */
 export function useUpdateWorldSharing(worldId: MaybeGetter<string>) {
@@ -156,7 +112,7 @@ export function useUpdateWorldSharing(worldId: MaybeGetter<string>) {
 			mutationFn: (data: UpdateWorldSharingRequest) => updateWorldSharing(id, data),
 			onSuccess: (updatedWorld: World) => {
 				client.setQueryData(queryKeys.worlds.detail(id), updatedWorld);
-				client.invalidateQueries({ queryKey: queryKeys.worlds.all });
+				client.invalidateQueries({ queryKey: queryKeys.sessions.all });
 			},
 			onError: (error: Error) => {
 				showError('Failed to update sharing settings', error.message);

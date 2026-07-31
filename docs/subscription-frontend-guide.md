@@ -4,17 +4,18 @@
 
 The backend now enforces per-user subscription tiers with usage quotas. Three tiers exist:
 
-| Tier      | Worlds/period | Nodes/period | Audio              | Reset Period |
-| --------- | ------------- | ------------ | ------------------ | ------------ |
-| FREE      | 3             | 30           | 10 (lifetime)      | 7 days       |
-| EXPLORER  | 20            | 200          | 10 (lifetime)      | 30 days      |
-| COSMONAUT | 100           | 2,000        | 150/month          | 30 days      |
+| Tier      | Worlds/period | Nodes/period | Audio         | Reset Period |
+| --------- | ------------- | ------------ | ------------- | ------------ |
+| FREE      | 3             | 30           | 10 (lifetime) | 7 days       |
+| EXPLORER  | 20            | 200          | 10 (lifetime) | 30 days      |
+| COSMONAUT | 100           | 2,000        | 150/month     | 30 days      |
 
 **World creation limit:** **Worlds/period** is a rate limit on how many worlds can be _created_ within a single billing period. Resets when the period ends.
 
-All existing endpoints continue to work as before. The key changes are:
+The key quota-enforced story endpoints are:
 
-- Two existing endpoints (`POST /worlds/` and `POST /worlds/{id}/nodes/{id}/generate-text`) now enforce quotas and may return new error types.
+- `POST /worlds/` creates a root world plus the owner's first session and enforces world creation quota.
+- `POST /sessions/{session_id}/nodes/{node_id}/generate-text` enforces node generation quota.
 - Three new endpoints provide usage info and Stripe session management.
 - The JWT now carries `custom:tier` and `custom:stripe_customer_id` claims (available after the user subscribes and re-authenticates).
 
@@ -175,7 +176,7 @@ This is returned when the user has reached their tier's world creation limit for
 
 ---
 
-### POST /worlds/{world_id}/nodes/{node_id}/generate-text (Generate Story Text)
+### POST /sessions/{session_id}/nodes/{node_id}/generate-text (Generate Story Text)
 
 Now enforces the nodes quota before generating text for a node.
 
@@ -315,7 +316,7 @@ Provide a link to the upgrade flow (`POST /auth/checkout`) or the billing portal
 
 ### Handling quota SSE errors on node generation
 
-Listen for `event: error` in the SSE stream from `POST /worlds/{id}/nodes/{id}/generate-text`. If the data starts with `"Quota exceeded"`, display an upgrade prompt instead of a generic error.
+Listen for `event: error` in the SSE stream from `POST /sessions/{sessionId}/nodes/{nodeId}/generate-text`. If the data starts with `"Quota exceeded"`, display an upgrade prompt instead of a generic error.
 
 ### Showing cancellation state
 

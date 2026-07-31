@@ -117,13 +117,18 @@
 	const isAtWorldLimit = $derived(usage ? usage.worlds_created >= usage.worlds_limit : false);
 
 	// Inline validation
+	const MIN_PROMPT_LENGTH = 5;
 	const MAX_PROMPT_LENGTH = 2000;
 	const promptTrimmed = $derived(worldPrompt.trim());
 	const promptTooLong = $derived(worldPrompt.length > MAX_PROMPT_LENGTH);
+	const promptTooShort = $derived(
+		promptTrimmed.length > 0 && promptTrimmed.length < MIN_PROMPT_LENGTH
+	);
 	const promptEmpty = $derived(promptTrimmed.length === 0);
 	const promptError = $derived.by(() => {
 		if (!hasAttemptedSubmit && !promptTooLong) return '';
 		if (promptEmpty) return 'A world prompt is required to create your world.';
+		if (promptTooShort) return `Prompt must be at least ${MIN_PROMPT_LENGTH} characters.`;
 		if (promptTooLong)
 			return `Prompt is too long (${worldPrompt.length}/${MAX_PROMPT_LENGTH} characters).`;
 		return '';
@@ -179,7 +184,7 @@
 	async function handleCreateWorld() {
 		hasAttemptedSubmit = true;
 
-		if (promptEmpty || promptTooLong) {
+		if (promptEmpty || promptTooShort || promptTooLong) {
 			return;
 		}
 
@@ -192,8 +197,8 @@
 				content_filter: contentFilter
 			},
 			{
-				onSuccess: (world) => {
-					goto(`/worlds/${world.id}`);
+				onSuccess: ({ session }) => {
+					goto(`/sessions/${session.id}`);
 				}
 			}
 		);
@@ -398,7 +403,7 @@
 						</Button>
 						<Button
 							type="submit"
-							disabled={loading || !worldPrompt.trim() || isAtWorldLimit}
+							disabled={loading || promptEmpty || promptTooShort || isAtWorldLimit}
 							class="flex-1 gap-2"
 						>
 							{#if loading}

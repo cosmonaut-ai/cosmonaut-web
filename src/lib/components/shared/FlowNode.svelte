@@ -24,10 +24,10 @@
 
 	async function handleMouseEnter() {
 		isHovering = true;
-		if (!tooltipData && data.storyNode.world_id) {
+		if (!tooltipData && data.sessionId) {
 			isLoadingTooltip = true;
 			try {
-				const fullNode = await getNode(data.storyNode.world_id, data.storyNode.id);
+				const fullNode = await getNode(data.sessionId, data.storyNode.id);
 				if (isHovering) tooltipData = fullNode;
 			} catch {
 				// Non-critical: tooltip just won't show details

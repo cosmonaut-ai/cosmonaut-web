@@ -28,11 +28,16 @@
 	const isDisabled = $derived(isLoading || isAtQuotaLimit);
 
 	let customChoiceText = $state('');
+	const MIN_CUSTOM_CHOICE_LENGTH = 5;
 	const MAX_CUSTOM_CHOICE_LENGTH = 200;
+	const customChoiceTrimmed = $derived(customChoiceText.trim());
+	const customChoiceTooShort = $derived(
+		customChoiceTrimmed.length > 0 && customChoiceTrimmed.length < MIN_CUSTOM_CHOICE_LENGTH
+	);
 
 	function handleCustomChoice() {
-		if (!customChoiceText.trim() || isLoading) return;
-		onCustomChoice?.(customChoiceText.trim());
+		if (!customChoiceTrimmed || customChoiceTooShort || isLoading) return;
+		onCustomChoice?.(customChoiceTrimmed);
 		customChoiceText = '';
 	}
 
@@ -142,13 +147,19 @@
 					onkeydown={handleKeydown}
 				/>
 				<div class="flex items-center justify-between">
-					<span class="text-xs text-muted-foreground">
-						{customChoiceText.length}/{MAX_CUSTOM_CHOICE_LENGTH}
+					<span
+						class="text-xs {customChoiceTooShort ? 'text-destructive' : 'text-muted-foreground'}"
+					>
+						{#if customChoiceTooShort}
+							At least {MIN_CUSTOM_CHOICE_LENGTH} characters required
+						{:else}
+							{customChoiceText.length}/{MAX_CUSTOM_CHOICE_LENGTH}
+						{/if}
 					</span>
 					<Button
 						size="sm"
 						onclick={handleCustomChoice}
-						disabled={isDisabled || !customChoiceText.trim()}
+						disabled={isDisabled || !customChoiceTrimmed || customChoiceTooShort}
 					>
 						{#if isLoading}
 							<Spinner />

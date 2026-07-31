@@ -16,25 +16,24 @@ export const AWS_REGION = import.meta.env.PUBLIC_AWS_REGION || 'us-east-2';
 
 // Explicit environment label set at build time in CI.
 // Falls back to URL-based inference for local dev where the var isn't set.
-export const ENV: 'local' | 'dev' | 'prod' = import.meta.env.PUBLIC_ENV
-	? (import.meta.env.PUBLIC_ENV as 'local' | 'dev' | 'prod')
-	: API_BASE_URL === 'http://localhost:8000'
-		? 'local'
-		: API_BASE_URL.includes('dev.cosmonaut-ai.com')
-			? 'dev'
-			: 'prod';
+// SAFETY: 'local' (which bypasses auth) requires BOTH PUBLIC_ENV=local explicitly
+// OR the API URL being the localhost default AND PUBLIC_ENV being unset.
+function resolveEnv(): 'local' | 'dev' | 'prod' {
+	const explicit = import.meta.env.PUBLIC_ENV as string | undefined;
+	if (explicit === 'local' || explicit === 'dev' || explicit === 'prod') return explicit;
+
+	if (!import.meta.env.PUBLIC_API_BASE_URL && API_BASE_URL === 'http://localhost:8000') {
+		return 'local';
+	}
+	if (API_BASE_URL.includes('dev.cosmonaut-ai.com')) return 'dev';
+	return 'prod';
+}
+export const ENV = resolveEnv();
 
 export const isLocalEnvironment = ENV === 'local';
-export const isDevEnvironment = ENV === 'dev';
-export const PRODUCTION_URL = 'https://cosmonaut-ai.com';
 
 // Sentry release (git SHA) set at build time in CI
 export const SENTRY_RELEASE: string = import.meta.env.PUBLIC_SENTRY_RELEASE || '';
-
-// Emails allowed to access the dev environment - all others are redirected to production
-export const DEV_ALLOWED_EMAILS: string[] = import.meta.env.PUBLIC_DEV_ALLOWED_EMAILS
-	? (import.meta.env.PUBLIC_DEV_ALLOWED_EMAILS as string).split(',').map((e) => e.trim())
-	: ['imatson9119@gmail.com', 'imatson9119+new@gmail.com', 'ian@cosmonaut-ai.com'];
 
 // Check if auth is configured (non-local environments require Cognito)
 export const isAuthConfigured =

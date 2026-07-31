@@ -72,6 +72,26 @@ jobs:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
 
+      # PostHog error tracking symbolication: inject chunk IDs into the built JS
+      # (appends — safe for Sentry's already-uploaded maps), upload JS + maps to
+      # PostHog, then delete every .map file so source maps never reach S3.
+      # Uploads go to the real API host, not the i.cosmonaut-ai.com ingest proxy.
+      - name: Upload source maps to PostHog
+        if: ${{ vars.POSTHOG_CLI_PROJECT_ID != '' }}
+        env:
+          POSTHOG_CLI_API_KEY: ${{ secrets.POSTHOG_CLI_API_KEY }}
+          POSTHOG_CLI_PROJECT_ID: ${{ vars.POSTHOG_CLI_PROJECT_ID }}
+        run: |
+          npx --yes @posthog/cli@latest --host https://us.posthog.com \
+            sourcemap inject --directory build/_app/immutable \
+            --release-name cosmonaut-web --release-version "${{ github.sha }}"
+          npx --yes @posthog/cli@latest --host https://us.posthog.com \
+            sourcemap upload --directory build/_app/immutable \
+            --release-name cosmonaut-web --release-version "${{ github.sha }}"
+
+      - name: Remove source maps before S3 upload
+        run: find build -name '*.map' -delete
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:

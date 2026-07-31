@@ -1,36 +1,83 @@
 <script lang="ts">
-	import type { World } from '$lib/types/api';
+	import type { World, WorldSession } from '$lib/types/api';
 	import { goto } from '$app/navigation';
+	import { useCreateWorldSession } from '$lib/queries';
 	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { BookOpen, Map, Play, Share2, Calendar, Sparkles, Eye } from '@lucide/svelte';
 
 	interface Props {
 		world: World;
+		session?: WorldSession | null;
+		inviteToken?: string | null;
 		lastNodeId?: string | null;
 		hasProgress: boolean;
 		hasEndings: boolean;
 		onShare: () => void;
 	}
 
-	let { world, lastNodeId = null, hasProgress, hasEndings, onShare }: Props = $props();
+	let {
+		world,
+		session = null,
+		inviteToken = null,
+		lastNodeId = null,
+		hasProgress,
+		hasEndings,
+		onShare
+	}: Props = $props();
 
-	function handleEnterStory() {
-		const targetNode = lastNodeId ?? world.root_node_id;
-		if (targetNode) {
-			goto(`/worlds/${world.id}/nodes/${targetNode}`);
+	const createSessionMutation = useCreateWorldSession(() => world.id);
+	let navigationTarget = $state<'story' | 'map' | null>(null);
+	const isSessionCreating = $derived(createSessionMutation.isPending);
+
+	async function ensureSession(): Promise<WorldSession | null> {
+		if (session) return session;
+		return await createSessionMutation.mutateAsync({
+			invite_token: inviteToken
+		});
+	}
+
+	async function handleEnterStory() {
+		if (!world.root_node_id || isSessionCreating) return;
+		navigationTarget = 'story';
+		try {
+			const activeSession = await ensureSession();
+			const targetNode = activeSession?.last_visited_node_id ?? lastNodeId ?? world.root_node_id;
+			if (activeSession) {
+				goto(`/sessions/${activeSession.id}/nodes/${targetNode}`);
+			}
+		} finally {
+			navigationTarget = null;
 		}
 	}
 
-	function handleViewMap() {
-		goto(`/worlds/${world.id}/graph`);
+	async function handleViewMap() {
+		if (isSessionCreating) return;
+		navigationTarget = 'map';
+		try {
+			const activeSession = await ensureSession();
+			if (activeSession) {
+				goto(`/sessions/${activeSession.id}/graph`);
+			}
+		} finally {
+			navigationTarget = null;
+		}
 	}
 </script>
 
 <section class="hero-enter hero-enter-5 mx-auto max-w-4xl px-6 py-8">
 	<div class="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
 		{#if world.root_node_id}
-			<Button size="lg" class="group gap-2 px-8" onclick={handleEnterStory}>
-				{#if hasProgress}
+			<Button
+				size="lg"
+				class="group gap-2 px-8"
+				onclick={handleEnterStory}
+				disabled={isSessionCreating}
+			>
+				{#if navigationTarget === 'story'}
+					<Spinner class="h-5 w-5" />
+					Opening...
+				{:else if hasProgress}
 					<Play class="h-5 w-5 transition-transform group-hover:scale-110" />
 					Continue
 				{:else}
@@ -40,9 +87,20 @@
 			</Button>
 		{/if}
 
-		<Button variant="outline" size="lg" class="gap-2 px-6" onclick={handleViewMap}>
-			<Map class="h-5 w-5" />
-			View Map
+		<Button
+			variant="outline"
+			size="lg"
+			class="gap-2 px-6"
+			onclick={handleViewMap}
+			disabled={isSessionCreating}
+		>
+			{#if navigationTarget === 'map'}
+				<Spinner class="h-5 w-5" />
+				Opening...
+			{:else}
+				<Map class="h-5 w-5" />
+				View Map
+			{/if}
 		</Button>
 
 		<Button

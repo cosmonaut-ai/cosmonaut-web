@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import {
 		deleteAdminWorld,
@@ -11,6 +11,7 @@
 	import { formatDateTime, shortId, visibilityClass } from '$lib/admin/format';
 	import { queryValue, routeWithQuery } from '$lib/admin/url';
 	import { showError, showSuccess } from '$lib/utils/toast';
+	import AdminPagination from '$lib/components/admin/AdminPagination.svelte';
 	import CopyButton from '$lib/components/admin/CopyButton.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -21,8 +22,18 @@
 
 	const searchParam = $derived(queryValue(page.url, 'search'));
 	const cursorParam = $derived(page.url.searchParams.get('cursor'));
+	const hasLookup = $derived(searchParam.trim().length > 0);
+	const worldsCardTitle = $derived(hasLookup ? 'Lookup Results' : 'Recent Worlds');
+	const worldsDescription = $derived(
+		hasLookup
+			? 'Review exact world and author matches without scanning the library.'
+			: 'Review the newest indexed worlds and their soundtrack coverage.'
+	);
+	const emptyWorldsMessage = $derived(
+		hasLookup ? 'No world or author matched this lookup.' : 'No indexed worlds are available yet.'
+	);
 
-	let worldSearch = $state('');
+	let worldSearch = $derived(searchParam);
 	let worlds = $state<World[]>([]);
 	let nextCursor = $state<string | null>(null);
 	let worldsLoading = $state(false);
@@ -32,13 +43,12 @@
 
 	const isMutating = $derived(actionPending !== '');
 
-	$effect(() => {
-		const currentRequest = ++requestId;
-		worldSearch = searchParam;
-		void loadWorlds(searchParam, cursorParam, currentRequest);
+	afterNavigate(() => {
+		void loadWorlds(searchParam, cursorParam);
 	});
 
-	async function loadWorlds(search: string, cursor: string | null, currentRequest = ++requestId) {
+	async function loadWorlds(search: string, cursor: string | null) {
+		const currentRequest = ++requestId;
 		worldsLoading = true;
 		worldsError = '';
 		try {
@@ -128,7 +138,7 @@
 	<div class="flex items-center justify-between gap-4">
 		<div>
 			<h2 class="text-xl font-semibold text-foreground">Worlds</h2>
-			<p class="mt-1 text-sm text-muted-foreground">Inspect and moderate every world.</p>
+			<p class="mt-1 text-sm text-muted-foreground">{worldsDescription}</p>
 		</div>
 		<Button variant="outline" size="sm" disabled={worldsLoading} onclick={refreshWorlds}>
 			<RefreshCw class="h-4 w-4" />
@@ -139,7 +149,7 @@
 	<Card class="min-w-0">
 		<CardHeader>
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<CardTitle>All Worlds</CardTitle>
+				<CardTitle>{worldsCardTitle}</CardTitle>
 				<form
 					class="flex w-full min-w-0 flex-col gap-2 sm:flex-row md:max-w-lg"
 					onsubmit={(event) => {
@@ -149,7 +159,7 @@
 				>
 					<Input
 						bind:value={worldSearch}
-						placeholder="Search title, world ID, author ID, or genre"
+						placeholder="World ID or author ID"
 						aria-label="Search worlds"
 						class="min-w-0"
 					/>
@@ -186,14 +196,15 @@
 				</div>
 			{:else}
 				<div class="overflow-x-auto">
-					<table class="w-full min-w-[900px] text-left text-sm">
+					<table class="w-full min-w-[1100px] text-left text-sm">
 						<thead class="border-b border-border text-xs text-muted-foreground uppercase">
 							<tr>
 								<th class="py-3 pr-4 font-medium">World</th>
 								<th class="px-4 py-3 font-medium">Author</th>
 								<th class="px-4 py-3 font-medium">Visibility</th>
 								<th class="px-4 py-3 font-medium">Status</th>
-								<th class="px-4 py-3 font-medium">Updated</th>
+								<th class="px-4 py-3 font-medium">Soundtrack</th>
+								<th class="px-4 py-3 font-medium">Created</th>
 								<th class="py-3 pl-4 text-right font-medium">Actions</th>
 							</tr>
 						</thead>
@@ -247,7 +258,33 @@
 										>
 									</td>
 									<td class="px-4 py-3 text-muted-foreground">{world.generation_status}</td>
-									<td class="px-4 py-3 text-muted-foreground">{formatDateTime(world.updated_at)}</td
+									<td class="px-4 py-3">
+										<div class="max-w-[18rem] space-y-1">
+											<p class="line-clamp-2 text-xs text-muted-foreground">
+												{world.soundtrack_description || 'N/A'}
+											</p>
+											{#if world.default_playlist_id}
+												<div
+													class="flex items-center gap-1 font-mono text-xs text-muted-foreground"
+												>
+													<a
+														href={`/admin/playlists/${world.default_playlist_id}`}
+														class="text-primary hover:underline"
+													>
+														{shortId(world.default_playlist_id)}
+													</a>
+													<CopyButton
+														value={world.default_playlist_id}
+														label="Copy playlist ID"
+														successLabel="Playlist ID copied"
+														class="h-6 w-6 text-muted-foreground"
+													/>
+												</div>
+											{/if}
+										</div>
+									</td>
+									<td class="px-4 py-3 text-muted-foreground"
+										>{formatDateTime(world.created_at || world.updated_at)}</td
 									>
 									<td class="py-3 pl-4">
 										<div class="flex justify-end gap-2">
@@ -290,35 +327,18 @@
 				</div>
 
 				{#if worlds.length === 0}
-					<p class="mt-4 text-sm text-muted-foreground">No worlds match the current filters.</p>
+					<p class="mt-4 text-sm text-muted-foreground">{emptyWorldsMessage}</p>
 				{/if}
 
-				<div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-					<p class="text-sm text-muted-foreground">
-						Showing {worlds.length} world{worlds.length === 1 ? '' : 's'} on this page.
-					</p>
-					<div class="flex gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={!cursorParam || worldsLoading}
-							onclick={goToFirstPage}
-						>
-							First Page
-						</Button>
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={!nextCursor || worldsLoading}
-							onclick={goToNextPage}
-						>
-							{#if worldsLoading}
-								<Spinner class="h-4 w-4" />
-							{/if}
-							Next Page
-						</Button>
-					</div>
-				</div>
+				<AdminPagination
+					count={worlds.length}
+					label="world"
+					hasPrevious={!!cursorParam}
+					hasNext={!!nextCursor}
+					loading={worldsLoading}
+					onFirst={goToFirstPage}
+					onNext={goToNextPage}
+				/>
 			{/if}
 		</CardContent>
 	</Card>

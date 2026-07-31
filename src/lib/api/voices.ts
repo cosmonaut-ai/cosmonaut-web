@@ -18,12 +18,12 @@ export async function listVoices(): Promise<Voice[]> {
  * @throws ApiError with status 429 when the user's audio quota is exceeded
  */
 export async function generateNodeAudio(
-	worldId: string,
+	sessionId: string,
 	nodeId: string,
 	voiceId: string
 ): Promise<{ audio_url: string; timestamps_url?: string | null }> {
 	return apiRequest<{ audio_url: string; timestamps_url?: string | null }>(
-		`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/audio`,
+		`${API_BASE_URL}/sessions/${sessionId}/nodes/${nodeId}/audio`,
 		{
 			method: 'POST',
 			body: JSON.stringify({ voice_id: voiceId })

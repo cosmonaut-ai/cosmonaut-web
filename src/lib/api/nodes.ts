@@ -5,23 +5,11 @@ import { createParser, type EventSourceMessage } from 'eventsource-parser';
 import { apiRequest, parseApiError, ApiError, POST_STREAM_DELAY_MS } from './core';
 import { fetchWithAuthRetry } from './fetchWithAuthRetry';
 
-/** Response from the progress endpoint */
-export interface WorldProgressResponse {
-	current_node_id: string | null;
-}
-
-/**
- * Get the authenticated user's last-visited node in a world
- */
-export async function getWorldProgress(worldId: string): Promise<WorldProgressResponse> {
-	return apiRequest<WorldProgressResponse>(`${API_BASE_URL}/worlds/${worldId}/progress`);
-}
-
 /**
  * Get a specific story node
  */
-export async function getNode(worldId: string, nodeId: string): Promise<StoryNode> {
-	return apiRequest<StoryNode>(`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}`);
+export async function getNode(sessionId: string, nodeId: string): Promise<StoryNode> {
+	return apiRequest<StoryNode>(`${API_BASE_URL}/sessions/${sessionId}/nodes/${nodeId}`);
 }
 
 /** Paginated response from the nodes list endpoint */
@@ -31,17 +19,17 @@ interface PaginatedNodesResponse {
 }
 
 /**
- * Get all nodes in a world (auto-paginating)
+ * Get all nodes in a session (auto-paginating)
  */
-export async function getWorldNodes(
-	worldId: string,
+export async function getSessionNodes(
+	sessionId: string,
 	fetchFn: typeof fetch = fetch
 ): Promise<StoryNode[]> {
 	const allNodes: StoryNode[] = [];
 	let cursor: string | null = null;
 
 	do {
-		const url = new URL(`${API_BASE_URL}/worlds/${worldId}/nodes/`);
+		const url = new URL(`${API_BASE_URL}/sessions/${sessionId}/nodes/`);
 		if (cursor) url.searchParams.set('cursor', cursor);
 
 		const page = await apiRequest<PaginatedNodesResponse>(url.toString(), {}, true, fetchFn);
@@ -59,11 +47,11 @@ export async function getWorldNodes(
  * @returns The initialized StoryNode with generation_status: 'initialized' (no text yet)
  */
 export async function chooseOption(
-	worldId: string,
+	sessionId: string,
 	nodeId: string,
 	choice: { targetId: string } | { customChoice: string }
 ): Promise<StoryNode> {
-	const url = `${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/choose`;
+	const url = `${API_BASE_URL}/sessions/${sessionId}/nodes/${nodeId}/choose`;
 
 	const requestBody: ChooseRequest =
 		'targetId' in choice
@@ -80,19 +68,19 @@ export async function chooseOption(
  * Generate story text for an initialized node (streaming)
  * This is step 2 of the two-step generation flow.
  * Only works for nodes with generation_status: 'initialized' or 'failed'
- * @param worldId - The world ID
+ * @param sessionId - The session ID
  * @param nodeId - The node ID to generate text for
  * @param onTextUpdate - Callback for streaming text updates
  * @returns The completed StoryNode with generated text
  */
 export async function generateNodeText(
-	worldId: string,
+	sessionId: string,
 	nodeId: string,
 	onTextUpdate: StreamingCallback,
 	signal?: AbortSignal
 ): Promise<StoryNode> {
 	const baseUrl = isLocalEnvironment ? API_BASE_URL : STREAMING_BASE_URL;
-	const url = `${baseUrl}/worlds/${worldId}/nodes/${nodeId}/generate-text`;
+	const url = `${baseUrl}/sessions/${sessionId}/nodes/${nodeId}/generate-text`;
 
 	// Ensure streaming session is valid (sets signed cookies)
 	if (!isLocalEnvironment) {
@@ -168,7 +156,7 @@ export async function generateNodeText(
 		}
 
 		await new Promise((resolve) => setTimeout(resolve, POST_STREAM_DELAY_MS));
-		return await getNode(worldId, nodeId);
+		return await getNode(sessionId, nodeId);
 	} else {
 		// Handle JSON response (pre-generated node or already completed)
 		const node = (await response.json()) as StoryNode;
@@ -183,13 +171,13 @@ export async function generateNodeText(
  * Retry background processing for a node with failed processing_status
  * This re-enqueues fact extraction and Pinecone upsert for nodes that
  * completed text generation but failed subsequent async processing.
- * @param worldId - The world ID
+ * @param sessionId - The session ID
  * @param nodeId - The node ID to retry processing for
  * @returns The updated StoryNode with processing_status reset to 'pending'
  */
-export async function retryNodeProcessing(worldId: string, nodeId: string): Promise<StoryNode> {
+export async function retryNodeProcessing(sessionId: string, nodeId: string): Promise<StoryNode> {
 	return apiRequest<StoryNode>(
-		`${API_BASE_URL}/worlds/${worldId}/nodes/${nodeId}/retry-processing`,
+		`${API_BASE_URL}/sessions/${sessionId}/nodes/${nodeId}/retry-processing`,
 		{ method: 'POST' }
 	);
 }

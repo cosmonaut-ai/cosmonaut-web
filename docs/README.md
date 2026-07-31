@@ -4,7 +4,7 @@ This directory contains frontend implementation guides, design-system notes, and
 
 ## Current References
 
-- [`../ARCHITECTURE.md`](../ARCHITECTURE.md): SvelteKit app structure, state management, query conventions, and route notes.
+- [`../../ARCHITECTURE.md`](../../ARCHITECTURE.md): SvelteKit app structure, state management, query conventions, and route notes.
 - [`../auth-info.md`](../auth-info.md): Cognito, local mock auth, and API authorization notes.
 - [`design-system/index.md`](design-system/index.md): design system entry point.
 - [`subscription-frontend-guide.md`](subscription-frontend-guide.md): subscription, usage, checkout, and billing portal behavior.

@@ -22,7 +22,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { ChevronLeft, Crown, ExternalLink, Trash2 } from '@lucide/svelte';
+	import { Activity, ChevronLeft, Crown, ExternalLink, Trash2 } from '@lucide/svelte';
 
 	const worldId = $derived(page.params.worldId ?? '');
 
@@ -164,7 +164,17 @@
 				/>
 			</p>
 		</div>
-		<Button variant="outline" size="sm" disabled={loading} onclick={refreshWorld}>Refresh</Button>
+		<div class="flex flex-wrap gap-2 md:justify-end">
+			<Button
+				href={`/admin/sessions?mode=world&q=${encodeURIComponent(worldId)}`}
+				variant="outline"
+				size="sm"
+			>
+				<Activity class="h-4 w-4" />
+				Sessions
+			</Button>
+			<Button variant="outline" size="sm" disabled={loading} onclick={refreshWorld}>Refresh</Button>
+		</div>
 	</div>
 
 	{#if error}
@@ -305,6 +315,37 @@
 							>
 								{world.world_prompt || 'N/A'}
 							</p>
+						</div>
+
+						<div class="space-y-2">
+							<p class="text-sm font-medium text-foreground">Soundtrack</p>
+							<div class="space-y-3 rounded-md border border-border p-3 text-sm">
+								<div class="flex flex-wrap items-center justify-between gap-3">
+									<span class="text-muted-foreground">Default playlist</span>
+									{#if world.default_playlist_id}
+										<span class="flex min-w-0 items-center gap-1 font-mono text-xs text-foreground">
+											<a
+												href={`/admin/playlists/${world.default_playlist_id}`}
+												class="text-right break-all text-primary hover:underline"
+											>
+												{world.default_playlist_id}
+											</a>
+											<CopyButton
+												value={world.default_playlist_id}
+												label="Copy playlist ID"
+												successLabel="Playlist ID copied"
+												class="h-6 w-6 shrink-0 text-muted-foreground"
+											/>
+										</span>
+									{:else}
+										<span class="font-medium text-foreground">N/A</span>
+									{/if}
+								</div>
+								<div class="space-y-1">
+									<p class="text-muted-foreground">Description</p>
+									<p class="text-foreground">{world.soundtrack_description || 'N/A'}</p>
+								</div>
+							</div>
 						</div>
 
 						<div class="grid gap-4 lg:grid-cols-2">
@@ -474,7 +515,7 @@
 					<CardContent>
 						<div class="space-y-3">
 							{#each nodes as node (node.id)}
-								<div class="rounded-md border border-border p-3">
+								<div id={`node-${node.id}`} class="scroll-mt-6 rounded-md border border-border p-3">
 									<div class="flex items-start justify-between gap-3">
 										<div class="min-w-0">
 											<p class="truncate text-sm font-medium text-foreground">
@@ -534,6 +575,18 @@
 						<ExternalLink class="h-4 w-4" />
 						Open Story
 					</Button>
+					<Button
+						href={`/admin/sessions?mode=world&q=${encodeURIComponent(world.id)}`}
+						variant="outline"
+					>
+						<Activity class="h-4 w-4" />
+						Open Sessions
+					</Button>
+					{#if world.default_playlist_id}
+						<Button href={`/admin/playlists/${world.default_playlist_id}`} variant="outline">
+							Open Playlist
+						</Button>
+					{/if}
 					<div class="rounded-md border border-border p-3">
 						<p class="text-xs text-muted-foreground">Shareable URL</p>
 						<div class="mt-1 flex items-center gap-1">
