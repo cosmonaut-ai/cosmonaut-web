@@ -4,6 +4,21 @@ import posthog from 'posthog-js';
 import { PUBLIC_POSTHOG_PROJECT_TOKEN, PUBLIC_POSTHOG_HOST } from '$env/static/public';
 import { ENV, SENTRY_RELEASE, isLocalEnvironment } from '$lib/config';
 
+// Plain transport-level fetch failures mean the client lost its connection.
+// The app already handles them (a toast, no retry loop), so they are expected
+// noise rather than application faults. Keep them out of error reporting.
+const TRANSPORT_ERROR_PATTERNS = [
+	/^Failed to fetch$/i,
+	/^NetworkError when attempting to fetch resource\.?$/i,
+	/^Load failed$/i,
+	/^The network connection was lost\.?$/i,
+	/^The Internet connection appears to be offline\.?$/i
+];
+
+function isExpectedTransportError(message: unknown): boolean {
+	return typeof message === 'string' && TRANSPORT_ERROR_PATTERNS.some((re) => re.test(message));
+}
+
 function reloadIfStale(key: string) {
 	const last = sessionStorage.getItem(key);
 	const now = Date.now();
@@ -40,6 +55,7 @@ if (!isLocalEnvironment) {
 		replaysSessionSampleRate: 0.1,
 		replaysOnErrorSampleRate: 1.0,
 		ignoreErrors: [
+			...TRANSPORT_ERROR_PATTERNS,
 			/runtime\.sendMessage/,
 			/extension\//i,
 			/^chrome-extension:\/\//,
@@ -65,7 +81,19 @@ export async function init() {
 			api_host: PUBLIC_POSTHOG_HOST,
 			ui_host: 'https://us.posthog.com',
 			defaults: '2026-01-30',
-			capture_exceptions: true
+			capture_exceptions: true,
+			before_send: (event) => {
+				if (event?.event === '$exception') {
+					const exceptions = event.properties?.$exception_list;
+					if (
+						Array.isArray(exceptions) &&
+						exceptions.some((exception) => isExpectedTransportError(exception?.value))
+					) {
+						return null;
+					}
+				}
+				return event;
+			}
 		});
 		if (SENTRY_RELEASE) {
 			posthog.register({ release: SENTRY_RELEASE });
