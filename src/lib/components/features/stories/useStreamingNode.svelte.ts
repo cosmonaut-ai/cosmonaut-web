@@ -203,7 +203,11 @@ export function useStreamingNode(options: UseStreamingNodeOptions) {
 			const currentSessionId = sessionId();
 
 			untrack(() => {
-				startGeneration(currentSessionId, nodeIdToGenerate, { setLoading: true });
+				// startGeneration already handles its own failures (toast plus a
+				// pinned generatingNodeId to stop a retry loop) and rethrows only
+				// for the awaiting call sites. This site fires and forgets, so
+				// swallow the rethrow to avoid an unhandled promise rejection.
+				startGeneration(currentSessionId, nodeIdToGenerate, { setLoading: true }).catch(() => {});
 			});
 		}
 	});
