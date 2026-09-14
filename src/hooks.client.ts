@@ -104,6 +104,12 @@ export async function init() {
 const sentryHandleError: HandleClientError = Sentry.handleErrorWithSentry();
 
 export const handleError: HandleClientError = (input) => {
+	// Router 404s are dead or crawled links, not application faults. The
+	// +error.svelte page still renders from page.status, so keep them out of
+	// error reporting to avoid triage noise.
+	if (input.status === 404) {
+		return { message: input.message };
+	}
 	if (!isLocalEnvironment && posthog.__loaded) {
 		try {
 			posthog.captureException(input.error);
